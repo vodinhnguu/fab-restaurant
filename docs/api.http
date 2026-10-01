@@ -1,0 +1,99 @@
+### FAB Seafood API - dùng với extension "REST Client" trong VS Code
+### Bấm "Send Request" phía trên mỗi request để gửi thử
+
+@base = http://localhost:4000/api/v1
+
+### Kiểm tra server
+GET {{base}}/health
+
+### Thông tin nhà hàng
+GET {{base}}/info
+
+### Đăng nhập admin - response sẽ được lưu vào biến "login"
+# @name login
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "admin@fab.vn", "password": "admin123" }
+
+### Lấy token từ request trên
+@token = {{login.response.body.data.token}}
+
+### Thông tin tài khoản
+GET {{base}}/auth/me
+Authorization: Bearer {{token}}
+
+### Danh mục
+GET {{base}}/categories
+
+### Danh sách món: lọc, sắp xếp, phân trang
+GET {{base}}/dishes?category=tom&sort=price_asc&page=1&limit=5
+
+### Tìm món
+GET {{base}}/dishes?search=cá hồi
+
+### Chi tiết món theo slug
+GET {{base}}/dishes/tom-su-hap-bia
+
+### Kiểm tra mã giảm giá
+POST {{base}}/coupons/check
+Content-Type: application/json
+
+{ "code": "WELCOME10", "subtotal": 400000 }
+
+### Tạo đơn hàng (khách vãng lai)
+# @name order
+POST {{base}}/orders
+Content-Type: application/json
+
+{
+  "customerName": "Khách Test",
+  "phone": "0901111222",
+  "type": "DELIVERY",
+  "address": "12 Lê Lợi, Hải Châu, Đà Nẵng",
+  "paymentMethod": "ONLINE",
+  "couponCode": "WELCOME10",
+  "items": [{ "dishId": 1, "quantity": 2 }]
+}
+
+### Tra cứu đơn vừa tạo
+GET {{base}}/orders/track/{{order.response.body.data.code}}?phone=0901111222
+
+### Thanh toán mô phỏng
+POST {{base}}/orders/{{order.response.body.data.code}}/pay
+Content-Type: application/json
+
+{ "phone": "0901111222" }
+
+### [Admin] Xác nhận đơn
+PATCH {{base}}/orders/{{order.response.body.data.id}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "CONFIRMED" }
+
+### [Admin] Danh sách đơn chờ xác nhận
+GET {{base}}/orders?status=PENDING
+Authorization: Bearer {{token}}
+
+### Đặt bàn (đổi ngày sang một ngày trong tương lai, giờ VN 10:00-21:00)
+POST {{base}}/reservations
+Content-Type: application/json
+
+{
+  "name": "Khách Test",
+  "phone": "0901111222",
+  "date": "2030-12-24T19:00:00+07:00",
+  "guests": 4,
+  "area": "Phòng VIP"
+}
+
+### [Admin] Thống kê 30 ngày
+GET {{base}}/stats/overview?days=30
+Authorization: Bearer {{token}}
+
+### Thử lỗi validation
+POST {{base}}/orders
+Content-Type: application/json
+
+{ "customerName": "A", "phone": "123", "items": [] }

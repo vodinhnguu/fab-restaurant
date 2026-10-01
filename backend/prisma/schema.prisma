@@ -1,0 +1,198 @@
+// =============================================================
+//  FAB Seafood - Prisma schema
+//  Tài liệu: docs/04-database.md
+// =============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- ENUMS ----------
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderType {
+  DELIVERY // Giao tận nơi
+  PICKUP // Đến lấy
+}
+
+enum OrderStatus {
+  PENDING // Chờ xác nhận
+  CONFIRMED // Đã xác nhận
+  PREPARING // Đang chế biến
+  DELIVERING // Đang giao
+  COMPLETED // Hoàn thành
+  CANCELLED // Đã hủy
+}
+
+enum PaymentMethod {
+  COD // Thanh toán khi nhận hàng
+  ONLINE // Thanh toán online (mô phỏng)
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum CouponType {
+  PERCENT // Giảm theo %
+  FIXED // Giảm số tiền cố định
+}
+
+// ---------- MODELS ----------
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  phone        String?
+  passwordHash String
+  role         Role          @default(CUSTOMER)
+  address      String?
+  avatar       String?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  orders       Order[]
+  reservations Reservation[]
+  reviews      Review[]
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  dishes      Dish[]
+}
+
+model Dish {
+  id          Int         @id @default(autoincrement())
+  name        String
+  slug        String      @unique
+  description String?
+  price       Int // Giá gốc (VNĐ)
+  salePrice   Int? // Giá khuyến mãi (nếu có)
+  unit        String      @default("phần") // phần, đĩa, kg, ly...
+  image       String?
+  isAvailable Boolean     @default(true)
+  isFeatured  Boolean     @default(false)
+  soldCount   Int         @default(0)
+  ratingAvg   Float       @default(0)
+  ratingCount Int         @default(0)
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+  reviews     Review[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([categoryId])
+}
+
+model Order {
+  id            Int           @id @default(autoincrement())
+  code          String        @unique // Mã đơn hiển thị cho khách, vd: FAB2410011234
+  userId        Int?
+  user          User?         @relation(fields: [userId], references: [id])
+  customerName  String
+  phone         String
+  address       String?
+  type          OrderType     @default(DELIVERY)
+  status        OrderStatus   @default(PENDING)
+  paymentMethod PaymentMethod @default(COD)
+  paymentStatus PaymentStatus @default(UNPAID)
+  subtotal      Int
+  discount      Int           @default(0)
+  shippingFee   Int           @default(0)
+  total         Int
+  couponCode    String?
+  note          String?
+  items         OrderItem[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Lưu lại tên + giá tại thời điểm đặt để lịch sử đơn không bị đổi khi món thay giá
+model OrderItem {
+  id       Int    @id @default(autoincrement())
+  orderId  Int
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  dishId   Int
+  dish     Dish   @relation(fields: [dishId], references: [id])
+  name     String
+  price    Int
+  quantity Int
+}
+
+model Reservation {
+  id        Int               @id @default(autoincrement())
+  code      String            @unique
+  userId    Int?
+  user      User?             @relation(fields: [userId], references: [id])
+  name      String
+  phone     String
+  email     String?
+  date      DateTime // Ngày giờ đến
+  guests    Int
+  area      String? // Khu vực mong muốn: trong nhà, ngoài trời, phòng VIP
+  note      String?
+  status    ReservationStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([date])
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dishId    Int
+  dish      Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  rating    Int // 1..5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, dishId]) // Mỗi người chỉ đánh giá 1 lần / món
+}
+
+model Coupon {
+  id          Int        @id @default(autoincrement())
+  code        String     @unique
+  description String?
+  type        CouponType
+  value       Int // % hoặc số tiền
+  minOrder    Int        @default(0)
+  maxDiscount Int? // Giảm tối đa (dùng cho PERCENT)
+  usageLimit  Int? // null = không giới hạn
+  usedCount   Int        @default(0)
+  startsAt    DateTime?
+  expiresAt   DateTime?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+}
