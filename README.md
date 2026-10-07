@@ -20,10 +20,11 @@ Backend là REST API dùng chung cho cả web và app mobile (Flutter) sau này.
 - Giỏ hàng dạng ngăn kéo trượt, lưu ở trình duyệt (F5 không mất)
 - Thanh toán: giao tận nơi hoặc đến lấy, **mã giảm giá**, phí ship tự tính (miễn phí từ 500k), COD hoặc **thanh toán online mô phỏng**
 - Theo dõi đơn hàng theo dòng thời gian, tự cập nhật mỗi 15 giây, khách được tự hủy khi đơn còn chờ xác nhận
-- Tra cứu đơn không cần tài khoản (mã đơn + số điện thoại)
+- Tra cứu đơn hàng **và lịch đặt bàn** không cần tài khoản (mã + số điện thoại), tự hủy lịch đặt bàn
 - Đặt bàn: chọn ngày, giờ, số khách, khu vực. Có kiểm tra giờ mở cửa
 - Tài khoản: đăng ký, đăng nhập, sửa hồ sơ, đổi mật khẩu, lịch sử đơn và lịch đặt bàn
 - Đánh giá món (chỉ khi đã nhận món đó)
+- Bảo mật: mật khẩu được hash bằng bcrypt, JWT, phân quyền, giới hạn số lần đăng nhập (rate limit)
 
 ### Admin (`/admin`)
 - Dashboard: doanh thu, số đơn, biểu đồ doanh thu theo ngày, top món bán chạy, đơn mới nhất
@@ -106,5 +107,10 @@ Nên đọc theo thứ tự:
 5. [Frontend với React](docs/05-frontend-react.md): routing, React Query, Zustand, form, Tailwind
 6. [Tài liệu API](docs/06-api-reference.md): danh sách endpoint, dùng cho app Flutter
 7. [Lộ trình học & bài tập](docs/07-lo-trinh-hoc-va-bai-tap.md): bài tập nâng cấp dự án từ dễ đến khó
+8. [Bản đồ mã nguồn](docs/08-ban-do-ma-nguon.md): từng file làm gì, có hàm nào, liên quan tới file nào
+9. [Muốn sửa gì thì sửa ở đâu](docs/09-muon-sua-gi-thi-sua-o-dau.md): đổi thông tin, màu sắc, quy tắc nghiệp vụ, thêm trường/trang mới, cách tìm lỗi
+10. [Sổ tay toàn tập](docs/10-so-tay-toan-tap.md): **một tài liệu đủ mọi thứ trên web**, đi qua từng chức năng (người dùng thấy gì, dữ liệu chạy qua đâu, code ở file nào, quy tắc nghiệp vụ), kèm câu hỏi tự kiểm tra và từ điển thuật ngữ
+
+👉 Mới bắt đầu? Đọc **10** trước để có bức tranh toàn cảnh. Khi đang code, mở sẵn **08** và **09** để tra cứu nhanh.
 
 File [docs/api.http](docs/api.http) dùng để gọi thử API ngay trong VS Code (cần cài extension **REST Client**).

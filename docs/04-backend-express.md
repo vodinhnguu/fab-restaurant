@@ -176,10 +176,10 @@ router.use('/contacts', contactRoutes);
 
 ## 8. Bảo mật đã áp dụng & còn thiếu
 
-✅ Đã có: bcrypt, JWT, phân quyền, validation, helmet, CORS giới hạn domain, giới hạn kích thước body/file, chỉ nhận đúng loại file ảnh, Prisma chống SQL injection, không lộ `passwordHash`, không lộ stack trace khi chạy production.
+✅ Đã có: bcrypt, JWT, phân quyền, validation, helmet, CORS giới hạn domain, giới hạn kích thước body/file, chỉ nhận đúng loại file ảnh, Prisma chống SQL injection, không lộ `passwordHash`, không lộ stack trace khi chạy production, **rate limit** (`middlewares/rateLimit.js`): đăng nhập/đăng ký/đổi mật khẩu tối đa 20 lần mỗi 15 phút cho mỗi IP, tra cứu đơn/đặt bàn tối đa 60 lần mỗi 15 phút. Vượt mức thì trả lỗi **429**.
 
 ⏳ Nên bổ sung khi chạy thật (bài tập):
-- **Rate limit** (`express-rate-limit`) cho `/auth/login` để chống dò mật khẩu
+- Rate limit dùng **Redis** khi chạy nhiều server (bản hiện tại lưu bộ đếm trong RAM của 1 server)
 - Refresh token và thu hồi token
 - Xác thực email, quên mật khẩu
 - Log ra file và giám sát lỗi (Sentry)

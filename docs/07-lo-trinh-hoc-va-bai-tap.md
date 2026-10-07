@@ -19,6 +19,8 @@
 | 13 | Dashboard + biểu đồ | `admin/Dashboard.jsx`, `modules/stats` |
 | 14 | Làm bài tập cấp 1 bên dưới | |
 
+**Mẹo:** trong lúc đọc code, mở song song [08-ban-do-ma-nguon.md](08-ban-do-ma-nguon.md) để tra nhanh vai trò từng file. Khi bắt đầu tự sửa, dùng [09-muon-sua-gi-thi-sua-o-dau.md](09-muon-sua-gi-thi-sua-o-dau.md).
+
 **Mẹo:** đặt `console.log` hoặc breakpoint (VS Code → Run and Debug) ở controller, rồi thao tác trên web để thấy dữ liệu đi qua từng bước. Mở DevTools → tab **Network** để xem request/response thật.
 
 ## 2. Bài tập nâng cấp
@@ -33,7 +35,7 @@
 ### 🟡 Cấp 2: Trung bình
 6. **Món yêu thích:** model `Favorite(userId, dishId)`, nút ❤️ trên DishCard, trang "Món yêu thích" trong tài khoản.
 7. **Tùy chọn món:** ví dụ tôm có "Hấp bia / Nướng muối ớt / Rang me", cua có size theo kg. Gợi ý: model `DishOption`, lưu lựa chọn vào `OrderItem`.
-8. **Rate limit đăng nhập:** dùng `express-rate-limit`, tối đa 5 lần/phút cho mỗi IP.
+8. **Rate limit:** dự án đã có bản tự viết ở `backend/src/middlewares/rateLimit.js` (đọc kỹ để hiểu cách hoạt động). Bài tập: (a) áp dụng thêm cho `POST /orders` và `POST /reservations` để chống spam đơn ảo; (b) thử thay bằng thư viện `express-rate-limit` rồi so sánh với bản tự viết.
 9. **Quên mật khẩu qua email:** `nodemailer` + Gmail App Password hoặc Resend. Gửi link có token hết hạn sau 15 phút.
 10. **Xuất báo cáo Excel** doanh thu ở dashboard (thư viện `exceljs`).
 11. **Upload ảnh lên Cloudinary** thay vì lưu trên ổ đĩa (cần thiết khi deploy).

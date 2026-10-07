@@ -26,6 +26,7 @@ Base URL: `http://localhost:4000/api/v1`
 | 403 | Không có quyền |
 | 404 | Không tìm thấy |
 | 409 | Trùng dữ liệu hoặc xung đột |
+| 429 | Gọi quá nhiều lần (rate limit). Header `Retry-After` cho biết số giây phải chờ. Áp dụng cho `/auth/login`, `/auth/register`, `/auth/change-password` (20 lần / 15 phút) và `/orders/track`, `/reservations/track` (60 lần / 15 phút) |
 
 **Xác thực:** gửi header `Authorization: Bearer <token>`. Token hết hạn sau 7 ngày (`JWT_EXPIRES_IN`).
 
@@ -111,8 +112,8 @@ Kết quả trả về: đơn hàng đầy đủ gồm `code`, `subtotal`, `disc
 |---|---|---|---|
 | POST | `/reservations` | 🔓 | `{ name, phone, date (ISO), guests, email?, area?, note? }`. Phải đặt trước ít nhất 30 phút và trong giờ mở cửa |
 | GET | `/reservations/my` | 👤 | Lịch của tôi |
-| GET | `/reservations/track/:code?phone=` | 🔓 | Xem 1 lịch |
-| POST | `/reservations/:code/cancel` | 🔓 | Hủy (khi đang `PENDING` hoặc `CONFIRMED`) |
+| GET | `/reservations/track/:code?phone=` | 🔓 | Xem 1 lịch (chủ lịch, admin, hoặc đúng SĐT; SĐT có dấu cách vẫn được) |
+| POST | `/reservations/:code/cancel` | 🔓 | `{ phone? }`. Hủy khi đang `PENDING` hoặc `CONFIRMED` **và chưa tới giờ hẹn** |
 | GET | `/reservations` | 🛡️ | Query: `status`, `date=YYYY-MM-DD`, `search`, `page` |
 | PATCH | `/reservations/:id/status` | 🛡️ | `{ status: PENDING|CONFIRMED|CANCELLED|COMPLETED }` |
 
