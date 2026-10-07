@@ -2,8 +2,10 @@ import { Fish } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { EmptyState } from '../components/ui/Feedback';
+import { useDocumentTitle } from '../lib/hooks';
 
 export default function NotFound() {
+  useDocumentTitle('Không tìm thấy trang');
   return (
     <EmptyState
       icon={Fish}

@@ -12,6 +12,7 @@ import { Checkbox, Field, Input, Select } from '../../components/ui/Form';
 import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { formatDate, formatPrice } from '../../lib/format';
+import { useDocumentTitle } from '../../lib/hooks';
 import { couponApi } from '../../services';
 
 const toInputDate = (d) => (d ? dayjs(d).format('YYYY-MM-DD') : '');
@@ -83,6 +84,7 @@ function CouponForm({ coupon, onClose }) {
 }
 
 export default function Coupons() {
+  useDocumentTitle('Quản trị - Mã giảm giá');
   const { data, isLoading } = useQuery({ queryKey: ['coupons', 'admin'], queryFn: couponApi.list });
   const [editing, setEditing] = useState(null);
   const qc = useQueryClient();

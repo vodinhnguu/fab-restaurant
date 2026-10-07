@@ -11,6 +11,7 @@ import { Field, Input } from '../components/ui/Form';
 import Modal from '../components/ui/Modal';
 import { ORDER_STATUS, ORDER_TYPE, PAYMENT_METHOD, PAYMENT_STATUS } from '../lib/constants';
 import { formatDateTime, formatPrice, imageUrl } from '../lib/format';
+import { useDocumentTitle } from '../lib/hooks';
 import { orderApi } from '../services';
 
 const STEPS = ['PENDING', 'CONFIRMED', 'PREPARING', 'DELIVERING', 'COMPLETED'];
@@ -91,6 +92,7 @@ export default function OrderDetail() {
   const phone = params.get('phone') || undefined;
   const [payOpen, setPayOpen] = useState(false);
   const qc = useQueryClient();
+  useDocumentTitle(`Đơn hàng ${code}`);
 
   const { data: order, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['order', code],

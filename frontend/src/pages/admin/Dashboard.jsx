@@ -9,6 +9,7 @@ import { Spinner } from '../../components/ui/Feedback';
 import { Select } from '../../components/ui/Form';
 import { ORDER_STATUS } from '../../lib/constants';
 import { formatCompactPrice, formatPrice, fromNow } from '../../lib/format';
+import { useDocumentTitle } from '../../lib/hooks';
 import { statsApi } from '../../services';
 
 const SERIES = '#1f7aa3'; // ocean-500 - 1 chuỗi dữ liệu nên chỉ dùng 1 màu
@@ -43,6 +44,7 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 export default function Dashboard() {
+  useDocumentTitle('Quản trị - Tổng quan');
   const [days, setDays] = useState(30);
   const { data, isLoading } = useQuery({ queryKey: ['stats', days], queryFn: () => statsApi.overview(days) });
 

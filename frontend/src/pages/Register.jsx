@@ -5,10 +5,12 @@ import { toast } from 'sonner';
 import Logo from '../components/layout/Logo';
 import Button from '../components/ui/Button';
 import { Field, Input } from '../components/ui/Form';
+import { useDocumentTitle } from '../lib/hooks';
 import { authApi } from '../services';
 import { useAuthStore } from '../stores/auth';
 
 export default function Register() {
+  useDocumentTitle('Đăng ký');
   const setAuth = useAuthStore((s) => s.setAuth);
   const navigate = useNavigate();
   const location = useLocation();

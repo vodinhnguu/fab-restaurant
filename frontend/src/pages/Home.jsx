@@ -5,7 +5,7 @@ import DishCard from '../components/DishCard';
 import Button from '../components/ui/Button';
 import { Spinner } from '../components/ui/Feedback';
 import { formatPrice, imageUrl } from '../lib/format';
-import { useCategories, useInfo } from '../lib/hooks';
+import { useCategories, useDocumentTitle, useInfo } from '../lib/hooks';
 import { couponApi, dishApi } from '../services';
 
 const HERO = 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=1800&q=80&auto=format&fit=crop';
@@ -15,7 +15,8 @@ const ABOUT_2 = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=900
 const FEATURES = [
   { icon: Fish, title: 'Tươi sống mỗi ngày', text: 'Nhập hải sản từ làng chài lúc 5h sáng' },
   { icon: ChefHat, title: 'Đầu bếp 15 năm', text: 'Kết hợp vị Việt và kỹ thuật Âu - Nhật' },
-  { icon: Truck, title: 'Giao nhanh 45 phút', text: 'Miễn phí cho đơn từ 500.000đ' },
+  // Mức miễn phí giao hàng lấy từ API (/info, cấu hình ở backend/.env) để chỉ phải sửa 1 nơi
+  { icon: Truck, title: 'Giao nhanh 45 phút', text: (info) => (info ? `Miễn phí cho đơn từ ${formatPrice(info.freeShippingMin)}` : '') },
   { icon: Award, title: 'Top 10 Đà Nẵng', text: 'Hơn 20.000 lượt khách hài lòng' },
 ];
 
@@ -26,6 +27,7 @@ const TESTIMONIALS = [
 ];
 
 export default function Home() {
+  useDocumentTitle();
   const { data: info } = useInfo();
   const { data: categories } = useCategories();
   const featured = useQuery({
@@ -79,7 +81,7 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="font-semibold">{title}</h3>
-                <p className="text-sm text-slate-500">{text}</p>
+                <p className="text-sm text-slate-500">{typeof text === 'function' ? text(info) : text}</p>
               </div>
             </div>
           ))}

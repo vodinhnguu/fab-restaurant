@@ -10,6 +10,7 @@ import { EmptyState, ErrorState, Rating, Spinner } from '../components/ui/Feedba
 import { Textarea } from '../components/ui/Form';
 import QuantityInput from '../components/ui/QuantityInput';
 import { formatPrice, fromNow, imageUrl } from '../lib/format';
+import { useDocumentTitle } from '../lib/hooks';
 import { reviewApi, dishApi } from '../services';
 import { useAuthStore } from '../stores/auth';
 import { useCartStore } from '../stores/cart';
@@ -59,6 +60,7 @@ export default function DishDetail() {
     queryKey: ['dish', slug],
     queryFn: () => dishApi.detail(slug),
   });
+  useDocumentTitle(dish?.name); // hook phải gọi TRƯỚC các lệnh return sớm bên dưới
 
   if (isLoading) return <Spinner className="py-32" />;
   if (isError) return <ErrorState error={error} />;

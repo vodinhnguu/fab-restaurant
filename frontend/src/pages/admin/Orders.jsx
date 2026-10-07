@@ -13,6 +13,7 @@ import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { NEXT_STATUS, ORDER_STATUS, ORDER_TYPE, PAYMENT_METHOD, PAYMENT_STATUS, STATUS_ACTION_LABEL } from '../../lib/constants';
 import { formatDateTime, formatPrice } from '../../lib/format';
+import { useDocumentTitle } from '../../lib/hooks';
 import { orderApi } from '../../services';
 
 function OrderModal({ id, onClose }) {
@@ -91,6 +92,7 @@ function OrderModal({ id, onClose }) {
 }
 
 export default function Orders() {
+  useDocumentTitle('Quản trị - Đơn hàng');
   const [params, setParams] = useSearchParams();
   const status = params.get('status') || '';
   const page = Number(params.get('page')) || 1;

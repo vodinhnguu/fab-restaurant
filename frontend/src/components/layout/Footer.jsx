@@ -1,5 +1,6 @@
 import { Clock, Globe, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { formatPrice } from '../../lib/format';
 import { useInfo } from '../../lib/hooks';
 import Logo from './Logo';
 
@@ -33,6 +34,7 @@ export default function Footer() {
             <li><Link to="/menu" className="hover:text-coral-300">Thực đơn</Link></li>
             <li><Link to="/reservation" className="hover:text-coral-300">Đặt bàn</Link></li>
             <li><Link to="/track" className="hover:text-coral-300">Tra cứu đơn hàng</Link></li>
+            <li><Link to="/track?tab=reservation" className="hover:text-coral-300">Tra cứu đặt bàn</Link></li>
             <li><Link to="/account" className="hover:text-coral-300">Tài khoản</Link></li>
           </ul>
         </div>
@@ -52,7 +54,7 @@ export default function Footer() {
             <Clock className="h-4 w-4 shrink-0 text-coral-400" />
             Thứ 2 - Chủ nhật: {info?.openingHours.open} - {info?.openingHours.close}
           </p>
-          <p className="mt-2 text-sm text-ocean-300">Miễn phí giao hàng cho đơn từ 500.000đ</p>
+          {info && <p className="mt-2 text-sm text-ocean-300">Miễn phí giao hàng cho đơn từ {formatPrice(info.freeShippingMin)}</p>}
         </div>
       </div>
       <div className="border-t border-white/10 py-5 text-center text-xs text-ocean-300">

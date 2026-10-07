@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import Button from '../components/ui/Button';
 import { Field, Input, Select, Textarea } from '../components/ui/Form';
 import { formatDateTime } from '../lib/format';
-import { useInfo } from '../lib/hooks';
+import { useDocumentTitle, useInfo } from '../lib/hooks';
 import { reservationApi } from '../services';
 import { useAuthStore } from '../stores/auth';
 
@@ -26,6 +26,7 @@ function timeSlots(open = '10:00', close = '22:00') {
 }
 
 export default function Reservation() {
+  useDocumentTitle('Đặt bàn');
   const user = useAuthStore((s) => s.user);
   const { data: info } = useInfo();
   const [success, setSuccess] = useState(null);
@@ -64,6 +65,7 @@ export default function Reservation() {
           <CalendarCheck className="mx-auto h-14 w-14 text-green-500" />
           <h1 className="mt-4 text-2xl font-bold">Đặt bàn thành công!</h1>
           <p className="mt-2 text-slate-600">Nhà hàng sẽ gọi xác nhận trong ít phút.</p>
+          {!user && <p className="mt-1 text-xs text-slate-500">Hãy lưu lại mã đặt bàn để tra cứu hoặc hủy lịch ở mục <b>Tra cứu</b>.</p>}
           <div className="mt-6 space-y-2 rounded-xl bg-ocean-50 p-4 text-left text-sm">
             <p>Mã đặt bàn: <b className="font-mono">{success.code}</b></p>
             <p>Thời gian: <b>{formatDateTime(success.date)}</b></p>
@@ -71,7 +73,7 @@ export default function Reservation() {
             {success.area && <p>Khu vực: <b>{success.area}</b></p>}
           </div>
           <div className="mt-6 flex justify-center gap-3">
-            {user && <Button as={Link} to="/account/reservations" variant="outline">Xem lịch của tôi</Button>}
+            <Button as={Link} to={`/reservations/${success.code}?phone=${encodeURIComponent(success.phone)}`} variant="outline">Xem chi tiết</Button>
             <Button onClick={() => setSuccess(null)}>Đặt thêm</Button>
           </div>
         </div>

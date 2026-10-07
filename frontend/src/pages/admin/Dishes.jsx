@@ -12,7 +12,7 @@ import { Checkbox, Field, Input, Select, Textarea } from '../../components/ui/Fo
 import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { formatPrice, imageUrl } from '../../lib/format';
-import { useCategories } from '../../lib/hooks';
+import { useCategories, useDocumentTitle } from '../../lib/hooks';
 import { dishApi } from '../../services';
 
 const EMPTY = { name: '', description: '', price: '', salePrice: '', unit: 'phần', image: '', categoryId: '', isAvailable: true, isFeatured: false };
@@ -100,6 +100,7 @@ function DishForm({ dish, onClose }) {
 }
 
 export default function Dishes() {
+  useDocumentTitle('Quản trị - Món ăn');
   const [filters, setFilters] = useState({ search: '', category: '', page: 1 });
   const [editing, setEditing] = useState(null); // null: đóng, {}: thêm mới, dish: sửa
   const { data: categories } = useCategories();

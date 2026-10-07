@@ -7,9 +7,11 @@ import { StatusBadge } from '../../components/ui/Badge';
 import { EmptyState, Pagination, Spinner } from '../../components/ui/Feedback';
 import { ORDER_STATUS } from '../../lib/constants';
 import { formatDateTime, formatPrice, imageUrl } from '../../lib/format';
+import { useDocumentTitle } from '../../lib/hooks';
 import { orderApi } from '../../services';
 
 export default function MyOrders() {
+  useDocumentTitle('Đơn hàng của tôi');
   const [page, setPage] = useState(1);
   const { data, isLoading } = useQuery({
     queryKey: ['my-orders', page],

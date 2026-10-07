@@ -11,7 +11,7 @@ import { Field, Input, Textarea } from '../../components/ui/Form';
 import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { imageUrl } from '../../lib/format';
-import { useCategories } from '../../lib/hooks';
+import { useCategories, useDocumentTitle } from '../../lib/hooks';
 import { categoryApi } from '../../services';
 
 function CategoryForm({ category, onClose }) {
@@ -49,6 +49,7 @@ function CategoryForm({ category, onClose }) {
 }
 
 export default function Categories() {
+  useDocumentTitle('Quản trị - Danh mục');
   const { data, isLoading } = useCategories();
   const [editing, setEditing] = useState(null);
   const qc = useQueryClient();

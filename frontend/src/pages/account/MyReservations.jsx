@@ -7,9 +7,11 @@ import { StatusBadge } from '../../components/ui/Badge';
 import { EmptyState, Spinner } from '../../components/ui/Feedback';
 import { RESERVATION_STATUS } from '../../lib/constants';
 import { formatDateTime } from '../../lib/format';
+import { useDocumentTitle } from '../../lib/hooks';
 import { reservationApi } from '../../services';
 
 export default function MyReservations() {
+  useDocumentTitle('Lịch đặt bàn của tôi');
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ['my-reservations'], queryFn: reservationApi.my });
 
@@ -33,7 +35,7 @@ export default function MyReservations() {
         <div key={r.id} className="card flex flex-wrap items-center justify-between gap-4 p-5">
           <div>
             <div className="flex items-center gap-3">
-              <span className="font-mono font-semibold">{r.code}</span>
+              <Link to={`/reservations/${r.code}`} className="font-mono font-semibold hover:text-coral-600">{r.code}</Link>
               <StatusBadge map={RESERVATION_STATUS} value={r.status} />
             </div>
             <p className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-600">

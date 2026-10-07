@@ -7,10 +7,11 @@ import DishCard from '../components/DishCard';
 import { Select } from '../components/ui/Form';
 import { EmptyState, ErrorState, Pagination, Spinner } from '../components/ui/Feedback';
 import { SORT_OPTIONS } from '../lib/constants';
-import { useCategories } from '../lib/hooks';
+import { useCategories, useDocumentTitle } from '../lib/hooks';
 import { dishApi } from '../services';
 
 export default function Menu() {
+  useDocumentTitle('Thực đơn');
   // Bộ lọc lưu trên URL (?category=tom&sort=popular&page=2) -> chia sẻ link được, F5 không mất
   const [params, setParams] = useSearchParams();
   const category = params.get('category') || '';

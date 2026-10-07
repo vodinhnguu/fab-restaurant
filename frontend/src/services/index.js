@@ -44,6 +44,7 @@ export const orderApi = {
 export const reservationApi = {
   create: (body) => api.post('/reservations', body).then((r) => r.data),
   my: () => api.get('/reservations/my').then((r) => r.data),
+  track: (code, phone) => api.get(`/reservations/track/${code}`, { params: { phone } }).then((r) => r.data),
   cancel: (code, phone) => api.post(`/reservations/${code}/cancel`, { phone }),
   // admin
   list: (params) => api.get('/reservations', { params }),

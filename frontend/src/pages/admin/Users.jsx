@@ -8,10 +8,12 @@ import { Pagination, Spinner } from '../../components/ui/Feedback';
 import { Input, Select } from '../../components/ui/Form';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { formatDate } from '../../lib/format';
+import { useDocumentTitle } from '../../lib/hooks';
 import { userApi } from '../../services';
 import { useAuthStore } from '../../stores/auth';
 
 export default function Users() {
+  useDocumentTitle('Quản trị - Người dùng');
   const me = useAuthStore((s) => s.user);
   const [filters, setFilters] = useState({ search: '', role: '', page: 1 });
   const qc = useQueryClient();

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import Button from '../../components/ui/Button';
 import { Field, Input } from '../../components/ui/Form';
+import { useDocumentTitle } from '../../lib/hooks';
 import { authApi } from '../../services';
 import { useAuthStore } from '../../stores/auth';
 
@@ -64,6 +65,7 @@ function PasswordForm() {
 }
 
 export default function Profile() {
+  useDocumentTitle('Tài khoản');
   return (
     <div className="space-y-6">
       <ProfileForm />

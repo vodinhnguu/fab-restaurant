@@ -8,9 +8,11 @@ import Button from '../../components/ui/Button';
 import { EmptyState, Pagination, Rating, Spinner } from '../../components/ui/Feedback';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { formatDateTime } from '../../lib/format';
+import { useDocumentTitle } from '../../lib/hooks';
 import { reviewApi } from '../../services';
 
 export default function Reviews() {
+  useDocumentTitle('Quản trị - Đánh giá');
   const [page, setPage] = useState(1);
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ['admin-reviews', page], queryFn: () => reviewApi.list({ page }), placeholderData: keepPreviousData });

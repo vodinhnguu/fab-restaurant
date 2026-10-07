@@ -9,6 +9,7 @@ import { Input, Select } from '../../components/ui/Form';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { RESERVATION_STATUS } from '../../lib/constants';
 import { formatDateTime } from '../../lib/format';
+import { useDocumentTitle } from '../../lib/hooks';
 import { reservationApi } from '../../services';
 
 // Hành động hợp lệ cho từng trạng thái
@@ -18,6 +19,7 @@ const ACTIONS = {
 };
 
 export default function Reservations() {
+  useDocumentTitle('Quản trị - Đặt bàn');
   const [filters, setFilters] = useState({ status: '', date: '', search: '', page: 1 });
   const qc = useQueryClient();
 

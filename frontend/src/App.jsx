@@ -1,10 +1,12 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import AdminLayout from './components/layout/AdminLayout';
 import CustomerLayout from './components/layout/CustomerLayout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import { Spinner } from './components/ui/Feedback';
 import Home from './pages/Home';
+import { authApi } from './services';
+import { useAuthStore } from './stores/auth';
 
 // Lazy load: chỉ tải code của trang khi người dùng vào trang đó -> trang chủ load nhanh hơn
 const Menu = lazy(() => import('./pages/Menu'));
@@ -13,6 +15,7 @@ const Checkout = lazy(() => import('./pages/Checkout'));
 const OrderDetail = lazy(() => import('./pages/OrderDetail'));
 const TrackOrder = lazy(() => import('./pages/TrackOrder'));
 const Reservation = lazy(() => import('./pages/Reservation'));
+const ReservationDetail = lazy(() => import('./pages/ReservationDetail'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -32,6 +35,16 @@ const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
 
 export default function App() {
+  const token = useAuthStore((s) => s.token);
+  const setUser = useAuthStore((s) => s.setUser);
+
+  // Mỗi lần mở web: lấy lại thông tin tài khoản mới nhất từ server.
+  // User lưu trong localStorage có thể đã cũ (admin vừa đổi quyền / khóa tài khoản).
+  // Token hết hạn -> API trả 401 -> interceptor trong lib/api.js tự đăng xuất.
+  useEffect(() => {
+    if (token) authApi.me().then(setUser).catch(() => {});
+  }, [token, setUser]);
+
   return (
     <Suspense fallback={<Spinner className="py-32" />}>
       <Routes>
@@ -44,6 +57,7 @@ export default function App() {
           <Route path="orders/:code" element={<OrderDetail />} />
           <Route path="track" element={<TrackOrder />} />
           <Route path="reservation" element={<Reservation />} />
+          <Route path="reservations/:code" element={<ReservationDetail />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
 

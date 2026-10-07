@@ -9,7 +9,7 @@ import Button from '../components/ui/Button';
 import { EmptyState } from '../components/ui/Feedback';
 import { Field, Input, Textarea } from '../components/ui/Form';
 import { formatPrice, imageUrl } from '../lib/format';
-import { useInfo } from '../lib/hooks';
+import { useDocumentTitle, useInfo } from '../lib/hooks';
 import { couponApi, orderApi } from '../services';
 import { useAuthStore } from '../stores/auth';
 import { selectSubtotal, useCartStore } from '../stores/cart';
@@ -35,6 +35,7 @@ function OptionCard({ active, onClick, icon: Icon, title, desc }) {
 }
 
 export default function Checkout() {
+  useDocumentTitle('Thanh toán');
   const user = useAuthStore((s) => s.user);
   const { items, clear } = useCartStore();
   const subtotal = useCartStore(selectSubtotal);
@@ -66,7 +67,8 @@ export default function Checkout() {
     onSuccess: (order) => {
       clear();
       toast.success('Đặt hàng thành công!');
-      navigate(`/orders/${order.code}?phone=${order.phone}`, { replace: true });
+      // encodeURIComponent: SĐT dạng +84... có dấu + sẽ bị URL hiểu thành dấu cách nếu không mã hóa
+      navigate(`/orders/${order.code}?phone=${encodeURIComponent(order.phone)}`, { replace: true });
     },
     onError: (e) => toast.error(e.message),
   });
