@@ -19,7 +19,8 @@ export async function myReservations(req, res) {
 
 async function findAccessible(code, user, phone) {
   const r = await prisma.reservation.findUnique({ where: { code } });
-  const allowed = r && ((user && (r.userId === user.id || user.role === 'ADMIN')) || (phone && phone === r.phone));
+  const phoneMatch = phone && phone.replace(/\s/g, '') === r?.phone;
+  const allowed = r && ((user && (r.userId === user.id || user.role === 'ADMIN')) || phoneMatch);
   if (!allowed) throw ApiError.notFound('Không tìm thấy lịch đặt bàn');
   return r;
 }
@@ -32,6 +33,7 @@ export async function track(req, res) {
 export async function cancel(req, res) {
   const r = await findAccessible(req.params.code, req.user, req.body?.phone);
   if (!['PENDING', 'CONFIRMED'].includes(r.status)) throw ApiError.badRequest('Không thể hủy lịch này');
+  if (r.date < new Date()) throw ApiError.badRequest('Lịch đặt bàn đã qua, không thể hủy');
   const updated = await prisma.reservation.update({ where: { id: r.id }, data: { status: 'CANCELLED' } });
   res.json({ success: true, data: updated, message: 'Đã hủy đặt bàn' });
 }

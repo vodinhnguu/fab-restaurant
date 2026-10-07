@@ -1,6 +1,6 @@
 // =============================================================
 //  FAB Seafood - Prisma schema
-//  Tài liệu: docs/04-database.md
+//  Tài liệu: docs/03-database-prisma.md
 // =============================================================
 
 generator client {

@@ -19,8 +19,14 @@ export const loginSchema = z.object({
 
 export const updateProfileSchema = z.object({
   name: z.string().trim().min(2).max(100).optional(),
-  phone: phone.optional().or(z.literal('')),
-  address: z.string().trim().max(255).optional(),
+  // Ô để trống ('') -> lưu null để DB không có chuỗi rỗng
+  phone: phone.optional().or(z.literal('').transform(() => null)),
+  address: z
+    .string()
+    .trim()
+    .max(255)
+    .optional()
+    .transform((v) => (v === '' ? null : v)), // undefined = không gửi lên -> giữ nguyên
   avatar: z.string().max(500).optional(),
 });
 
