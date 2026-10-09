@@ -14,7 +14,7 @@ const TABS = {
     icon: PackageSearch,
     title: 'Tra cứu đơn hàng',
     desc: 'Nhập mã đơn và số điện thoại đã dùng khi đặt hàng',
-    placeholder: 'VD: FAB2610011234',
+    placeholder: 'VD: FAB261001123456',
     path: '/orders',
   },
   reservation: {
@@ -22,7 +22,7 @@ const TABS = {
     icon: CalendarSearch,
     title: 'Tra cứu đặt bàn',
     desc: 'Nhập mã đặt bàn và số điện thoại đã dùng khi đặt',
-    placeholder: 'VD: RSV2610011234',
+    placeholder: 'VD: RSV261001123456',
     path: '/reservations',
   },
 };

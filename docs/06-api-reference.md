@@ -77,11 +77,19 @@ Ký hiệu cột Quyền: 🌐 công khai · 👤 cần đăng nhập · 🔓 c�
 | POST | `/orders` | 🔓 | Tạo đơn (xem ví dụ bên dưới) |
 | GET | `/orders/my` | 👤 | Đơn của tôi, có phân trang |
 | GET | `/orders/track/:code?phone=` | 🔓 | Xem đơn: chủ đơn, admin, hoặc ai biết đúng SĐT đặt hàng |
-| POST | `/orders/:code/pay` | 🔓 | Thanh toán **mô phỏng**. Body `{ phone }` nếu không đăng nhập |
-| POST | `/orders/:code/cancel` | 🔓 | Khách tự hủy (chỉ khi đơn còn `PENDING`) |
+| POST | `/orders/:code/cancel` | 🔓 | Khách tự hủy (chỉ khi đơn còn `PENDING` và chưa thanh toán online) |
 | GET | `/orders` | 🛡️ | Query: `status`, `search`, `from`, `to`, `page`. `meta.statusCounts` = số đơn theo từng trạng thái |
-| GET | `/orders/:id` | 🛡️ | Chi tiết |
+| GET | `/orders/:id` | 🛡️ | Chi tiết, kèm `payments` (lịch sử thanh toán VNPay) |
 | PATCH | `/orders/:id/status` | 🛡️ | `{ status }`, phải đúng thứ tự trong STATUS_FLOW |
+
+## Thanh toán VNPay
+Chi tiết luồng: [11-thanh-toan-vnpay.md](11-thanh-toan-vnpay.md). Đơn `paymentMethod: "ONLINE"` chỉ tạo được khi `/info` trả `onlinePayment: true`.
+
+| Method | Endpoint | Quyền | Mô tả |
+|---|---|---|---|
+| POST | `/payments/vnpay/:code` | 🔓 | Body `{ phone }` nếu không đăng nhập. Trả `{ paymentUrl }` để chuyển khách sang VNPay (Flutter: mở bằng WebView) |
+| GET | `/payments/vnpay/ipn` | VNPay | Máy chủ VNPay gọi, trả `{ RspCode, Message }` |
+| GET | `/payments/vnpay/return?vnp_...` | 🔓 | Gửi nguyên query VNPay trả về. Trả `{ paid, message, orderCode, phone, amount, transactionNo, bankCode }` |
 
 **Ví dụ tạo đơn**
 ```http

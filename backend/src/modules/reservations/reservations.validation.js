@@ -34,6 +34,11 @@ export const createReservationSchema = z
     { message: `Nhà hàng nhận khách từ ${restaurant.openingHours.open}, đặt muộn nhất trước giờ đóng cửa 1 tiếng`, path: ['date'] },
   );
 
+// Khách vãng lai hủy lịch: gửi kèm SĐT đã đặt (người đã đăng nhập có thể bỏ trống)
+export const cancelReservationSchema = z.object({
+  phone: z.string().trim().max(15).optional(),
+});
+
 export const updateReservationStatusSchema = z.object({
   status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']),
 });

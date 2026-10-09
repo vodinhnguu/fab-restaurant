@@ -1,0 +1,17 @@
+# PostgreSQL cho môi trường dev - khớp sẵn với DATABASE_URL trong backend/.env.example
+# Chạy: docker compose up -d   (dừng: docker compose down)
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fab_restaurant
+    ports:
+      - "5432:5432"
+    volumes:
+      - fab_pgdata:/var/lib/postgresql/data
+
+volumes:
+  fab_pgdata:

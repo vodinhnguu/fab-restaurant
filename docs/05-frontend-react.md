@@ -167,4 +167,4 @@ const { register, handleSubmit, formState: { errors } } = useForm({ defaultValue
 2. `Header` đọc `selectCount` → badge số lượng
 3. `CartDrawer` → nút "Tiến hành đặt món" → `/checkout`
 4. `Checkout` → `couponApi.check` (áp mã) → `orderApi.create` → `clear()` giỏ hàng → `navigate('/orders/:code?phone=...')`
-5. `OrderDetail` → `useQuery` với `refetchInterval` → `MockPaymentModal` → `orderApi.pay`
+5. `OrderDetail` → `useQuery` với `refetchInterval` → nút "Thanh toán qua VNPay" → `paymentApi.createVnpay` → chuyển sang VNPay → quay về `PaymentResult` (`/payment/vnpay-return`) → `paymentApi.vnpayReturn`

@@ -30,7 +30,14 @@ export const PAYMENT_STATUS = {
   REFUNDED: { label: 'Đã hoàn tiền', color: 'slate' },
 };
 
-export const PAYMENT_METHOD = { COD: 'Tiền mặt khi nhận', ONLINE: 'Thanh toán online' };
+// Kết quả từng lần thanh toán qua VNPay (bảng Payment)
+export const PAYMENT_TXN_STATUS = {
+  PENDING: { label: 'Chờ thanh toán', color: 'amber' },
+  SUCCESS: { label: 'Thành công', color: 'green' },
+  FAILED: { label: 'Thất bại', color: 'red' },
+};
+
+export const PAYMENT_METHOD = { COD: 'Tiền mặt khi nhận', ONLINE: 'VNPay' };
 export const ORDER_TYPE = { DELIVERY: 'Giao tận nơi', PICKUP: 'Đến lấy tại quán' };
 
 export const SORT_OPTIONS = [

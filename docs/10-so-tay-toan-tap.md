@@ -91,7 +91,7 @@ FAB Seafood là website của một nhà hàng hải sản ở Đà Nẵng. Có 
 | 5 | Thêm món vào giỏ, sửa số lượng | ngăn kéo giỏ hàng | Không |
 | 6 | Đặt món: giao tận nơi hoặc đến lấy, COD hoặc online | `/checkout` | Không |
 | 7 | Áp mã giảm giá | `/checkout` | Không |
-| 8 | Theo dõi trạng thái đơn (tự cập nhật), thanh toán online mô phỏng, hủy đơn | `/orders/:code` | Không (cần mã đơn + SĐT) |
+| 8 | Theo dõi trạng thái đơn (tự cập nhật), thanh toán lại qua VNPay, hủy đơn | `/orders/:code` | Không (cần mã đơn + SĐT) |
 | 9 | Tra cứu đơn hàng hoặc lịch đặt bàn bằng mã + SĐT | `/track` | Không |
 | 10 | Đặt bàn | `/reservation` | Không |
 | 11 | Xem / hủy lịch đặt bàn | `/reservations/:code` | Không (cần mã + SĐT) |
@@ -482,7 +482,7 @@ useCartStore = create(persist((set) => ({
 **👀 Người dùng thấy gì:**
 1. **Hình thức nhận món:** Giao tận nơi / Đến lấy tại quán.
 2. **Thông tin người nhận:** họ tên, SĐT, địa chỉ (chỉ hiện khi giao tận nơi), ghi chú. Đã đăng nhập thì được điền sẵn từ hồ sơ.
-3. **Phương thức thanh toán:** Tiền mặt (COD) / Online (mô phỏng).
+3. **Phương thức thanh toán:** Tiền mặt (COD) / VNPay (chỉ hiện khi đã cấu hình VNPay).
 4. **Cột tóm tắt:** danh sách món, ô mã giảm giá + các mã gợi ý (bấm là áp), tạm tính, giảm giá, phí giao, tổng cộng, nút "Đặt hàng".
 
 **📁 Code:**
@@ -515,7 +515,7 @@ Ví dụ: 2 phần *Tôm sú hấp bia* (289.000đ) + mã `WELCOME10`, giao tậ
 3. Tính phí ship.
 4. Có mã giảm giá → applyCoupon kiểm tra + tính discount → usedCount + 1
 5. Tạo Order + các OrderItem (lưu kèm TÊN và GIÁ tại thời điểm đặt).
-   Mã đơn: generateCode('FAB') → FAB + yyMMdd + 4 số ngẫu nhiên, ví dụ FAB2610061234
+   Mã đơn: generateCode('FAB') → FAB + yyMMdd (giờ VN) + 6 số ngẫu nhiên, ví dụ FAB261006123456
 6. Tăng soldCount của từng món.
    ── KẾT THÚC TRANSACTION ──
 ```
@@ -561,11 +561,11 @@ Nút "Áp dụng" ở trang thanh toán gọi `POST /coupons/check` chỉ để 
 
 **👀 Người dùng thấy gì:** lời cảm ơn (nếu đơn vừa đặt trong 10 phút), mã đơn, **thanh tiến trình** 5 bước (đơn "đến lấy" chỉ có 4 bước vì bỏ "Đang giao"), thông tin nhận hàng, chi tiết tiền, khung vàng "Thanh toán ngay" (nếu chọn online mà chưa trả), nút "Hủy đơn" (nếu còn chờ xác nhận). Dòng chữ nhỏ "Trạng thái tự động cập nhật mỗi 15 giây".
 
-**📁 Code:** [pages/OrderDetail.jsx](../frontend/src/pages/OrderDetail.jsx) (`Timeline`, `MockPaymentModal`), [orders.controller.js](../backend/src/modules/orders/orders.controller.js) (`track`, `pay`, `cancel`), [orders.service.js](../backend/src/modules/orders/orders.service.js) (`findAccessibleOrder`, `changeStatus`)
+**📁 Code:** [pages/OrderDetail.jsx](../frontend/src/pages/OrderDetail.jsx) (`Timeline`, nút thanh toán VNPay), [orders.controller.js](../backend/src/modules/orders/orders.controller.js) (`track`, `cancel`), [payments/](../backend/src/modules/payments/), [orders.service.js](../backend/src/modules/orders/orders.service.js) (`findAccessibleOrder`, `changeStatus`)
 
 ### 12.1 Ai được xem một đơn hàng?
 
-Mã đơn kiểu `FAB2610061234` khá dễ đoán. Nếu chỉ cần mã là xem được thì người lạ có thể dò ra tên, SĐT, địa chỉ của người khác. Vì vậy `findAccessibleOrder` chỉ cho xem khi thỏa **một trong ba** điều kiện:
+Mã đơn kiểu `FAB261006123456` khá dễ đoán. Nếu chỉ cần mã là xem được thì người lạ có thể dò ra tên, SĐT, địa chỉ của người khác. Vì vậy `findAccessibleOrder` chỉ cho xem khi thỏa **một trong ba** điều kiện:
 
 ```js
 const isOwner    = user && order.userId === user.id;      // đơn của chính mình (đã đăng nhập)
@@ -585,11 +585,11 @@ useQuery({ queryKey: ['order', code], queryFn: ..., refetchInterval: 15000 })
 ```
 Cứ 15 giây React Query tự gọi lại API. Admin vừa bấm "Xác nhận" thì tối đa 15 giây sau khách thấy thanh tiến trình nhảy bước. Cách này đơn giản nhưng tốn request. Cách "xịn" hơn là WebSocket (bài tập số 13 trong [07](07-lo-trinh-hoc-va-bai-tap.md)).
 
-### 12.3 Thanh toán online (MÔ PHỎNG)
+### 12.3 Thanh toán online (VNPay)
 
-Không có cổng thanh toán thật. `MockPaymentModal` hiện form thẻ giả, chờ 1,2 giây cho giống thật, rồi gọi `POST /orders/:code/pay`. Backend kiểm tra: đơn chọn `ONLINE`, chưa `PAID`, chưa bị hủy → đặt `paymentStatus = PAID`.
+Backend tạo link thanh toán có chữ ký → khách sang trang VNPay → VNPay báo kết quả về backend bằng **IPN** và đưa khách quay về `/payment/vnpay-return` → backend kiểm tra chữ ký và số tiền rồi mới đánh dấu `PAID`. Client **không bao giờ** tự báo "tôi đã trả tiền". Mỗi lần bấm thanh toán được lưu thành một dòng trong bảng `Payment` để đối soát.
 
-> Thực tế với VNPay/MoMo: backend tạo link thanh toán → chuyển khách sang trang ngân hàng → ngân hàng gọi ngược lại backend (IPN/callback) kèm **chữ ký** → backend kiểm chữ ký rồi mới đánh dấu đã trả. **Tuyệt đối không** để client tự báo "tôi đã trả tiền" như bản mô phỏng này. Xem [04 mục 6.3](04-backend-express.md).
+Toàn bộ chi tiết (luồng, code, đăng ký sandbox, thẻ test): [11-thanh-toan-vnpay.md](11-thanh-toan-vnpay.md).
 
 ### 12.4 Hủy đơn
 
@@ -951,7 +951,7 @@ Danh sách mọi đánh giá (20/trang): người viết, món (bấm để mở
 | `Review` | Đánh giá | `@@unique([userId, dishId])` |
 | `Coupon` | Mã giảm giá | `usedCount` / `usageLimit`; `startsAt` / `expiresAt` có thể null |
 
-**Enum** (giá trị cố định): `Role`, `OrderType` (DELIVERY/PICKUP), `OrderStatus` (6 trạng thái), `PaymentMethod` (COD/ONLINE), `PaymentStatus` (UNPAID/PAID/REFUNDED), `ReservationStatus`, `CouponType` (PERCENT/FIXED).
+**Enum** (giá trị cố định): `Role`, `OrderType` (DELIVERY/PICKUP), `OrderStatus` (6 trạng thái), `PaymentMethod` (COD/ONLINE), `PaymentStatus` (UNPAID/PAID/REFUNDED), `PaymentTxnStatus` (PENDING/SUCCESS/FAILED, dùng cho bảng `Payment`), `ReservationStatus`, `CouponType` (PERCENT/FIXED).
 
 **Index** (`@@index`): giúp tìm kiếm nhanh theo các cột hay lọc: `Dish.categoryId`, `Order.userId`, `Order.status`, `Order.createdAt`, `Reservation.date`.
 
@@ -983,7 +983,7 @@ Danh sách mọi đánh giá (20/trang): người viết, món (bấm để mở
 **Còn thiếu (nên biết khi bảo vệ đồ án):**
 - Token lưu ở **localStorage**: nếu web bị chèn mã độc (XSS), token có thể bị đánh cắp. Phương án mạnh hơn là cookie `httpOnly` kèm refresh token.
 - Chưa có xác thực email, quên mật khẩu.
-- Thanh toán online chỉ là **mô phỏng**.
+- Thanh toán VNPay mới chạy sandbox. Nhận tiền thật cần hợp đồng với VNPay (xem [11 mục 7](11-thanh-toan-vnpay.md)).
 - `JWT_SECRET` trong `.env.example` là chuỗi mẫu: **bắt buộc đổi** khi deploy.
 
 ---
@@ -1045,7 +1045,7 @@ Tra lỗi theo mã: [09 mục H](09-muon-sua-gi-thi-sua-o-dau.md).
 Luôn là **số nguyên VNĐ** (`Int`). Không dùng số thực để tránh sai số kiểu `0.1 + 0.2 = 0.30000000000000004`. Hiển thị bằng `formatPrice(289000)` → `289.000đ`.
 
 ### Mã đơn, mã đặt bàn
-`generateCode('FAB')` / `generateCode('RSV')` → tiền tố + `yyMMdd` + 4 số ngẫu nhiên. Cột `code` là `@unique`, nên trong trường hợp (rất hiếm) bị trùng, database sẽ báo lỗi chứ không lưu đè.
+`generateCode('FAB')` / `generateCode('RSV')` → tiền tố + `yyMMdd` (theo giờ Việt Nam) + 6 số ngẫu nhiên (1 triệu mã/ngày). Cột `code` là `@unique`; nếu xui bị trùng, `withUniqueCode` bắt lỗi P2002 rồi sinh mã khác và thử lại (tối đa 5 lần).
 
 ### Slug
 `slugify('Tôm Sú Hấp Bia')` → `tom-su-hap-bia`: bỏ dấu tiếng Việt (`normalize('NFD')` tách dấu ra rồi xóa), đổi `đ` → `d`, chữ thường, ký tự lạ thành `-`. Dùng cho URL đẹp và tốt cho SEO: `/menu/tom-su-hap-bia` thay vì `/menu/17`.
@@ -1125,9 +1125,9 @@ Kết quả rà soát toàn bộ web. Mỗi thay đổi đều ghi rõ **vì sao
 
 | Giới hạn | Hướng nâng cấp | Bài tập trong [07](07-lo-trinh-hoc-va-bai-tap.md) |
 |---|---|---|
-| Thanh toán online là mô phỏng | Tích hợp VNPay / MoMo sandbox | 15 |
+| Thanh toán mới có VNPay | Thêm MoMo / QR chuyển khoản (làm theo mẫu module `payments`) | 15 |
 | Trạng thái đơn cập nhật bằng polling | WebSocket (Socket.IO), admin có chuông báo đơn mới | 13 |
-| Đặt bàn chưa kiểm tra còn bàn trống, backend chưa có state machine | Model `Table`, chặn đặt trùng giờ, thêm `STATUS_FLOW` cho đặt bàn | 16 |
+| Đặt bàn chưa kiểm tra còn bàn trống | Model `Table`, chặn đặt trùng giờ | 16 |
 | Ảnh upload lưu trên ổ đĩa server | Cloudinary / S3 | 11 |
 | Chưa có quên mật khẩu | Gửi email chứa link có hạn | 9 |
 | Chưa có test tự động | vitest + supertest | 12 |

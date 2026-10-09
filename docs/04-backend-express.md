@@ -113,12 +113,12 @@ PENDING ──► CONFIRMED ──► PREPARING ──► DELIVERING ──► C
 - Hoàn thành đơn COD → tự đánh dấu `PAID`
 - Hủy đơn đã thanh toán → `REFUNDED`. Đồng thời trả lại `soldCount` và lượt dùng mã
 
-### 6.3 Thanh toán mô phỏng
-`POST /orders/:code/pay` đánh dấu `PAID` ngay. Với cổng thanh toán thật (VNPay/MoMo), luồng sẽ là:
-1. Backend tạo URL thanh toán có chữ ký, trả về cho client.
+### 6.3 Thanh toán online (VNPay)
+Module `payments` (chi tiết: [11-thanh-toan-vnpay.md](11-thanh-toan-vnpay.md)):
+1. Backend tạo URL thanh toán có chữ ký, trả về cho client (`POST /payments/vnpay/:code`).
 2. Client chuyển hướng người dùng sang trang của VNPay.
-3. VNPay gọi **IPN** (webhook) về backend. Backend kiểm tra chữ ký rồi mới cập nhật `PAID`.
-4. VNPay chuyển hướng người dùng về trang kết quả.
+3. VNPay gọi **IPN** (webhook) về backend. Backend kiểm tra chữ ký và số tiền rồi mới cập nhật `PAID`.
+4. VNPay chuyển hướng người dùng về trang kết quả. Trang này gửi query lên `GET /payments/vnpay/return`, backend kiểm tra chữ ký thêm một lần nữa (đường dự phòng khi IPN không tới được, ví dụ lúc chạy localhost).
 
 ## 7. Hướng dẫn: thêm một module mới
 

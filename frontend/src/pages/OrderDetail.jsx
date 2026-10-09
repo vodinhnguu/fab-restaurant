@@ -1,18 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { Check, CircleCheck, CreditCard, LoaderCircle, Lock, PackageSearch } from 'lucide-react';
-import { useState } from 'react';
+import { Check, CircleCheck, CreditCard, LoaderCircle, PackageSearch } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import Button from '../components/ui/Button';
 import Badge, { StatusBadge } from '../components/ui/Badge';
 import { EmptyState, Spinner } from '../components/ui/Feedback';
-import { Field, Input } from '../components/ui/Form';
-import Modal from '../components/ui/Modal';
 import { ORDER_STATUS, ORDER_TYPE, PAYMENT_METHOD, PAYMENT_STATUS } from '../lib/constants';
 import { formatDateTime, formatPrice, imageUrl } from '../lib/format';
 import { useDocumentTitle } from '../lib/hooks';
-import { orderApi } from '../services';
+import { orderApi, paymentApi } from '../services';
 
 const STEPS = ['PENDING', 'CONFIRMED', 'PREPARING', 'DELIVERING', 'COMPLETED'];
 
@@ -47,58 +44,27 @@ function Timeline({ order }) {
   );
 }
 
-// Cổng thanh toán GIẢ LẬP - chỉ để demo luồng, không xử lý thẻ thật
-function MockPaymentModal({ open, onClose, order, onPaid }) {
-  const [card, setCard] = useState('4111 1111 1111 1111');
-  const pay = useMutation({
-    mutationFn: async () => {
-      await new Promise((r) => setTimeout(r, 1200)); // giả lập thời gian xử lý của ngân hàng
-      return orderApi.pay(order.code, order.phone);
-    },
-    onSuccess: () => {
-      toast.success('Thanh toán thành công!');
-      onPaid();
-      onClose();
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
-  return (
-    <Modal open={open} onClose={onClose} title="Cổng thanh toán (mô phỏng)" size="sm">
-      <div className="space-y-4">
-        <div className="rounded-xl bg-gradient-to-br from-ocean-800 to-ocean-950 p-5 text-white">
-          <p className="text-xs text-ocean-200">Số tiền thanh toán</p>
-          <p className="text-2xl font-bold">{formatPrice(order.total)}</p>
-          <p className="mt-3 text-xs text-ocean-200">Đơn hàng {order.code}</p>
-        </div>
-        <Field label="Số thẻ" hint="Đây là môi trường demo - không nhập thẻ thật">
-          <Input value={card} onChange={(e) => setCard(e.target.value)} />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Hết hạn"><Input defaultValue="12/30" /></Field>
-          <Field label="CVV"><Input defaultValue="123" /></Field>
-        </div>
-        <Button className="w-full" size="lg" loading={pay.isPending} onClick={() => pay.mutate()}>
-          <Lock className="h-4 w-4" /> Thanh toán {formatPrice(order.total)}
-        </Button>
-      </div>
-    </Modal>
-  );
-}
-
 export default function OrderDetail() {
   const { code } = useParams();
   const [params] = useSearchParams();
   const phone = params.get('phone') || undefined;
-  const [payOpen, setPayOpen] = useState(false);
   const qc = useQueryClient();
   useDocumentTitle(`Đơn hàng ${code}`);
 
-  const { data: order, isLoading, isError, refetch, isFetching } = useQuery({
+  const { data: order, isLoading, isError, isFetching } = useQuery({
     queryKey: ['order', code],
     queryFn: () => orderApi.track(code, phone),
     refetchInterval: 15000, // Tự cập nhật trạng thái mỗi 15 giây
     retry: false,
+  });
+
+  // Lấy link VNPay rồi chuyển khách sang đó (mỗi lần bấm là 1 giao dịch mới)
+  const pay = useMutation({
+    mutationFn: () => paymentApi.createVnpay(code, phone),
+    onSuccess: (paymentUrl) => {
+      window.location.href = paymentUrl;
+    },
+    onError: (e) => toast.error(e.message),
   });
 
   const cancel = useMutation({
@@ -142,7 +108,7 @@ export default function OrderDetail() {
       {needPay && (
         <div className="mb-6 flex flex-col items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:flex-row">
           <p className="text-sm text-amber-800">Đơn hàng chưa được thanh toán. Vui lòng thanh toán để nhà hàng xác nhận nhanh hơn.</p>
-          <Button onClick={() => setPayOpen(true)}><CreditCard className="h-4 w-4" /> Thanh toán ngay</Button>
+          <Button loading={pay.isPending} onClick={() => pay.mutate()}><CreditCard className="h-4 w-4" /> Thanh toán qua VNPay</Button>
         </div>
       )}
 
@@ -184,14 +150,13 @@ export default function OrderDetail() {
 
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <Button as={Link} to="/menu" variant="outline">Tiếp tục đặt món</Button>
-        {order.status === 'PENDING' && (
+        {/* Đã trả tiền online thì phải gọi nhà hàng để hủy + hoàn tiền */}
+        {order.status === 'PENDING' && order.paymentStatus !== 'PAID' && (
           <Button variant="danger" loading={cancel.isPending} onClick={() => window.confirm('Bạn chắc chắn muốn hủy đơn này?') && cancel.mutate()}>
             Hủy đơn
           </Button>
         )}
       </div>
-
-      <MockPaymentModal open={payOpen} onClose={() => setPayOpen(false)} order={order} onPaid={refetch} />
     </div>
   );
 }

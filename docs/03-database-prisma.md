@@ -11,6 +11,7 @@ erDiagram
     Dish ||--o{ OrderItem : "nằm trong"
     Dish ||--o{ Review : "được đánh giá"
     Order ||--|{ OrderItem : "gồm"
+    Order ||--o{ Payment : "thanh toán (VNPay)"
 
     User {
       int id PK
@@ -68,6 +69,14 @@ erDiagram
       int dishId FK
       int rating "1-5"
     }
+    Payment {
+      int id PK
+      int orderId FK
+      string txnRef UK "vnp_TxnRef"
+      int amount
+      enum status "PENDING | SUCCESS | FAILED"
+      string transactionNo "mã GD VNPay"
+    }
     Coupon {
       int id PK
       string code UK
@@ -88,12 +97,13 @@ File gốc: `backend/prisma/schema.prisma`
 | Giá lưu dạng **Int (VNĐ)** thay vì Float | Số thực bị sai số (`0.1 + 0.2 = 0.30000000000000004`). Tiền Việt không có phần lẻ nên dùng số nguyên là an toàn nhất |
 | `Order.userId` cho phép **null** | Khách không cần tài khoản vẫn đặt hàng được (tăng tỉ lệ chốt đơn) |
 | `OrderItem` lưu `name`, `price` | "Ảnh chụp" tại thời điểm mua, món đổi giá sau đó thì đơn cũ vẫn đúng |
-| `Order.code` riêng ngoài `id` | Không lộ `id` tăng dần (người khác có thể đoán ra số đơn của quán). Mã như `FAB2610011234` cũng dễ đọc qua điện thoại hơn |
+| `Order.code` riêng ngoài `id` | Không lộ `id` tăng dần (người khác có thể đoán ra số đơn của quán). Mã như `FAB261001123456` cũng dễ đọc qua điện thoại hơn |
 | `Dish.soldCount`, `ratingAvg`, `ratingCount` | **Denormalization**: lưu sẵn giá trị tổng hợp để sắp xếp và hiển thị nhanh, không phải tính lại mỗi lần đọc. Đổi lại, phải cập nhật mỗi khi có đơn hoặc đánh giá mới |
 | `@@unique([userId, dishId])` ở Review | Mỗi người chỉ đánh giá một món một lần (đánh giá lại thì cập nhật bản cũ) |
 | `slug` | URL đẹp, tốt cho SEO: `/menu/tom-su-hap-bia` thay vì `/menu/4` |
 | `@@index` | Tăng tốc truy vấn hay dùng: lọc đơn theo `status`, `createdAt`, lọc món theo `categoryId` |
 | `onDelete: Cascade` ở OrderItem | Xóa đơn thì các dòng chi tiết bị xóa theo |
+| Bảng `Payment` riêng, không chỉ dùng `Order.paymentStatus` | Một đơn có thể thanh toán nhiều lần (hủy rồi trả lại). Mỗi lần là một dòng, lưu mã giao dịch VNPay để đối soát khi có khiếu nại. `Order.paymentStatus` vẫn giữ để hiển thị và lọc nhanh. Xem [11](11-thanh-toan-vnpay.md) |
 
 ## 3. Prisma cơ bản
 

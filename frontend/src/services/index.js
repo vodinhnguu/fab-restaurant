@@ -33,12 +33,18 @@ export const orderApi = {
   create: (body) => api.post('/orders', body).then((r) => r.data),
   my: (params) => api.get('/orders/my', { params }),
   track: (code, phone) => api.get(`/orders/track/${code}`, { params: { phone } }).then((r) => r.data),
-  pay: (code, phone) => api.post(`/orders/${code}/pay`, { phone }),
   cancel: (code, phone) => api.post(`/orders/${code}/cancel`, { phone }),
   // admin
   list: (params) => api.get('/orders', { params }),
   detail: (id) => api.get(`/orders/${id}`).then((r) => r.data),
   updateStatus: (id, status) => api.patch(`/orders/${id}/status`, { status }),
+};
+
+export const paymentApi = {
+  // Lấy link VNPay cho đơn -> frontend chuyển khách sang link đó
+  createVnpay: (code, phone) => api.post(`/payments/vnpay/${code}`, { phone }).then((r) => r.data.paymentUrl),
+  // Gửi nguyên query VNPay gắn trên URL trả về (?vnp_...) để backend kiểm tra chữ ký
+  vnpayReturn: (search) => api.get(`/payments/vnpay/return${search}`).then((r) => r.data),
 };
 
 export const reservationApi = {

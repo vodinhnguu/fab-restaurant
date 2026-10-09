@@ -31,21 +31,14 @@ export async function track(req, res) {
   res.json({ success: true, data: order });
 }
 
-// Thanh toán online (MÔ PHỎNG) - thực tế sẽ redirect sang VNPay/MoMo rồi nhận callback
-export async function pay(req, res) {
-  const order = await orderService.findAccessibleOrder(req.params.code, req.user, req.body.phone);
-  if (order.paymentMethod !== 'ONLINE') throw ApiError.badRequest('Đơn này thanh toán khi nhận hàng');
-  if (order.paymentStatus === 'PAID') throw ApiError.badRequest('Đơn đã được thanh toán');
-  if (order.status === 'CANCELLED') throw ApiError.badRequest('Đơn đã bị hủy');
-
-  const updated = await prisma.order.update({ where: { id: order.id }, data: { paymentStatus: 'PAID' } });
-  res.json({ success: true, data: updated, message: 'Thanh toán thành công' });
-}
-
 // Khách tự hủy khi đơn còn chờ xác nhận
 export async function cancel(req, res) {
   const order = await orderService.findAccessibleOrder(req.params.code, req.user, req.body.phone);
   if (order.status !== 'PENDING') throw ApiError.badRequest('Chỉ có thể hủy đơn đang chờ xác nhận');
+  // Đã trả tiền thật qua VNPay -> nhà hàng phải hoàn tiền thủ công, nên khách không tự hủy được
+  if (order.paymentStatus === 'PAID') {
+    throw ApiError.badRequest('Đơn đã thanh toán online, vui lòng gọi nhà hàng để được hủy và hoàn tiền');
+  }
   const updated = await orderService.changeStatus(order, 'CANCELLED');
   res.json({ success: true, data: updated, message: 'Đã hủy đơn hàng' });
 }
@@ -83,6 +76,11 @@ export async function detail(req, res) {
     include: {
       items: { include: { dish: { select: { image: true, slug: true } } } },
       user: { select: { id: true, name: true, email: true } },
+      // Lịch sử các lần thanh toán online - để đối soát với VNPay (bỏ rawData cho gọn)
+      payments: {
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, txnRef: true, amount: true, status: true, transactionNo: true, bankCode: true, responseCode: true, paidAt: true, createdAt: true },
+      },
     },
   });
   if (!order) throw ApiError.notFound('Không tìm thấy đơn hàng');

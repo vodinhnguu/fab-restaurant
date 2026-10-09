@@ -14,6 +14,7 @@ const DishDetail = lazy(() => import('./pages/DishDetail'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const OrderDetail = lazy(() => import('./pages/OrderDetail'));
 const TrackOrder = lazy(() => import('./pages/TrackOrder'));
+const PaymentResult = lazy(() => import('./pages/PaymentResult'));
 const Reservation = lazy(() => import('./pages/Reservation'));
 const ReservationDetail = lazy(() => import('./pages/ReservationDetail'));
 const Login = lazy(() => import('./pages/Login'));
@@ -56,6 +57,7 @@ export default function App() {
           <Route path="checkout" element={<Checkout />} />
           <Route path="orders/:code" element={<OrderDetail />} />
           <Route path="track" element={<TrackOrder />} />
+          <Route path="payment/vnpay-return" element={<PaymentResult />} />
           <Route path="reservation" element={<Reservation />} />
           <Route path="reservations/:code" element={<ReservationDetail />} />
           <Route path="login" element={<Login />} />

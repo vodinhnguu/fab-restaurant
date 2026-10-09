@@ -1,11 +1,22 @@
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../utils/ApiError.js';
-import { generateCode, getPagination, paginationMeta } from '../../utils/helpers.js';
+import { getPagination, paginationMeta, withUniqueCode } from '../../utils/helpers.js';
+
+// Các bước chuyển trạng thái hợp lệ (giống STATUS_FLOW của đơn hàng).
+// Lịch đã hủy / đã hoàn thành thì không đổi được nữa.
+export const RESERVATION_FLOW = {
+  PENDING: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['COMPLETED', 'CANCELLED'],
+  CANCELLED: [],
+  COMPLETED: [],
+};
 
 export async function create(req, res) {
-  const reservation = await prisma.reservation.create({
-    data: { ...req.body, email: req.body.email || null, code: generateCode('RSV'), userId: req.user?.id ?? null },
-  });
+  const reservation = await withUniqueCode('RSV', (code) =>
+    prisma.reservation.create({
+      data: { ...req.body, email: req.body.email || null, code, userId: req.user?.id ?? null },
+    }),
+  );
   res.status(201).json({ success: true, data: reservation });
 }
 
@@ -67,9 +78,18 @@ export async function list(req, res) {
 }
 
 export async function updateStatus(req, res) {
-  const r = await prisma.reservation.update({
-    where: { id: Number(req.params.id) },
-    data: { status: req.body.status },
-  });
+  const id = Number(req.params.id);
+  const { status } = req.body;
+  const current = await prisma.reservation.findUnique({ where: { id } });
+  if (!current) throw ApiError.notFound('Không tìm thấy lịch đặt bàn');
+  if (!RESERVATION_FLOW[current.status].includes(status)) {
+    throw ApiError.badRequest(`Không thể chuyển lịch đặt bàn từ ${current.status} sang ${status}`);
+  }
+
+  // Điều kiện status trong where: nếu 2 admin bấm cùng lúc, người sau sẽ không ghi đè được
+  const { count } = await prisma.reservation.updateMany({ where: { id, status: current.status }, data: { status } });
+  if (count === 0) throw ApiError.conflict('Lịch đặt bàn vừa được người khác cập nhật, vui lòng tải lại trang');
+
+  const r = await prisma.reservation.findUnique({ where: { id } });
   res.json({ success: true, data: r });
 }

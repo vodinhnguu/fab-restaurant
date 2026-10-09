@@ -44,6 +44,13 @@ enum PaymentStatus {
   REFUNDED
 }
 
+// Kết quả 1 lần thanh toán qua cổng (VNPay)
+enum PaymentTxnStatus {
+  PENDING // Đã tạo link, khách chưa trả xong
+  SUCCESS // Cổng thanh toán báo thành công
+  FAILED // Khách hủy / thẻ lỗi / hết hạn
+}
+
 enum ReservationStatus {
   PENDING
   CONFIRMED
@@ -129,6 +136,7 @@ model Order {
   couponCode    String?
   note          String?
   items         OrderItem[]
+  payments      Payment[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -147,6 +155,27 @@ model OrderItem {
   name     String
   price    Int
   quantity Int
+}
+
+// Mỗi lần khách bấm "Thanh toán" = 1 dòng Payment (1 đơn có thể thử trả nhiều lần).
+// Lưu lại để đối soát với VNPay khi có khiếu nại: mã giao dịch, ngân hàng, mã phản hồi...
+model Payment {
+  id            Int              @id @default(autoincrement())
+  orderId       Int
+  order         Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider      String           @default("VNPAY")
+  txnRef        String           @unique // Mã giao dịch mình gửi sang VNPay (vnp_TxnRef)
+  amount        Int // Số tiền (VNĐ) tại thời điểm tạo link
+  status        PaymentTxnStatus @default(PENDING)
+  transactionNo String? // Mã giao dịch phía VNPay (vnp_TransactionNo)
+  bankCode      String?
+  responseCode  String? // vnp_ResponseCode: "00" = thành công
+  paidAt        DateTime?
+  rawData       Json? // Toàn bộ dữ liệu VNPay gửi về
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([orderId])
 }
 
 model Reservation {

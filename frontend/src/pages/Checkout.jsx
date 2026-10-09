@@ -10,19 +10,21 @@ import { EmptyState } from '../components/ui/Feedback';
 import { Field, Input, Textarea } from '../components/ui/Form';
 import { formatPrice, imageUrl } from '../lib/format';
 import { useDocumentTitle, useInfo } from '../lib/hooks';
-import { couponApi, orderApi } from '../services';
+import { couponApi, orderApi, paymentApi } from '../services';
 import { useAuthStore } from '../stores/auth';
 import { selectSubtotal, useCartStore } from '../stores/cart';
 
 // Ô lựa chọn dạng thẻ (hình thức nhận hàng / thanh toán)
-function OptionCard({ active, onClick, icon: Icon, title, desc }) {
+function OptionCard({ active, onClick, icon: Icon, title, desc, disabled }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className={clsx(
         'flex flex-1 items-start gap-3 rounded-xl border-2 p-4 text-left transition',
         active ? 'border-coral-500 bg-coral-50' : 'border-slate-200 bg-white hover:border-slate-300',
+        disabled && 'cursor-not-allowed opacity-50 hover:border-slate-200',
       )}
     >
       <Icon className={clsx('mt-0.5 h-5 w-5', active ? 'text-coral-600' : 'text-slate-400')} />
@@ -64,14 +66,32 @@ export default function Checkout() {
 
   const placeOrder = useMutation({
     mutationFn: orderApi.create,
-    onSuccess: (order) => {
+    onSuccess: async (order) => {
       clear();
-      toast.success('Đặt hàng thành công!');
       // encodeURIComponent: SĐT dạng +84... có dấu + sẽ bị URL hiểu thành dấu cách nếu không mã hóa
-      navigate(`/orders/${order.code}?phone=${encodeURIComponent(order.phone)}`, { replace: true });
+      const detailUrl = `/orders/${order.code}?phone=${encodeURIComponent(order.phone)}`;
+
+      if (order.paymentMethod === 'ONLINE') {
+        try {
+          // Rời khỏi web, sang trang VNPay. Trả xong VNPay đưa khách về /payment/vnpay-return
+          window.location.href = await paymentApi.createVnpay(order.code, order.phone);
+          return;
+        } catch (e) {
+          // Đơn đã tạo xong, chỉ lỗi bước lấy link -> khách bấm "Thanh toán ngay" ở trang đơn để thử lại
+          toast.error(`Đã đặt đơn nhưng chưa mở được VNPay: ${e.message}`);
+          navigate(detailUrl, { replace: true });
+          return;
+        }
+      }
+
+      toast.success('Đặt hàng thành công!');
+      navigate(detailUrl, { replace: true });
     },
     onError: (e) => toast.error(e.message),
   });
+
+  // Nhà hàng chưa cấu hình VNPay -> không cho chọn thanh toán online
+  const onlineEnabled = Boolean(info?.onlinePayment);
 
   if (items.length === 0) {
     return (
@@ -153,7 +173,14 @@ export default function Checkout() {
             <h2 className="text-lg font-semibold">3. Phương thức thanh toán</h2>
             <div className="flex flex-col gap-3 sm:flex-row">
               <OptionCard active={paymentMethod === 'COD'} onClick={() => setPaymentMethod('COD')} icon={Banknote} title="Tiền mặt" desc="Thanh toán khi nhận món" />
-              <OptionCard active={paymentMethod === 'ONLINE'} onClick={() => setPaymentMethod('ONLINE')} icon={CreditCard} title="Thanh toán online" desc="Thẻ ngân hàng / Ví (mô phỏng)" />
+              <OptionCard
+                active={paymentMethod === 'ONLINE'}
+                onClick={() => setPaymentMethod('ONLINE')}
+                disabled={!onlineEnabled}
+                icon={CreditCard}
+                title="Thanh toán VNPay"
+                desc={onlineEnabled ? 'Thẻ ATM, Visa/Master, QR ngân hàng' : 'Tạm thời chưa hỗ trợ'}
+              />
             </div>
           </section>
         </div>
@@ -225,7 +252,7 @@ export default function Checkout() {
             </dl>
 
             <Button type="submit" size="lg" className="mt-6 w-full" loading={placeOrder.isPending}>
-              {paymentMethod === 'ONLINE' ? 'Đặt hàng & thanh toán' : 'Đặt hàng'}
+              {paymentMethod === 'ONLINE' ? 'Đặt hàng & thanh toán VNPay' : 'Đặt hàng'}
             </Button>
           </div>
         </aside>

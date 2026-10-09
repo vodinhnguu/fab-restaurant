@@ -18,7 +18,7 @@ Backend là REST API dùng chung cho cả web và app mobile (Flutter) sau này.
 - Thực đơn: lọc theo danh mục, tìm kiếm (debounce), sắp xếp, phân trang. Bộ lọc lưu trên URL
 - Chi tiết món: ảnh, giá khuyến mãi, đánh giá sao, bình luận, món liên quan
 - Giỏ hàng dạng ngăn kéo trượt, lưu ở trình duyệt (F5 không mất)
-- Thanh toán: giao tận nơi hoặc đến lấy, **mã giảm giá**, phí ship tự tính (miễn phí từ 500k), COD hoặc **thanh toán online mô phỏng**
+- Thanh toán: giao tận nơi hoặc đến lấy, **mã giảm giá**, phí ship tự tính (miễn phí từ 500k), COD hoặc **thanh toán online qua VNPay**
 - Theo dõi đơn hàng theo dòng thời gian, tự cập nhật mỗi 15 giây, khách được tự hủy khi đơn còn chờ xác nhận
 - Tra cứu đơn hàng **và lịch đặt bàn** không cần tài khoản (mã + số điện thoại), tự hủy lịch đặt bàn
 - Đặt bàn: chọn ngày, giờ, số khách, khu vực. Có kiểm tra giờ mở cửa
@@ -40,14 +40,15 @@ Backend là REST API dùng chung cho cả web và app mobile (Flutter) sau này.
 Yêu cầu: **Node.js 20 trở lên** và **PostgreSQL 14 trở lên**
 
 ```bash
-# 1. Cài thư viện cho cả 3 thư mục
+# 1. Cài thư viện cho cả 3 thư mục (tự tạo backend/.env từ .env.example nếu chưa có)
 npm run install:all
 
-# 2. Tạo database và file cấu hình
-createdb fab_restaurant
-cp backend/.env.example backend/.env      # rồi sửa DATABASE_URL cho đúng máy bạn
+# 2. Bật PostgreSQL - chọn 1 trong 2 cách:
+docker compose up -d                      # Cách A: dùng Docker, không cần cấu hình gì thêm
+createdb fab_restaurant                   # Cách B: Postgres cài sẵn trên máy (user/pass postgres/postgres)
+                                          #   khác user/pass thì sửa DATABASE_URL trong backend/.env
 
-# 3. Tạo bảng + dữ liệu mẫu
+# 3. Tạo bảng + dữ liệu mẫu (xóa dữ liệu cũ rồi tạo lại)
 npm run setup
 
 # 4. Chạy cả backend (cổng 4000) và frontend (cổng 5173)
@@ -110,6 +111,7 @@ Nên đọc theo thứ tự:
 8. [Bản đồ mã nguồn](docs/08-ban-do-ma-nguon.md): từng file làm gì, có hàm nào, liên quan tới file nào
 9. [Muốn sửa gì thì sửa ở đâu](docs/09-muon-sua-gi-thi-sua-o-dau.md): đổi thông tin, màu sắc, quy tắc nghiệp vụ, thêm trường/trang mới, cách tìm lỗi
 10. [Sổ tay toàn tập](docs/10-so-tay-toan-tap.md): **một tài liệu đủ mọi thứ trên web**, đi qua từng chức năng (người dùng thấy gì, dữ liệu chạy qua đâu, code ở file nào, quy tắc nghiệp vụ), kèm câu hỏi tự kiểm tra và từ điển thuật ngữ
+11. [Thanh toán VNPay](docs/11-thanh-toan-vnpay.md): luồng thanh toán, chữ ký, IPN, đăng ký sandbox, chuẩn bị nhận tiền thật
 
 👉 Mới bắt đầu? Đọc **10** trước để có bức tranh toàn cảnh. Khi đang code, mở sẵn **08** và **09** để tra cứu nhanh.
 

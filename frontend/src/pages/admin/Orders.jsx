@@ -11,7 +11,7 @@ import { EmptyState, Pagination, Spinner } from '../../components/ui/Feedback';
 import { Input } from '../../components/ui/Form';
 import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
-import { NEXT_STATUS, ORDER_STATUS, ORDER_TYPE, PAYMENT_METHOD, PAYMENT_STATUS, STATUS_ACTION_LABEL } from '../../lib/constants';
+import { NEXT_STATUS, ORDER_STATUS, ORDER_TYPE, PAYMENT_METHOD, PAYMENT_STATUS, PAYMENT_TXN_STATUS, STATUS_ACTION_LABEL } from '../../lib/constants';
 import { formatDateTime, formatPrice } from '../../lib/format';
 import { useDocumentTitle } from '../../lib/hooks';
 import { orderApi } from '../../services';
@@ -64,6 +64,26 @@ function OrderModal({ id, onClose }) {
             <div className="flex justify-between"><dt className="text-slate-500">Phí giao</dt><dd>{formatPrice(order.shippingFee)}</dd></div>
             <div className="flex justify-between text-base font-bold"><dt>Tổng</dt><dd className="text-coral-600">{formatPrice(order.total)}</dd></div>
           </dl>
+
+          {order.payments?.length > 0 && (
+            <div className="border-t border-slate-100 pt-4">
+              <p className="mb-2 font-medium">Lịch sử thanh toán VNPay</p>
+              <ul className="space-y-1.5 text-xs">
+                {order.payments.map((p) => (
+                  <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-slate-50 px-3 py-2">
+                    <StatusBadge map={PAYMENT_TXN_STATUS} value={p.status} />
+                    <span>{formatDateTime(p.paidAt || p.createdAt)}</span>
+                    {p.transactionNo && <span>Mã GD VNPay: <span className="font-mono">{p.transactionNo}</span></span>}
+                    {p.bankCode && <span>Ngân hàng: {p.bankCode}</span>}
+                    {p.status === 'FAILED' && p.responseCode && <span className="text-slate-500">Mã lỗi {p.responseCode}</span>}
+                  </li>
+                ))}
+              </ul>
+              {order.status === 'CANCELLED' && order.paymentStatus !== 'UNPAID' && (
+                <p className="mt-2 rounded-lg bg-amber-50 p-2 text-amber-800">Đơn đã hủy nhưng khách đã trả tiền: nhớ hoàn tiền trên trang quản lý của VNPay.</p>
+              )}
+            </div>
+          )}
 
           {NEXT_STATUS[order.status].length > 0 && (
             <div className="border-t border-slate-100 pt-4">

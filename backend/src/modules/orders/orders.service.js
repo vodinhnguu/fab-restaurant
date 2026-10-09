@@ -1,7 +1,7 @@
-import { env } from '../../config/env.js';
+import { env, isVnpayEnabled } from '../../config/env.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../utils/ApiError.js';
-import { generateCode } from '../../utils/helpers.js';
+import { withUniqueCode } from '../../utils/helpers.js';
 import { applyCoupon } from '../coupons/coupons.service.js';
 
 // Các bước chuyển trạng thái hợp lệ (state machine)
@@ -17,13 +17,18 @@ export const STATUS_FLOW = {
 const orderInclude = { items: { include: { dish: { select: { image: true, slug: true } } } } };
 
 export async function createOrder(input, user) {
+  if (input.paymentMethod === 'ONLINE' && !isVnpayEnabled()) {
+    throw ApiError.badRequest('Nhà hàng chưa bật thanh toán online, vui lòng chọn thanh toán khi nhận hàng');
+  }
+
   // Gộp các dòng trùng món
   const qtyByDish = new Map();
   for (const { dishId, quantity } of input.items) {
     qtyByDish.set(dishId, (qtyByDish.get(dishId) || 0) + quantity);
   }
 
-  return prisma.$transaction(async (tx) => {
+  // Lỗi trong transaction của PostgreSQL làm hỏng cả transaction -> trùng mã thì phải chạy lại cả transaction
+  return withUniqueCode('FAB', (code) => prisma.$transaction(async (tx) => {
     // 1. Lấy giá từ DB - KHÔNG BAO GIỜ tin giá do client gửi lên
     const dishes = await tx.dish.findMany({ where: { id: { in: [...qtyByDish.keys()] } } });
     if (dishes.length !== qtyByDish.size) throw ApiError.badRequest('Có món không tồn tại');
@@ -43,13 +48,23 @@ export async function createOrder(input, user) {
       const applied = await applyCoupon(tx, input.couponCode, subtotal);
       discount = applied.discount;
       couponCode = applied.coupon.code;
-      await tx.coupon.update({ where: { id: applied.coupon.id }, data: { usedCount: { increment: 1 } } });
+      // Kiểm tra lượt dùng + cộng lượt trong CÙNG 1 câu UPDATE.
+      // Nếu tách riêng "đọc usedCount rồi mới cộng", 2 đơn đặt cùng lúc đều thấy "còn 1 lượt" và cùng dùng được mã.
+      // PostgreSQL khóa dòng khi UPDATE nên đơn thứ 2 phải chờ, rồi kiểm tra lại điều kiện với số lượt mới nhất.
+      const { count } = await tx.coupon.updateMany({
+        where: {
+          id: applied.coupon.id,
+          OR: [{ usageLimit: null }, { usedCount: { lt: tx.coupon.fields.usageLimit } }],
+        },
+        data: { usedCount: { increment: 1 } },
+      });
+      if (count === 0) throw ApiError.badRequest('Mã giảm giá đã hết lượt sử dụng');
     }
 
     // 3. Tạo đơn + chi tiết đơn
     const order = await tx.order.create({
       data: {
-        code: generateCode('FAB'),
+        code,
         userId: user?.id ?? null,
         customerName: input.customerName,
         phone: input.phone,
@@ -73,7 +88,7 @@ export async function createOrder(input, user) {
     }
 
     return order;
-  });
+  }));
 }
 
 // Tìm đơn theo mã, chỉ cho xem nếu là chủ đơn / admin / biết đúng SĐT đặt hàng

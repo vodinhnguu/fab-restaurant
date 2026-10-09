@@ -59,8 +59,9 @@ Content-Type: application/json
 ### Tra cứu đơn vừa tạo
 GET {{base}}/orders/track/{{order.response.body.data.code}}?phone=0901111222
 
-### Thanh toán mô phỏng
-POST {{base}}/orders/{{order.response.body.data.code}}/pay
+### Lấy link thanh toán VNPay (cần cấu hình VNP_* trong backend/.env)
+# Mở paymentUrl trong trình duyệt để thanh toán bằng thẻ test - xem docs/11-thanh-toan-vnpay.md
+POST {{base}}/payments/vnpay/{{order.response.body.data.code}}
 Content-Type: application/json
 
 { "phone": "0901111222" }
