@@ -1,5 +1,6 @@
 import { env, isVnpayEnabled } from '../../config/env.js';
 import { prisma } from '../../lib/prisma.js';
+import { can } from '../permissions/permissions.service.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { withUniqueCode } from '../../utils/helpers.js';
 import { applyCoupon } from '../coupons/coupons.service.js';
@@ -91,15 +92,16 @@ export async function createOrder(input, user) {
   }));
 }
 
-// Tìm đơn theo mã, chỉ cho xem nếu là chủ đơn / admin / biết đúng SĐT đặt hàng
-export async function findAccessibleOrder(code, user, phone) {
+// Tìm đơn theo mã, chỉ cho xem nếu là chủ đơn / nhân viên có quyền / biết đúng SĐT đặt hàng.
+// action: quyền cần có trên ORDERS (xem = 'view', hủy = 'edit')
+export async function findAccessibleOrder(code, user, phone, action = 'view') {
   const order = await prisma.order.findUnique({ where: { code }, include: orderInclude });
   if (!order) throw ApiError.notFound('Không tìm thấy đơn hàng');
 
   const isOwner = user && order.userId === user.id;
-  const isAdmin = user?.role === 'ADMIN';
+  const isStaff = can(user, 'ORDERS', action);
   const phoneMatch = phone && phone.replace(/\s/g, '') === order.phone;
-  if (!isOwner && !isAdmin && !phoneMatch) throw ApiError.notFound('Không tìm thấy đơn hàng');
+  if (!isOwner && !isStaff && !phoneMatch) throw ApiError.notFound('Không tìm thấy đơn hàng');
 
   return order;
 }

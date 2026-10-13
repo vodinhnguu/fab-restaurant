@@ -9,10 +9,12 @@ import { EmptyState, Pagination, Rating, Spinner } from '../../components/ui/Fee
 import { Table, Td, Th } from '../../components/ui/Table';
 import { formatDateTime } from '../../lib/format';
 import { useDocumentTitle } from '../../lib/hooks';
+import { useCan } from '../../lib/permissions';
 import { reviewApi } from '../../services';
 
 export default function Reviews() {
   useDocumentTitle('Quản trị - Đánh giá');
+  const can = useCan();
   const [page, setPage] = useState(1);
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ['admin-reviews', page], queryFn: () => reviewApi.list({ page }), placeholderData: keepPreviousData });
@@ -37,7 +39,7 @@ export default function Reviews() {
                   <Td><Rating value={r.rating} /></Td>
                   <Td className="max-w-xs text-slate-600">{r.comment || '-'}</Td>
                   <Td className="whitespace-nowrap text-slate-500">{formatDateTime(r.createdAt)}</Td>
-                  <Td><Button size="icon" variant="ghost" className="text-red-500" onClick={() => window.confirm('Xóa đánh giá này?') && remove.mutate(r.id)} aria-label="Xóa"><Trash2 className="h-4 w-4" /></Button></Td>
+                  <Td>{can('REVIEWS', 'delete') && <Button size="icon" variant="ghost" className="text-red-500" onClick={() => window.confirm('Xóa đánh giá này?') && remove.mutate(r.id)} aria-label="Xóa"><Trash2 className="h-4 w-4" /></Button>}</Td>
                 </tr>
               ))}
             </tbody>

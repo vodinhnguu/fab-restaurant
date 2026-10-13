@@ -33,7 +33,7 @@ export async function track(req, res) {
 
 // Khách tự hủy khi đơn còn chờ xác nhận
 export async function cancel(req, res) {
-  const order = await orderService.findAccessibleOrder(req.params.code, req.user, req.body.phone);
+  const order = await orderService.findAccessibleOrder(req.params.code, req.user, req.body.phone, 'edit');
   if (order.status !== 'PENDING') throw ApiError.badRequest('Chỉ có thể hủy đơn đang chờ xác nhận');
   // Đã trả tiền thật qua VNPay -> nhà hàng phải hoàn tiền thủ công, nên khách không tự hủy được
   if (order.paymentStatus === 'PAID') {

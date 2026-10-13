@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { optionalAuth, requireAdmin, requireAuth } from '../../middlewares/auth.js';
+import { optionalAuth, requireAuth, requirePermission } from '../../middlewares/auth.js';
 import { rateLimit } from '../../middlewares/rateLimit.js';
 import { validate } from '../../middlewares/validate.js';
 import * as ctrl from './orders.controller.js';
@@ -19,8 +19,8 @@ router.get('/track/:code', trackLimiter, optionalAuth, ctrl.track);
 router.post('/:code/cancel', trackLimiter, optionalAuth, validate(phoneSchema), ctrl.cancel);
 
 // Admin
-router.get('/', requireAdmin, validate(orderQuerySchema, 'query'), ctrl.list);
-router.get('/:id', requireAdmin, ctrl.detail);
-router.patch('/:id/status', requireAdmin, validate(updateStatusSchema), ctrl.updateStatus);
+router.get('/', requirePermission('ORDERS', 'view'), validate(orderQuerySchema, 'query'), ctrl.list);
+router.get('/:id', requirePermission('ORDERS', 'view'), ctrl.detail);
+router.patch('/:id/status', requirePermission('ORDERS', 'edit'), validate(updateStatusSchema), ctrl.updateStatus);
 
 export default router;

@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { CalendarDays, LayoutDashboard, LogOut, Menu, Receipt, ShoppingBag, User, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { canAccessAdmin } from '../../lib/permissions';
 import { useAuthStore } from '../../stores/auth';
 import { selectCount, useCartStore } from '../../stores/cart';
 import Logo from './Logo';
@@ -37,7 +38,7 @@ function UserMenu({ user, onLogout }) {
       </button>
       {open && (
         <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-100 bg-white p-1.5 shadow-lg" onClick={() => setOpen(false)}>
-          {user.role === 'ADMIN' && (
+          {canAccessAdmin(user) && (
             <Link to="/admin" className={item}>
               <LayoutDashboard className="h-4 w-4" /> Trang quản trị
             </Link>

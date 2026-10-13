@@ -1,4 +1,5 @@
 import { prisma } from '../../lib/prisma.js';
+import { userInclude } from '../../middlewares/auth.js';
 import * as authService from './auth.service.js';
 
 export async function register(req, res) {
@@ -16,7 +17,7 @@ export async function me(req, res) {
 }
 
 export async function updateProfile(req, res) {
-  const user = await prisma.user.update({ where: { id: req.user.id }, data: req.body });
+  const user = await prisma.user.update({ where: { id: req.user.id }, data: req.body, include: userInclude });
   res.json({ success: true, data: authService.toPublicUser(user) });
 }
 

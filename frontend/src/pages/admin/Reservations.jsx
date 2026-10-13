@@ -10,6 +10,7 @@ import { Table, Td, Th } from '../../components/ui/Table';
 import { RESERVATION_STATUS } from '../../lib/constants';
 import { formatDateTime } from '../../lib/format';
 import { useDocumentTitle } from '../../lib/hooks';
+import { useCan } from '../../lib/permissions';
 import { reservationApi } from '../../services';
 
 // Hành động hợp lệ cho từng trạng thái
@@ -22,6 +23,7 @@ export default function Reservations() {
   useDocumentTitle('Quản trị - Đặt bàn');
   const [filters, setFilters] = useState({ status: '', date: '', search: '', page: 1 });
   const qc = useQueryClient();
+  const can = useCan();
 
   const query = Object.fromEntries(Object.entries(filters).filter(([, v]) => v));
   const { data, isLoading } = useQuery({
@@ -79,7 +81,7 @@ export default function Reservations() {
                   <Td><StatusBadge map={RESERVATION_STATUS} value={r.status} /></Td>
                   <Td className="whitespace-nowrap">
                     <div className="flex gap-1">
-                      {ACTIONS[r.status]?.map(([s, label, variant]) => (
+                      {can('RESERVATIONS', 'edit') && ACTIONS[r.status]?.map(([s, label, variant]) => (
                         <Button key={s} size="sm" variant={variant} onClick={() => update.mutate({ id: r.id, status: s })}>{label}</Button>
                       ))}
                     </div>

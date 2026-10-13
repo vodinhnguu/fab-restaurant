@@ -74,7 +74,17 @@ export const couponApi = {
 
 export const userApi = {
   list: (params) => api.get('/users', { params }),
+  create: (body) => api.post('/users', body),
   update: (id, body) => api.patch(`/users/${id}`, body),
+  resetPassword: (id, password) => api.post(`/users/${id}/reset-password`, { password }),
+};
+
+// Ma trận phân quyền: list trả { modules, actions, roles }
+export const permissionApi = {
+  list: () => api.get('/permissions').then((r) => r.data),
+  create: (body) => api.post('/permissions/roles', body),
+  update: (id, body) => api.put(`/permissions/roles/${id}`, body),
+  remove: (id) => api.delete(`/permissions/roles/${id}`),
 };
 
 export const statsApi = {

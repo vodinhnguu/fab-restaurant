@@ -16,7 +16,8 @@ datasource db {
 
 enum Role {
   CUSTOMER
-  ADMIN
+  STAFF // Nhân viên: quyền theo vai trò (staffRole) trong ma trận phân quyền
+  ADMIN // Toàn quyền
 }
 
 enum OrderType {
@@ -75,6 +76,8 @@ model User {
   address      String?
   avatar       String?
   isActive     Boolean       @default(true)
+  staffRoleId  Int? // Chỉ dùng khi role = STAFF
+  staffRole    StaffRole?    @relation(fields: [staffRoleId], references: [id], onDelete: SetNull)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   orders       Order[]
@@ -224,4 +227,36 @@ model Coupon {
   expiresAt   DateTime?
   isActive    Boolean    @default(true)
   createdAt   DateTime   @default(now())
+}
+
+// ---------- PHÂN QUYỀN NỘI BỘ (ma trận vai trò × chức năng) ----------
+// Danh sách chức năng (module) cố định nằm trong src/config/permissions.js.
+// Tài liệu: docs/12-ma-tran-phan-quyen.md
+
+// Vai trò / bộ phận trong nhà hàng: Chủ, Quản lý, Bếp, Thu ngân...
+model StaffRole {
+  id          Int              @id @default(autoincrement())
+  key         String           @unique // Mã viết hoa, vd: CASHIER
+  name        String // Tên hiển thị, vd: Thu ngân
+  description String? // Bộ phận này làm gì
+  sortOrder   Int              @default(0)
+  isSystem    Boolean          @default(false) // Vai trò mặc định -> không cho xóa
+  permissions RolePermission[]
+  users       User[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+// 1 dòng = quyền của 1 vai trò trên 1 chức năng: Xem / Thêm / Sửa / Xóa
+model RolePermission {
+  id        Int       @id @default(autoincrement())
+  roleId    Int
+  role      StaffRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  module    String // Mã chức năng, vd: ORDERS (xem MODULES trong config/permissions.js)
+  canView   Boolean   @default(false)
+  canCreate Boolean   @default(false)
+  canEdit   Boolean   @default(false)
+  canDelete Boolean   @default(false)
+
+  @@unique([roleId, module])
 }

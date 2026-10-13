@@ -7,6 +7,7 @@ import couponRoutes from './modules/coupons/coupons.routes.js';
 import dishRoutes from './modules/dishes/dishes.routes.js';
 import orderRoutes from './modules/orders/orders.routes.js';
 import paymentRoutes from './modules/payments/payments.routes.js';
+import permissionRoutes from './modules/permissions/permissions.routes.js';
 import reservationRoutes from './modules/reservations/reservations.routes.js';
 import reviewRoutes from './modules/reviews/reviews.routes.js';
 import statsRoutes from './modules/stats/stats.routes.js';
@@ -28,6 +29,7 @@ router.use('/reviews', reviewRoutes);
 router.use('/coupons', couponRoutes);
 router.use('/users', userRoutes);
 router.use('/stats', statsRoutes);
+router.use('/permissions', permissionRoutes);
 router.use('/upload', uploadRoutes);
 
 export default router;

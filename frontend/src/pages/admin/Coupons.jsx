@@ -13,6 +13,7 @@ import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { formatDate, formatPrice } from '../../lib/format';
 import { useDocumentTitle } from '../../lib/hooks';
+import { useCan } from '../../lib/permissions';
 import { couponApi } from '../../services';
 
 const toInputDate = (d) => (d ? dayjs(d).format('YYYY-MM-DD') : '');
@@ -85,6 +86,7 @@ function CouponForm({ coupon, onClose }) {
 
 export default function Coupons() {
   useDocumentTitle('Quản trị - Mã giảm giá');
+  const can = useCan();
   const { data, isLoading } = useQuery({ queryKey: ['coupons', 'admin'], queryFn: couponApi.list });
   const [editing, setEditing] = useState(null);
   const qc = useQueryClient();
@@ -103,7 +105,7 @@ export default function Coupons() {
 
   return (
     <>
-      <PageHeader title="Mã giảm giá" actions={<Button onClick={() => setEditing({})}><Plus className="h-4 w-4" /> Tạo mã</Button>} />
+      <PageHeader title="Mã giảm giá" actions={can('COUPONS', 'create') && <Button onClick={() => setEditing({})}><Plus className="h-4 w-4" /> Tạo mã</Button>} />
       {isLoading ? <Spinner /> : (
         <Table>
           <thead><tr><Th>Mã</Th><Th>Giảm</Th><Th>Điều kiện</Th><Th className="text-center">Đã dùng</Th><Th>Hết hạn</Th><Th>Trạng thái</Th><Th /></tr></thead>
@@ -117,8 +119,8 @@ export default function Coupons() {
                 <Td className="whitespace-nowrap">{c.expiresAt ? formatDate(c.expiresAt) : 'Không'}</Td>
                 <Td>{statusOf(c)}</Td>
                 <Td className="whitespace-nowrap">
-                  <Button size="icon" variant="ghost" onClick={() => setEditing(c)} aria-label="Sửa"><Pencil className="h-4 w-4" /></Button>
-                  <Button size="icon" variant="ghost" className="text-red-500" onClick={() => window.confirm(`Xóa mã ${c.code}?`) && remove.mutate(c.id)} aria-label="Xóa"><Trash2 className="h-4 w-4" /></Button>
+                  {can('COUPONS', 'edit') && <Button size="icon" variant="ghost" onClick={() => setEditing(c)} aria-label="Sửa"><Pencil className="h-4 w-4" /></Button>}
+                  {can('COUPONS', 'delete') && <Button size="icon" variant="ghost" className="text-red-500" onClick={() => window.confirm(`Xóa mã ${c.code}?`) && remove.mutate(c.id)} aria-label="Xóa"><Trash2 className="h-4 w-4" /></Button>}
                 </Td>
               </tr>
             ))}

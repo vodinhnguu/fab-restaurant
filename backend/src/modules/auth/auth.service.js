@@ -2,13 +2,21 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { env } from '../../config/env.js';
 import { prisma } from '../../lib/prisma.js';
+import { userInclude } from '../../middlewares/auth.js';
+import { userPermissions } from '../permissions/permissions.service.js';
 import { ApiError } from '../../utils/ApiError.js';
 
-// Không bao giờ trả passwordHash ra ngoài
+// Không bao giờ trả passwordHash ra ngoài.
+// Kèm `permissions` (ma trận quyền của tài khoản) để frontend ẩn menu / nút không có quyền.
+// user nên được lấy kèm `include: userInclude`, nếu không nhân viên sẽ không có quyền nào.
 export function toPublicUser(user) {
   // eslint-disable-next-line no-unused-vars
-  const { passwordHash, ...rest } = user;
-  return rest;
+  const { passwordHash, staffRole, ...rest } = user;
+  return {
+    ...rest,
+    staffRole: staffRole ? { id: staffRole.id, key: staffRole.key, name: staffRole.name } : null,
+    permissions: userPermissions(user),
+  };
 }
 
 export function signToken(user) {
@@ -25,7 +33,7 @@ export async function register({ name, email, phone, password }) {
 }
 
 export async function login({ email, password }) {
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({ where: { email }, include: userInclude });
   // Dùng chung 1 thông báo để không lộ email nào tồn tại
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
     throw ApiError.unauthorized('Email hoặc mật khẩu không đúng');

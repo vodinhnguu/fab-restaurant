@@ -12,6 +12,7 @@ import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { imageUrl } from '../../lib/format';
 import { useCategories, useDocumentTitle } from '../../lib/hooks';
+import { useCan } from '../../lib/permissions';
 import { categoryApi } from '../../services';
 
 function CategoryForm({ category, onClose }) {
@@ -50,6 +51,7 @@ function CategoryForm({ category, onClose }) {
 
 export default function Categories() {
   useDocumentTitle('Quản trị - Danh mục');
+  const can = useCan();
   const { data, isLoading } = useCategories();
   const [editing, setEditing] = useState(null);
   const qc = useQueryClient();
@@ -61,7 +63,7 @@ export default function Categories() {
 
   return (
     <>
-      <PageHeader title="Danh mục" actions={<Button onClick={() => setEditing({})}><Plus className="h-4 w-4" /> Thêm danh mục</Button>} />
+      <PageHeader title="Danh mục" actions={can('MENU', 'create') && <Button onClick={() => setEditing({})}><Plus className="h-4 w-4" /> Thêm danh mục</Button>} />
       {isLoading ? <Spinner /> : (
         <Table>
           <thead><tr><Th>Danh mục</Th><Th>Mô tả</Th><Th className="text-center">Số món</Th><Th className="text-center">Thứ tự</Th><Th /></tr></thead>
@@ -73,8 +75,8 @@ export default function Categories() {
                 <Td className="text-center">{c._count.dishes}</Td>
                 <Td className="text-center">{c.sortOrder}</Td>
                 <Td className="whitespace-nowrap">
-                  <Button size="icon" variant="ghost" onClick={() => setEditing(c)} aria-label="Sửa"><Pencil className="h-4 w-4" /></Button>
-                  <Button size="icon" variant="ghost" className="text-red-500" onClick={() => window.confirm(`Xóa danh mục "${c.name}"?`) && remove.mutate(c.id)} aria-label="Xóa"><Trash2 className="h-4 w-4" /></Button>
+                  {can('MENU', 'edit') && <Button size="icon" variant="ghost" onClick={() => setEditing(c)} aria-label="Sửa"><Pencil className="h-4 w-4" /></Button>}
+                  {can('MENU', 'delete') && <Button size="icon" variant="ghost" className="text-red-500" onClick={() => window.confirm(`Xóa danh mục "${c.name}"?`) && remove.mutate(c.id)} aria-label="Xóa"><Trash2 className="h-4 w-4" /></Button>}
                 </Td>
               </tr>
             ))}

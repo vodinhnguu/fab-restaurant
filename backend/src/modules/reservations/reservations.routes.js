@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { optionalAuth, requireAdmin, requireAuth } from '../../middlewares/auth.js';
+import { optionalAuth, requireAuth, requirePermission } from '../../middlewares/auth.js';
 import { rateLimit } from '../../middlewares/rateLimit.js';
 import { validate } from '../../middlewares/validate.js';
 import * as ctrl from './reservations.controller.js';
@@ -22,7 +22,7 @@ router.get('/my', requireAuth, ctrl.myReservations);
 router.get('/track/:code', trackLimiter, optionalAuth, ctrl.track);
 router.post('/:code/cancel', trackLimiter, optionalAuth, validate(cancelReservationSchema), ctrl.cancel);
 
-router.get('/', requireAdmin, validate(reservationQuerySchema, 'query'), ctrl.list);
-router.patch('/:id/status', requireAdmin, validate(updateReservationStatusSchema), ctrl.updateStatus);
+router.get('/', requirePermission('RESERVATIONS', 'view'), validate(reservationQuerySchema, 'query'), ctrl.list);
+router.patch('/:id/status', requirePermission('RESERVATIONS', 'edit'), validate(updateReservationStatusSchema), ctrl.updateStatus);
 
 export default router;

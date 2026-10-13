@@ -1,4 +1,5 @@
 import { prisma } from '../../lib/prisma.js';
+import { can } from '../permissions/permissions.service.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { getPagination, paginationMeta, withUniqueCode } from '../../utils/helpers.js';
 
@@ -28,10 +29,10 @@ export async function myReservations(req, res) {
   res.json({ success: true, data: reservations });
 }
 
-async function findAccessible(code, user, phone) {
+async function findAccessible(code, user, phone, action = 'view') {
   const r = await prisma.reservation.findUnique({ where: { code } });
   const phoneMatch = phone && phone.replace(/\s/g, '') === r?.phone;
-  const allowed = r && ((user && (r.userId === user.id || user.role === 'ADMIN')) || phoneMatch);
+  const allowed = r && ((user && (r.userId === user.id || can(user, 'RESERVATIONS', action))) || phoneMatch);
   if (!allowed) throw ApiError.notFound('Không tìm thấy lịch đặt bàn');
   return r;
 }
@@ -42,7 +43,7 @@ export async function track(req, res) {
 }
 
 export async function cancel(req, res) {
-  const r = await findAccessible(req.params.code, req.user, req.body?.phone);
+  const r = await findAccessible(req.params.code, req.user, req.body?.phone, 'edit');
   if (!['PENDING', 'CONFIRMED'].includes(r.status)) throw ApiError.badRequest('Không thể hủy lịch này');
   if (r.date < new Date()) throw ApiError.badRequest('Lịch đặt bàn đã qua, không thể hủy');
   const updated = await prisma.reservation.update({ where: { id: r.id }, data: { status: 'CANCELLED' } });

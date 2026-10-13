@@ -14,10 +14,12 @@ import { Table, Td, Th } from '../../components/ui/Table';
 import { NEXT_STATUS, ORDER_STATUS, ORDER_TYPE, PAYMENT_METHOD, PAYMENT_STATUS, PAYMENT_TXN_STATUS, STATUS_ACTION_LABEL } from '../../lib/constants';
 import { formatDateTime, formatPrice } from '../../lib/format';
 import { useDocumentTitle } from '../../lib/hooks';
+import { useCan } from '../../lib/permissions';
 import { orderApi } from '../../services';
 
 function OrderModal({ id, onClose }) {
   const qc = useQueryClient();
+  const can = useCan();
   const { data: order, isLoading } = useQuery({ queryKey: ['admin-order', id], queryFn: () => orderApi.detail(id), enabled: !!id });
 
   const update = useMutation({
@@ -85,7 +87,7 @@ function OrderModal({ id, onClose }) {
             </div>
           )}
 
-          {NEXT_STATUS[order.status].length > 0 && (
+          {can('ORDERS', 'edit') && NEXT_STATUS[order.status].length > 0 && (
             <div className="border-t border-slate-100 pt-4">
               <p className="mb-2 font-medium">Chuyển trạng thái:</p>
               <div className="flex flex-wrap gap-2">

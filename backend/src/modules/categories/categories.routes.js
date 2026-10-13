@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAdmin } from '../../middlewares/auth.js';
+import { requirePermission } from '../../middlewares/auth.js';
 import { validate } from '../../middlewares/validate.js';
 import * as ctrl from './categories.controller.js';
 import { categorySchema } from './categories.validation.js';
@@ -7,8 +7,8 @@ import { categorySchema } from './categories.validation.js';
 const router = Router();
 
 router.get('/', ctrl.list);
-router.post('/', requireAdmin, validate(categorySchema), ctrl.create);
-router.put('/:id', requireAdmin, validate(categorySchema), ctrl.update);
-router.delete('/:id', requireAdmin, ctrl.remove);
+router.post('/', requirePermission('MENU', 'create'), validate(categorySchema), ctrl.create);
+router.put('/:id', requirePermission('MENU', 'edit'), validate(categorySchema), ctrl.update);
+router.delete('/:id', requirePermission('MENU', 'delete'), ctrl.remove);
 
 export default router;

@@ -2,6 +2,7 @@
 // CẢNH BÁO: script này XÓA toàn bộ dữ liệu cũ trong database rồi tạo lại.
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { seedDefaultRoles } from '../src/modules/permissions/permissions.service.js';
 
 const prisma = new PrismaClient();
 
@@ -86,6 +87,10 @@ async function main() {
   await prisma.category.deleteMany();
   await prisma.coupon.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.staffRole.deleteMany(); // quyền (RolePermission) tự xóa theo
+
+  console.log('🔐 Tạo vai trò & ma trận phân quyền...');
+  await seedDefaultRoles(prisma);
 
   console.log('👤 Tạo tài khoản...');
   const admin = await prisma.user.create({
@@ -109,6 +114,17 @@ async function main() {
         data: { name, email, phone, passwordHash: customerHash, address: '45 Bạch Đằng, Hải Châu, Đà Nẵng' },
       }),
     );
+  }
+
+  // Nhân viên demo (mật khẩu 123456) - đăng nhập để thử ma trận phân quyền
+  const staffRoles = Object.fromEntries((await prisma.staffRole.findMany()).map((r) => [r.key, r.id]));
+  for (const [name, email, phone, roleKey] of [
+    ['Phạm Quản Lý', 'quanly@fab.vn', '0930000001', 'MANAGER'],
+    ['Đỗ Thu Ngân', 'thungan@fab.vn', '0930000002', 'CASHIER'],
+    ['Hoàng Lễ Tân', 'letan@fab.vn', '0930000003', 'RECEPTIONIST'],
+    ['Bùi Đầu Bếp', 'bep@fab.vn', '0930000004', 'KITCHEN'],
+  ]) {
+    await prisma.user.create({ data: { name, email, phone, passwordHash: customerHash, role: 'STAFF', staffRoleId: staffRoles[roleKey] } });
   }
 
   console.log('📂 Tạo danh mục & món ăn...');
@@ -244,6 +260,7 @@ async function main() {
   console.log('✅ Seed xong!');
   console.log('   Admin:     admin@fab.vn / admin123');
   console.log('   Khách hàng: khach@fab.vn / 123456');
+  console.log('   Nhân viên: quanly@ / thungan@ / letan@ / bep@fab.vn - mật khẩu 123456');
   console.log(`   (admin id ${admin.id})`);
 }
 

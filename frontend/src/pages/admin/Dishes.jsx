@@ -13,6 +13,7 @@ import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { formatPrice, imageUrl } from '../../lib/format';
 import { useCategories, useDocumentTitle } from '../../lib/hooks';
+import { useCan } from '../../lib/permissions';
 import { dishApi } from '../../services';
 
 const EMPTY = { name: '', description: '', price: '', salePrice: '', unit: 'phần', image: '', categoryId: '', isAvailable: true, isFeatured: false };
@@ -117,6 +118,7 @@ export default function Dishes() {
     qc.invalidateQueries({ queryKey: ['admin-dishes'] });
     qc.invalidateQueries({ queryKey: ['dishes'] });
   };
+  const can = useCan();
   const toggle = useMutation({ mutationFn: dishApi.toggle, onSuccess: invalidate, onError: (e) => toast.error(e.message) });
   const remove = useMutation({
     mutationFn: dishApi.remove,
@@ -128,7 +130,7 @@ export default function Dishes() {
 
   return (
     <>
-      <PageHeader title="Món ăn" subtitle={data && `${data.meta.total} món`} actions={<Button onClick={() => setEditing({})}><Plus className="h-4 w-4" /> Thêm món</Button>} />
+      <PageHeader title="Món ăn" subtitle={data && `${data.meta.total} món`} actions={can('MENU', 'create') && <Button onClick={() => setEditing({})}><Plus className="h-4 w-4" /> Thêm món</Button>} />
 
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative w-64">
@@ -174,7 +176,8 @@ export default function Dishes() {
                     {/* Công tắc bật/tắt nhanh "còn món" */}
                     <button
                       onClick={() => toggle.mutate(d.id)}
-                      className={`relative h-6 w-11 rounded-full transition ${d.isAvailable ? 'bg-green-500' : 'bg-slate-300'}`}
+                      disabled={!can('MENU', 'edit')}
+                      className={`relative h-6 w-11 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60 ${d.isAvailable ? 'bg-green-500' : 'bg-slate-300'}`}
                       aria-label="Bật/tắt bán"
                       title={d.isAvailable ? 'Đang bán' : 'Ngừng bán'}
                     >
@@ -182,8 +185,8 @@ export default function Dishes() {
                     </button>
                   </Td>
                   <Td className="whitespace-nowrap">
-                    <Button size="icon" variant="ghost" onClick={() => setEditing(d)} aria-label="Sửa"><Pencil className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" className="text-red-500" onClick={() => window.confirm(`Xóa món "${d.name}"?`) && remove.mutate(d.id)} aria-label="Xóa"><Trash2 className="h-4 w-4" /></Button>
+                    {can('MENU', 'edit') && <Button size="icon" variant="ghost" onClick={() => setEditing(d)} aria-label="Sửa"><Pencil className="h-4 w-4" /></Button>}
+                    {can('MENU', 'delete') && <Button size="icon" variant="ghost" className="text-red-500" onClick={() => window.confirm(`Xóa món "${d.name}"?`) && remove.mutate(d.id)} aria-label="Xóa"><Trash2 className="h-4 w-4" /></Button>}
                   </Td>
                 </tr>
               ))}

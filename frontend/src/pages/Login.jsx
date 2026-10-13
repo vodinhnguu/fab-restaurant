@@ -6,6 +6,7 @@ import Logo from '../components/layout/Logo';
 import Button from '../components/ui/Button';
 import { Field, Input } from '../components/ui/Form';
 import { useDocumentTitle } from '../lib/hooks';
+import { canAccessAdmin } from '../lib/permissions';
 import { authApi } from '../services';
 import { useAuthStore } from '../stores/auth';
 
@@ -22,7 +23,7 @@ export default function Login() {
       setAuth(data);
       toast.success(`Xin chào, ${data.user.name}!`);
       const from = location.state?.from;
-      navigate(from || (data.user.role === 'ADMIN' ? '/admin' : '/'), { replace: true });
+      navigate(from || (canAccessAdmin(data.user) ? '/admin' : '/'), { replace: true });
     },
     onError: (e) => toast.error(e.message),
   });
@@ -51,9 +52,17 @@ export default function Login() {
         {/* Tài khoản demo - xóa khi đưa vào sử dụng thật */}
         <div className="rounded-xl bg-sand-100 p-3 text-xs text-slate-600">
           <p className="mb-2 font-semibold">Tài khoản demo:</p>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => fillDemo('admin@fab.vn', 'admin123')} className="rounded-lg bg-white px-2 py-1 ring-1 ring-slate-200 hover:ring-ocean-300">Admin</button>
-            <button type="button" onClick={() => fillDemo('khach@fab.vn', '123456')} className="rounded-lg bg-white px-2 py-1 ring-1 ring-slate-200 hover:ring-ocean-300">Khách hàng</button>
+          <div className="flex flex-wrap gap-2">
+            {[
+              ['Admin', 'admin@fab.vn', 'admin123'],
+              ['Khách hàng', 'khach@fab.vn', '123456'],
+              ['Quản lý', 'quanly@fab.vn', '123456'],
+              ['Thu ngân', 'thungan@fab.vn', '123456'],
+              ['Lễ tân', 'letan@fab.vn', '123456'],
+              ['Bếp', 'bep@fab.vn', '123456'],
+            ].map(([label, email, password]) => (
+              <button key={email} type="button" onClick={() => fillDemo(email, password)} className="rounded-lg bg-white px-2 py-1 ring-1 ring-slate-200 hover:ring-ocean-300">{label}</button>
+            ))}
           </div>
         </div>
       </form>

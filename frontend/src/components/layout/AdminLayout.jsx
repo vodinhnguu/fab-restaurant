@@ -1,33 +1,11 @@
 import clsx from 'clsx';
-import {
-  CalendarDays,
-  ChartColumn,
-  ExternalLink,
-  FolderTree,
-  LogOut,
-  Menu,
-  MessageSquare,
-  Receipt,
-  Ticket,
-  Users,
-  UtensilsCrossed,
-  X,
-} from 'lucide-react';
+import { ExternalLink, LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { ADMIN_MENU } from '../../lib/adminMenu';
+import { can } from '../../lib/permissions';
 import { useAuthStore } from '../../stores/auth';
 import Logo from './Logo';
-
-const MENU = [
-  { to: '/admin', label: 'Tổng quan', icon: ChartColumn, end: true },
-  { to: '/admin/orders', label: 'Đơn hàng', icon: Receipt },
-  { to: '/admin/reservations', label: 'Đặt bàn', icon: CalendarDays },
-  { to: '/admin/dishes', label: 'Món ăn', icon: UtensilsCrossed },
-  { to: '/admin/categories', label: 'Danh mục', icon: FolderTree },
-  { to: '/admin/coupons', label: 'Mã giảm giá', icon: Ticket },
-  { to: '/admin/reviews', label: 'Đánh giá', icon: MessageSquare },
-  { to: '/admin/users', label: 'Người dùng', icon: Users },
-];
 
 export default function AdminLayout() {
   const [open, setOpen] = useState(false);
@@ -40,7 +18,7 @@ export default function AdminLayout() {
         <Logo light to="/admin" />
       </div>
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {MENU.map(({ to, label, icon: Icon, end }) => (
+        {ADMIN_MENU.filter((m) => can(user, m.module)).map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
@@ -96,7 +74,7 @@ export default function AdminLayout() {
           <div className="ml-auto flex items-center gap-3">
             <div className="text-right">
               <p className="text-sm font-medium">{user?.name}</p>
-              <p className="text-xs text-slate-500">{user?.email}</p>
+              <p className="text-xs text-slate-500">{user?.role === 'ADMIN' ? 'Quản trị viên' : user?.staffRole?.name ?? user?.email}</p>
             </div>
             <span className="grid h-9 w-9 place-items-center rounded-full bg-coral-500 font-semibold text-white">
               {user?.name?.charAt(0)}

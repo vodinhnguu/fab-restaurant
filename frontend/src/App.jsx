@@ -1,10 +1,12 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import AdminLayout from './components/layout/AdminLayout';
 import CustomerLayout from './components/layout/CustomerLayout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import { Spinner } from './components/ui/Feedback';
 import Home from './pages/Home';
+import { ADMIN_MENU } from './lib/adminMenu';
+import { can } from './lib/permissions';
 import { authApi } from './services';
 import { useAuthStore } from './stores/auth';
 
@@ -34,6 +36,15 @@ const AdminCategories = lazy(() => import('./pages/admin/Categories'));
 const AdminCoupons = lazy(() => import('./pages/admin/Coupons'));
 const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
+const AdminPermissions = lazy(() => import('./pages/admin/Permissions'));
+
+// /admin: có quyền xem Tổng quan thì vào Dashboard, không thì chuyển tới trang đầu tiên được phép
+function AdminHome() {
+  const user = useAuthStore((s) => s.user);
+  if (can(user, 'DASHBOARD')) return <Dashboard />;
+  const first = ADMIN_MENU.find((m) => can(user, m.module));
+  return first ? <Navigate to={first.to} replace /> : null;
+}
 
 export default function App() {
   const token = useAuthStore((s) => s.token);
@@ -74,17 +85,22 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Route>
 
-        {/* ===== Trang quản trị (chỉ ADMIN) ===== */}
-        <Route element={<ProtectedRoute role="ADMIN" />}>
+        {/* ===== Trang quản trị: admin + nhân viên, mỗi trang cần quyền Xem chức năng tương ứng ===== */}
+        <Route element={<ProtectedRoute admin />}>
           <Route path="admin" element={<AdminLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="orders" element={<AdminOrders />} />
-            <Route path="reservations" element={<AdminReservations />} />
-            <Route path="dishes" element={<AdminDishes />} />
-            <Route path="categories" element={<AdminCategories />} />
-            <Route path="coupons" element={<AdminCoupons />} />
-            <Route path="reviews" element={<AdminReviews />} />
-            <Route path="users" element={<AdminUsers />} />
+            <Route index element={<AdminHome />} />
+            <Route element={<ProtectedRoute module="ORDERS" />}><Route path="orders" element={<AdminOrders />} /></Route>
+            <Route element={<ProtectedRoute module="RESERVATIONS" />}><Route path="reservations" element={<AdminReservations />} /></Route>
+            <Route element={<ProtectedRoute module="MENU" />}>
+              <Route path="dishes" element={<AdminDishes />} />
+              <Route path="categories" element={<AdminCategories />} />
+            </Route>
+            <Route element={<ProtectedRoute module="COUPONS" />}><Route path="coupons" element={<AdminCoupons />} /></Route>
+            <Route element={<ProtectedRoute module="REVIEWS" />}><Route path="reviews" element={<AdminReviews />} /></Route>
+            <Route element={<ProtectedRoute module="STAFF" />}>
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="permissions" element={<AdminPermissions />} />
+            </Route>
           </Route>
         </Route>
       </Routes>
