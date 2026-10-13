@@ -57,6 +57,12 @@ npm run dev
 
 Mở http://localhost:5173
 
+**Máy khác / sau khi `git pull`:**
+- Máy mới clone về: chạy đủ 4 bước trên.
+- Máy đã chạy rồi, chỉ pull code mới: `npm run install:all` rồi `npm --prefix backend run db:deploy` (cập nhật bảng, **không xóa** dữ liệu), sau đó `npm run dev`.
+- `backend/.env` không có trên git (chứa khóa bí mật). Muốn dùng VNPay trên máy mới thì tự chép `VNP_TMN_CODE`, `VNP_HASH_SECRET` sang.
+- Dùng Claude Code: file [CLAUDE.md](CLAUDE.md) ghi sẵn cách chạy và tài khoản demo, AI tự đọc khi mở dự án.
+
 | Tài khoản demo | Email | Mật khẩu |
 |---|---|---|
 | Admin | admin@fab.vn | admin123 |
