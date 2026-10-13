@@ -1,29 +1,21 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import { CalendarCheck, Clock, Phone, Users } from 'lucide-react';
-import { useState } from 'react';
+import { CalendarCheck, Clock, Phone, Users, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import TableMap, { TableLegend } from '../components/TableMap';
 import Button from '../components/ui/Button';
+import { Spinner } from '../components/ui/Feedback';
 import { Field, Input, Select, Textarea } from '../components/ui/Form';
 import { formatDateTime } from '../lib/format';
 import { useDocumentTitle, useInfo } from '../lib/hooks';
+import { timeSlots, toVnIso } from '../lib/reservation';
 import { reservationApi } from '../services';
 import { useAuthStore } from '../stores/auth';
 
 const IMG = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80&auto=format&fit=crop';
-
-// Tạo danh sách khung giờ 30 phút một, từ giờ mở cửa đến trước giờ đóng 1 tiếng
-function timeSlots(open = '10:00', close = '22:00') {
-  const slots = [];
-  const [oh, om] = open.split(':').map(Number);
-  const [ch] = close.split(':').map(Number);
-  for (let m = oh * 60 + om; m <= (ch - 1) * 60; m += 30) {
-    slots.push(`${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`);
-  }
-  return slots;
-}
 
 export default function Reservation() {
   useDocumentTitle('Đặt bàn');
@@ -31,7 +23,7 @@ export default function Reservation() {
   const { data: info } = useInfo();
   const [success, setSuccess] = useState(null);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
       name: user?.name || '',
       phone: user?.phone || '',
@@ -40,9 +32,28 @@ export default function Reservation() {
       time: '19:00',
       guests: 2,
       area: '',
+      tableId: null,
       note: '',
     },
   });
+
+  // ----- Sơ đồ bàn: chọn khu vực -> hiện bàn trống / đã có khách tại đúng ngày giờ đã chọn -----
+  const [day, time, guests, area, tableId] = watch(['day', 'time', 'guests', 'area', 'tableId']);
+  const when = day && time ? toVnIso(day, time) : null;
+  const tableQuery = useQuery({
+    queryKey: ['table-map', when],
+    queryFn: () => reservationApi.tables(when),
+    enabled: !!area && !!when,
+    refetchInterval: 30000, // 30 giây cập nhật 1 lần, phòng người khác vừa đặt
+  });
+  const areaMap = tableQuery.data?.areas.find((a) => a.name === area);
+  const selectedTable = areaMap?.tables.find((t) => t.id === tableId);
+
+  // Đổi khu vực / giờ / số khách mà bàn đã chọn không còn phù hợp -> bỏ chọn
+  useEffect(() => {
+    if (!tableId || !tableQuery.data) return;
+    if (!selectedTable || selectedTable.status !== 'free' || selectedTable.seats < (guests || 1)) setValue('tableId', null);
+  }, [tableId, selectedTable, guests, tableQuery.data, setValue]);
 
   const mutation = useMutation({
     mutationFn: reservationApi.create,
@@ -50,12 +61,15 @@ export default function Reservation() {
       setSuccess(data);
       reset();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => {
+      toast.error(e.message);
+      if (e.status === 409) tableQuery.refetch(); // bàn vừa bị người khác đặt -> tải lại sơ đồ
+    },
   });
 
-  const onSubmit = ({ day, time, ...rest }) => {
+  const onSubmit = ({ day, time, tableId, ...rest }) => {
     // Ghép ngày + giờ theo múi giờ Việt Nam rồi gửi dạng ISO
-    mutation.mutate({ ...rest, date: new Date(`${day}T${time}:00+07:00`).toISOString() });
+    mutation.mutate({ ...rest, tableId: tableId || undefined, date: toVnIso(day, time) });
   };
 
   if (success) {
@@ -71,6 +85,7 @@ export default function Reservation() {
             <p>Thời gian: <b>{formatDateTime(success.date)}</b></p>
             <p>Số khách: <b>{success.guests}</b></p>
             {success.area && <p>Khu vực: <b>{success.area}</b></p>}
+            {success.table && <p>Bàn: <b>{success.table.code}</b> ({success.table.seats} ghế)</p>}
           </div>
           <div className="mt-6 flex justify-center gap-3">
             <Button as={Link} to={`/reservations/${success.code}?phone=${encodeURIComponent(success.phone)}`} variant="outline">Xem chi tiết</Button>
@@ -125,12 +140,35 @@ export default function Reservation() {
               </div>
             </Field>
           </div>
-          <Field label="Khu vực mong muốn">
+          <Field label="Khu vực mong muốn" hint={!area && 'Chọn khu vực để xem sơ đồ và chọn bàn'}>
             <Select {...register('area')}>
               <option value="">Không yêu cầu</option>
               {info?.reservationAreas.map((a) => <option key={a}>{a}</option>)}
             </Select>
           </Field>
+
+          {area && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="text-sm font-medium text-slate-700">Chọn bàn <span className="font-normal text-slate-400">(không bắt buộc)</span></p>
+                {when && <p className="text-xs text-slate-500">Tình trạng lúc {time} ngày {dayjs(day).format('DD/MM')}</p>}
+              </div>
+              <TableLegend />
+              {tableQuery.isLoading ? <Spinner className="py-8" /> : tableQuery.isError ? (
+                <p className="text-sm text-red-600">{tableQuery.error.message}</p>
+              ) : areaMap && (
+                <TableMap area={areaMap} guests={guests} selectedId={tableId} onSelect={(t) => setValue('tableId', t.id === tableId ? null : t.id)} />
+              )}
+              {selectedTable ? (
+                <p className="flex items-center justify-between rounded-xl bg-ocean-50 px-3 py-2 text-sm text-ocean-800">
+                  <span>Đã chọn bàn <b>{selectedTable.code}</b> · {selectedTable.seats} ghế</span>
+                  <button type="button" onClick={() => setValue('tableId', null)} className="inline-flex items-center gap-1 text-xs hover:underline"><X className="h-3.5 w-3.5" /> Bỏ chọn</button>
+                </p>
+              ) : (
+                <p className="text-xs text-slate-500">Bấm vào một bàn màu xanh lá để chọn. Không chọn thì nhà hàng sẽ xếp bàn giúp bạn.</p>
+              )}
+            </div>
+          )}
           <Field label="Ghi chú">
             <Textarea placeholder="Sinh nhật, ghế trẻ em, dị ứng thực phẩm..." {...register('note')} />
           </Field>

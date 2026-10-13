@@ -64,7 +64,7 @@ export default function ReservationDetail() {
         <ul className="mt-6 space-y-3 rounded-xl bg-ocean-50 p-5 text-sm">
           <li className="flex items-center gap-3"><CalendarDays className="h-4 w-4 text-ocean-500" /> {formatDateTime(r.date)}</li>
           <li className="flex items-center gap-3"><Users className="h-4 w-4 text-ocean-500" /> {r.guests} khách</li>
-          {r.area && <li className="flex items-center gap-3"><MapPin className="h-4 w-4 text-ocean-500" /> {r.area}</li>}
+          {r.area && <li className="flex items-center gap-3"><MapPin className="h-4 w-4 text-ocean-500" /> {r.area}{r.table && <b>· Bàn {r.table.code}</b>}</li>}
           <li className="flex items-center gap-3"><Phone className="h-4 w-4 text-ocean-500" /> {r.name} · {r.phone}</li>
         </ul>
         {r.note && <p className="mt-4 text-sm text-slate-600"><span className="text-slate-500">Ghi chú:</span> {r.note}</p>}

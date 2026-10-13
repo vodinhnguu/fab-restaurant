@@ -50,6 +50,8 @@ export const paymentApi = {
 export const reservationApi = {
   create: (body) => api.post('/reservations', body).then((r) => r.data),
   my: () => api.get('/reservations/my').then((r) => r.data),
+  // Sơ đồ bàn tại 1 thời điểm (ISO): { diningMinutes, areas: [{ name, cols, rows, tables }] }
+  tables: (date) => api.get('/reservations/tables', { params: { date } }).then((r) => r.data),
   track: (code, phone) => api.get(`/reservations/track/${code}`, { params: { phone } }).then((r) => r.data),
   cancel: (code, phone) => api.post(`/reservations/${code}/cancel`, { phone }),
   // admin

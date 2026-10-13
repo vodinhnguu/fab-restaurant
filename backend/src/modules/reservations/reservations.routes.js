@@ -7,10 +7,13 @@ import {
   cancelReservationSchema,
   createReservationSchema,
   reservationQuerySchema,
+  tableMapQuerySchema,
   updateReservationStatusSchema,
 } from './reservations.validation.js';
 
 const router = Router();
+// Sơ đồ bàn được tải lại mỗi khi khách đổi ngày / giờ nên cho thoải mái hơn
+const mapLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300 });
 
 // Tra cứu bằng mã + SĐT: giới hạn để không ai dò thử hàng loạt SĐT
 const trackLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 60 });
@@ -19,6 +22,8 @@ const createLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: 'B
 
 router.post('/', createLimiter, optionalAuth, validate(createReservationSchema), ctrl.create);
 router.get('/my', requireAuth, ctrl.myReservations);
+// Sơ đồ bàn: ai cũng xem được trống / bận; nhân viên có quyền thì thấy thêm tên khách
+router.get('/tables', mapLimiter, optionalAuth, validate(tableMapQuerySchema, 'query'), ctrl.tables);
 router.get('/track/:code', trackLimiter, optionalAuth, ctrl.track);
 router.post('/:code/cancel', trackLimiter, optionalAuth, validate(cancelReservationSchema), ctrl.cancel);
 

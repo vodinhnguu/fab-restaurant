@@ -192,12 +192,28 @@ model Reservation {
   date      DateTime // Ngày giờ đến
   guests    Int
   area      String? // Khu vực mong muốn: trong nhà, ngoài trời, phòng VIP
+  tableId   Int? // Bàn khách chọn trên sơ đồ (không bắt buộc)
+  table     DiningTable?      @relation(fields: [tableId], references: [id], onDelete: SetNull)
   note      String?
   status    ReservationStatus @default(PENDING)
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
 
   @@index([date])
+  @@index([tableId, date])
+}
+
+// Bàn trong nhà hàng, vẽ thành sơ đồ theo khu vực. Bàn mặc định: src/config/tables.js
+// Tài liệu: docs/13-so-do-ban.md
+model DiningTable {
+  id           Int           @id @default(autoincrement())
+  code         String        @unique // Số bàn hiển thị, vd: T01, BIEN03, VIP1
+  area         String // Khớp 1 trong restaurant.reservationAreas
+  seats        Int // Số ghế tối đa
+  x            Int // Cột trên sơ đồ (bắt đầu từ 1)
+  y            Int // Hàng trên sơ đồ (bắt đầu từ 1)
+  isActive     Boolean       @default(true) // Tắt khi bàn hỏng / đang sửa
+  reservations Reservation[]
 }
 
 model Review {

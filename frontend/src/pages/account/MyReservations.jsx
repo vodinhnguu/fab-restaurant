@@ -41,7 +41,7 @@ export default function MyReservations() {
             <p className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-600">
               <span className="flex items-center gap-1"><CalendarDays className="h-4 w-4" /> {formatDateTime(r.date)}</span>
               <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {r.guests} khách</span>
-              {r.area && <span>{r.area}</span>}
+              {r.area && <span>{r.area}{r.table && ` · Bàn ${r.table.code}`}</span>}
             </p>
             {r.note && <p className="mt-1 text-sm text-slate-500">Ghi chú: {r.note}</p>}
           </div>

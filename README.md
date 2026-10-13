@@ -114,6 +114,7 @@ Nên đọc theo thứ tự:
 10. [Sổ tay toàn tập](docs/10-so-tay-toan-tap.md): **một tài liệu đủ mọi thứ trên web**, đi qua từng chức năng (người dùng thấy gì, dữ liệu chạy qua đâu, code ở file nào, quy tắc nghiệp vụ), kèm câu hỏi tự kiểm tra và từ điển thuật ngữ
 11. [Thanh toán VNPay](docs/11-thanh-toan-vnpay.md): luồng thanh toán, chữ ký, IPN, đăng ký sandbox, chuẩn bị nhận tiền thật
 12. [Ma trận phân quyền](docs/12-ma-tran-phan-quyen.md): tài khoản nhân viên, 12 vai trò × 11 chức năng, backend chặn theo quyền
+13. [Sơ đồ bàn](docs/13-so-do-ban.md): chọn bàn theo khu vực khi đặt, màu bàn trống / đã có khách, sơ đồ cho admin
 
 👉 Mới bắt đầu? Đọc **10** trước để có bức tranh toàn cảnh. Khi đang code, mở sẵn **08** và **09** để tra cứu nhanh.
 

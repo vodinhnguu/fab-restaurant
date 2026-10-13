@@ -2,6 +2,7 @@
 // CẢNH BÁO: script này XÓA toàn bộ dữ liệu cũ trong database rồi tạo lại.
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { seedDefaultTables } from '../src/config/tables.js';
 import { seedDefaultRoles } from '../src/modules/permissions/permissions.service.js';
 
 const prisma = new PrismaClient();
@@ -83,6 +84,7 @@ async function main() {
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.reservation.deleteMany();
+  await prisma.diningTable.deleteMany();
   await prisma.dish.deleteMany();
   await prisma.category.deleteMany();
   await prisma.coupon.deleteMany();
@@ -248,12 +250,14 @@ async function main() {
     d.setHours(hour, 0, 0, 0);
     return d;
   };
+  await seedDefaultTables(prisma);
+  const tables = Object.fromEntries((await prisma.diningTable.findMany()).map((t) => [t.code, t.id]));
   await prisma.reservation.createMany({
     data: [
-      { code: 'RSV0000001', userId: demo.id, name: demo.name, phone: demo.phone, date: at(1, 19), guests: 4, area: 'Ngoài trời - view biển', status: 'CONFIRMED', note: 'Sinh nhật, chuẩn bị giúp bánh kem' },
-      { code: 'RSV0000002', name: 'Phạm Quốc Huy', phone: '0987654321', date: at(0, 20), guests: 2, area: 'Trong nhà', status: 'PENDING' },
-      { code: 'RSV0000003', name: 'Công ty ABC', phone: '0977000111', email: 'hr@abc.vn', date: at(3, 18), guests: 12, area: 'Phòng VIP', status: 'PENDING', note: 'Tiệc công ty' },
-      { code: 'RSV0000004', name: 'Võ Thị Lan', phone: '0966000222', date: at(-2, 19), guests: 3, area: 'Trong nhà', status: 'COMPLETED' },
+      { code: 'RSV0000001', tableId: tables.B03, userId: demo.id, name: demo.name, phone: demo.phone, date: at(1, 19), guests: 4, area: 'Ngoài trời - view biển', status: 'CONFIRMED', note: 'Sinh nhật, chuẩn bị giúp bánh kem' },
+      { code: 'RSV0000002', tableId: tables.T01, name: 'Phạm Quốc Huy', phone: '0987654321', date: at(0, 20), guests: 2, area: 'Trong nhà', status: 'PENDING' },
+      { code: 'RSV0000003', tableId: tables.VIP2, name: 'Công ty ABC', phone: '0977000111', email: 'hr@abc.vn', date: at(3, 18), guests: 12, area: 'Phòng VIP', status: 'PENDING', note: 'Tiệc công ty' },
+      { code: 'RSV0000004', tableId: tables.T03, name: 'Võ Thị Lan', phone: '0966000222', date: at(-2, 19), guests: 3, area: 'Trong nhà', status: 'COMPLETED' },
     ],
   });
 

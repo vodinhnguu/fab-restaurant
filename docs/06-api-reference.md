@@ -118,7 +118,8 @@ Kết quả trả về: đơn hàng đầy đủ gồm `code`, `subtotal`, `disc
 ## Đặt bàn
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
-| POST | `/reservations` | 🔓 | `{ name, phone, date (ISO), guests, email?, area?, note? }`. Phải đặt trước ít nhất 30 phút và trong giờ mở cửa |
+| POST | `/reservations` | 🔓 | `{ name, phone, date (ISO), guests, email?, area?, tableId?, note? }`. Phải đặt trước ít nhất 30 phút và trong giờ mở cửa. Có `tableId` thì bàn phải trống và đủ ghế (xem [13](13-so-do-ban.md)) |
+| GET | `/reservations/tables?date=<ISO>` | 🌐 | Sơ đồ bàn theo khu vực + trạng thái `free` / `pending` / `occupied` / `inactive` tại thời điểm đó (300 lần / 15 phút) |
 | GET | `/reservations/my` | 👤 | Lịch của tôi |
 | GET | `/reservations/track/:code?phone=` | 🔓 | Xem 1 lịch (chủ lịch, admin, hoặc đúng SĐT; SĐT có dấu cách vẫn được) |
 | POST | `/reservations/:code/cancel` | 🔓 | `{ phone? }`. Hủy khi đang `PENDING` hoặc `CONFIRMED` **và chưa tới giờ hẹn** |

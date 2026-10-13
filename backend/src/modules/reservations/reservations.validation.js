@@ -17,6 +17,7 @@ export const createReservationSchema = z
     date: z.coerce.date({ error: 'Vui lòng chọn ngày giờ' }),
     guests: z.coerce.number().int().min(1, 'Ít nhất 1 khách').max(50, 'Tối đa 50 khách, đoàn lớn vui lòng gọi hotline'),
     area: z.string().trim().max(100).optional().nullable(),
+    tableId: z.number().int().positive().optional().nullable(), // bàn chọn trên sơ đồ
     note: z.string().trim().max(500).optional().nullable(),
   })
   .refine((r) => r.date.getTime() > Date.now() + 30 * 60 * 1000, {
@@ -49,4 +50,9 @@ export const reservationQuerySchema = z.object({
   search: z.string().trim().optional(),
   page: z.coerce.number().optional(),
   limit: z.coerce.number().optional(),
+});
+
+// Xem sơ đồ bàn tại 1 thời điểm
+export const tableMapQuerySchema = z.object({
+  date: z.coerce.date({ error: 'Thiếu thời gian' }),
 });

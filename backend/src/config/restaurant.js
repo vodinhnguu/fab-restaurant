@@ -8,5 +8,6 @@ export const restaurant = {
   mapEmbedUrl: 'https://www.google.com/maps?q=V%C3%B5%20Nguy%C3%AAn%20Gi%C3%A1p%20S%C6%A1n%20Tr%C3%A0%20%C4%90%C3%A0%20N%E1%BA%B5ng&output=embed',
   openingHours: { open: '10:00', close: '22:00' },
   reservationAreas: ['Trong nhà', 'Ngoài trời - view biển', 'Phòng VIP'],
+  diningMinutes: 120, // 1 bữa ăn ~2 tiếng: bàn đã đặt lúc 19:00 thì bận từ 17:01 đến 20:59
   socials: { facebook: 'https://facebook.com', instagram: 'https://instagram.com', tiktok: 'https://tiktok.com' },
 };
