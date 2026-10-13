@@ -63,6 +63,7 @@ Các điểm cần nắm:
   - `requireAuth`: bắt buộc đăng nhập
   - `optionalAuth`: có token thì gắn `req.user`, không có cũng được
   - `requireRole('ADMIN')` / `requireAdmin`: kiểm tra vai trò
+  - `requirePermission('ORDERS', 'edit')`: kiểm tra theo ma trận phân quyền (ADMIN luôn qua, nhân viên xét theo vai trò). Xem [12-ma-tran-phan-quyen.md](12-ma-tran-phan-quyen.md)
 
 ## 4. Kiểm tra dữ liệu với Zod
 

@@ -260,6 +260,7 @@ Mở http://localhost:5173. Khi `pull` code mới về, nhớ chạy lại `npm 
 | Vai trò | Email | Mật khẩu | Ghi chú |
 |---|---|---|---|
 | Admin | `admin@fab.vn` | `admin123` | Vào được `/admin` |
+| Nhân viên | `quanly@` `thungan@` `letan@` `bep@fab.vn` | `123456` | Vào `/admin` nhưng chỉ thấy mục được cấp quyền |
 | Khách | `khach@fab.vn` | `123456` | Tên *Nguyễn Văn An*, SĐT `0901234567`. Có sẵn 1 đơn **đã hoàn thành** (mã `FAB0000DEMO`) để thử chức năng đánh giá |
 | Khách | `binh@fab.vn`, `chau@fab.vn` | `123456` | Đã đánh giá các món nổi bật |
 
@@ -731,11 +732,11 @@ Bộ đếm lưu trong RAM (`Map`), nên khởi động lại server là bộ đ
 
 # PHẦN III: TỪNG CHỨC NĂNG PHÍA QUẢN TRỊ
 
-> Đăng nhập `admin@fab.vn` / `admin123` để vào `/admin`. Mọi API admin đều có `requireAdmin` ở file routes, và **đó** mới là lớp bảo vệ thật sự.
+> Đăng nhập `admin@fab.vn` / `admin123` để vào `/admin`. Mọi API admin đều có `requireAdmin` hoặc `requirePermission(...)` ở file routes, và **đó** mới là lớp bảo vệ thật sự. Nhân viên (vd `thungan@fab.vn`) chỉ thấy các mục được cấp quyền, xem [12-ma-tran-phan-quyen.md](12-ma-tran-phan-quyen.md).
 
 ## 17. Khung trang admin
 
-**👀 Người dùng thấy gì:** thanh bên trái màu xanh đậm với 8 mục (màn hình nhỏ thì thu vào nút ☰), góc phải hiện tên + email admin, cuối thanh bên có "Xem trang khách" và "Đăng xuất".
+**👀 Người dùng thấy gì:** thanh bên trái màu xanh đậm với 9 mục (nhân viên chỉ thấy mục được cấp quyền) (màn hình nhỏ thì thu vào nút ☰), góc phải hiện tên + email admin, cuối thanh bên có "Xem trang khách" và "Đăng xuất".
 
 **📁 Code:** [layout/AdminLayout.jsx](../frontend/src/components/layout/AdminLayout.jsx) (mảng `MENU`), các trang trong [pages/admin/](../frontend/src/pages/admin/)
 

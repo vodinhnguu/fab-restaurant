@@ -61,6 +61,7 @@ Mở http://localhost:5173
 |---|---|---|
 | Admin | admin@fab.vn | admin123 |
 | Khách hàng | khach@fab.vn | 123456 |
+| Nhân viên (Quản lý / Thu ngân / Lễ tân / Bếp) | quanly@ / thungan@ / letan@ / bep@fab.vn | 123456 |
 
 Mã giảm giá mẫu: `WELCOME10`, `FAB50K`, `HAISAN20`
 
@@ -112,6 +113,7 @@ Nên đọc theo thứ tự:
 9. [Muốn sửa gì thì sửa ở đâu](docs/09-muon-sua-gi-thi-sua-o-dau.md): đổi thông tin, màu sắc, quy tắc nghiệp vụ, thêm trường/trang mới, cách tìm lỗi
 10. [Sổ tay toàn tập](docs/10-so-tay-toan-tap.md): **một tài liệu đủ mọi thứ trên web**, đi qua từng chức năng (người dùng thấy gì, dữ liệu chạy qua đâu, code ở file nào, quy tắc nghiệp vụ), kèm câu hỏi tự kiểm tra và từ điển thuật ngữ
 11. [Thanh toán VNPay](docs/11-thanh-toan-vnpay.md): luồng thanh toán, chữ ký, IPN, đăng ký sandbox, chuẩn bị nhận tiền thật
+12. [Ma trận phân quyền](docs/12-ma-tran-phan-quyen.md): tài khoản nhân viên, 12 vai trò × 11 chức năng, backend chặn theo quyền
 
 👉 Mới bắt đầu? Đọc **10** trước để có bức tranh toàn cảnh. Khi đang code, mở sẵn **08** và **09** để tra cứu nhanh.
 

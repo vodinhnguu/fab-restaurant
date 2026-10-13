@@ -34,7 +34,7 @@ Base URL: `http://localhost:4000/api/v1`
 
 **Tiền:** số nguyên, đơn vị VNĐ. **Thời gian:** chuỗi ISO 8601 theo giờ UTC (`2026-10-01T12:00:00.000Z`). Khi hiển thị cần đổi sang giờ Việt Nam.
 
-Ký hiệu cột Quyền: 🌐 công khai · 👤 cần đăng nhập · 🔓 có đăng nhập hay không đều được · 🛡️ chỉ ADMIN
+Ký hiệu cột Quyền: 🌐 công khai · 👤 cần đăng nhập · 🔓 có đăng nhập hay không đều được · 🛡️ ADMIN hoặc nhân viên có quyền tương ứng trong [ma trận phân quyền](12-ma-tran-phan-quyen.md#5-quyền-cần-có-cho-từng-api)
 
 ---
 
@@ -139,11 +139,13 @@ Kết quả trả về: đơn hàng đầy đủ gồm `code`, `subtotal`, `disc
 | POST | `/coupons/check` | 🌐 | `{ code, subtotal }` → `{ code, discount, description }` |
 | GET / POST / PUT / DELETE | `/coupons`, `/coupons/:id` | 🛡️ | CRUD. `{ code, type: PERCENT|FIXED, value, minOrder?, maxDiscount?, usageLimit?, startsAt?, expiresAt?, isActive? }` |
 
-## Người dùng, thống kê, upload (Admin)
+## Người dùng, thống kê, upload (Admin / nhân viên có quyền)
 | Method | Endpoint | Mô tả |
 |---|---|---|
-| GET | `/users?search=&role=&page=` | Danh sách người dùng |
-| PATCH | `/users/:id` | `{ role?, isActive? }` (không thể tự sửa chính mình) |
+| GET | `/users?search=&role=&staffRoleId=&page=` | Danh sách người dùng. `role`: `CUSTOMER` / `STAFF` / `ADMIN` |
+| POST | `/users` | Tạo tài khoản nhân viên: `{ name, email, phone?, password, role?: STAFF|ADMIN, staffRoleId }`. Chỉ ADMIN tạo được tài khoản ADMIN |
+| POST | `/users/:id/reset-password` | `{ password }` đặt lại mật khẩu (không dùng cho chính mình) |
+| PATCH | `/users/:id` | `{ role?, staffRoleId?, isActive? }`. `role: STAFF` bắt buộc có vai trò. Không tự sửa chính mình; nhân viên không sửa được tài khoản ADMIN |
 | GET | `/stats/overview?days=30` | Doanh thu, số đơn, `revenueByDay[]`, `topDishes[]`, `ordersByStatus[]`, `recentOrders[]` |
 | POST | `/upload` | `multipart/form-data`, field `image` (tối đa 5MB) → `{ url: "/uploads/xxx.jpg" }` |
 
