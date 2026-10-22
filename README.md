@@ -22,6 +22,7 @@ Backend là REST API dùng chung cho cả web và app mobile (Flutter) sau này.
 - Theo dõi đơn hàng theo dòng thời gian, tự cập nhật mỗi 15 giây, khách được tự hủy khi đơn còn chờ xác nhận
 - Tra cứu đơn hàng **và lịch đặt bàn** không cần tài khoản (mã + số điện thoại), tự hủy lịch đặt bàn
 - Đặt bàn: chọn ngày, giờ, số khách, khu vực. Có kiểm tra giờ mở cửa
+- Lịch bị nhà hàng hủy: khách xem lý do, bấm "Đặt lại ngày/giờ khác" với thông tin cũ đã điền sẵn
 - Tài khoản: đăng ký, đăng nhập, sửa hồ sơ, đổi mật khẩu, lịch sử đơn và lịch đặt bàn
 - Đánh giá món (chỉ khi đã nhận món đó)
 - Bảo mật: mật khẩu được hash bằng bcrypt, JWT, phân quyền, giới hạn số lần đăng nhập (rate limit)
@@ -29,7 +30,7 @@ Backend là REST API dùng chung cho cả web và app mobile (Flutter) sau này.
 ### Admin (`/admin`)
 - Dashboard: doanh thu, số đơn, biểu đồ doanh thu theo ngày, top món bán chạy, đơn mới nhất
 - Quản lý đơn hàng: lọc theo trạng thái, tìm kiếm, xem chi tiết, chuyển trạng thái theo đúng quy trình
-- Quản lý đặt bàn: lọc theo ngày và trạng thái, xác nhận, hủy, đánh dấu khách đã đến
+- Quản lý đặt bàn: lọc theo ngày và trạng thái, xác nhận, hủy (bắt buộc ghi lý do cho khách xem), đánh dấu khách đã đến
 - CRUD món ăn (upload ảnh, bật/tắt còn món), danh mục, mã giảm giá
 - Kiểm duyệt đánh giá, quản lý người dùng (phân quyền, khóa tài khoản)
 
@@ -121,6 +122,7 @@ Nên đọc theo thứ tự:
 11. [Thanh toán VNPay](docs/11-thanh-toan-vnpay.md): luồng thanh toán, chữ ký, IPN, đăng ký sandbox, chuẩn bị nhận tiền thật
 12. [Ma trận phân quyền](docs/12-ma-tran-phan-quyen.md): tài khoản nhân viên, 12 vai trò × 11 chức năng, backend chặn theo quyền
 13. [Sơ đồ bàn](docs/13-so-do-ban.md): chọn bàn theo khu vực khi đặt, màu bàn trống / đã có khách, sơ đồ cho admin
+14. [Lý do hủy đặt bàn](docs/14-ly-do-huy-dat-ban.md): admin chọn / ghi lý do khi hủy, khách xem lý do và đặt lại ngày giờ khác
 
 👉 Mới bắt đầu? Đọc **10** trước để có bức tranh toàn cảnh. Khi đang code, mở sẵn **08** và **09** để tra cứu nhanh.
 

@@ -224,7 +224,9 @@ Hiện tại khách chỉ được hủy khi đơn còn `PENDING`. Sửa 2 chỗ
 | Tối đa 50 khách | [reservations.validation.js](../backend/src/modules/reservations/reservations.validation.js#L18) dòng 18 | [Reservation.jsx](../frontend/src/pages/Reservation.jsx#L122) dòng 122 |
 | Ngày mặc định trên form là ngày mai, 19:00 | | [Reservation.jsx](../frontend/src/pages/Reservation.jsx#L38-L39) dòng 38-39 |
 | Hủy được khi ở trạng thái nào | [reservations.controller.js](../backend/src/modules/reservations/reservations.controller.js#L34) dòng 34 | [MyReservations.jsx](../frontend/src/pages/account/MyReservations.jsx#L46) dòng 46 |
-| Admin thấy nút nào ở trạng thái nào | | [admin/Reservations.jsx](../frontend/src/pages/admin/Reservations.jsx#L15-L18): `ACTIONS` |
+| Admin thấy nút nào ở trạng thái nào | | [admin/Reservations.jsx](../frontend/src/pages/admin/Reservations.jsx): `ACTIONS` |
+| Lý do hủy có sẵn để admin bấm nhanh | (nhận mọi lý do, ≤ 300 ký tự) | [admin/Reservations.jsx](../frontend/src/pages/admin/Reservations.jsx): `CANCEL_REASONS` |
+| Bắt buộc lý do khi admin hủy | [reservations.validation.js](../backend/src/modules/reservations/reservations.validation.js): `updateReservationStatusSchema` | `CancelDialog`: nút Hủy lịch mờ khi chưa có lý do |
 
 ### B5. Đổi số lượng tối đa mỗi món trong giỏ (đang là 50)
 

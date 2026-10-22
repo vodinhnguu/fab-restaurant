@@ -124,7 +124,7 @@ Kết quả trả về: đơn hàng đầy đủ gồm `code`, `subtotal`, `disc
 | GET | `/reservations/track/:code?phone=` | 🔓 | Xem 1 lịch (chủ lịch, admin, hoặc đúng SĐT; SĐT có dấu cách vẫn được) |
 | POST | `/reservations/:code/cancel` | 🔓 | `{ phone? }`. Hủy khi đang `PENDING` hoặc `CONFIRMED` **và chưa tới giờ hẹn** |
 | GET | `/reservations` | 🛡️ | Query: `status`, `date=YYYY-MM-DD`, `search`, `page` |
-| PATCH | `/reservations/:id/status` | 🛡️ | `{ status: PENDING|CONFIRMED|CANCELLED|COMPLETED }` |
+| PATCH | `/reservations/:id/status` | 🛡️ | `{ status: PENDING|CONFIRMED|CANCELLED|COMPLETED, reason? }`. Hủy (`CANCELLED`) thì **bắt buộc** `reason` ≤ 300 ký tự, lưu vào `cancelReason` cho khách xem (xem [14](14-ly-do-huy-dat-ban.md)) |
 
 ## Đánh giá
 | Method | Endpoint | Quyền | Mô tả |
