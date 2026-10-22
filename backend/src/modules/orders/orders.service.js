@@ -22,10 +22,12 @@ export async function createOrder(input, user) {
     throw ApiError.badRequest('Nhà hàng chưa bật thanh toán online, vui lòng chọn thanh toán khi nhận hàng');
   }
 
-  // Gộp các dòng trùng món
+  // Gộp các dòng trùng món (ghi chú của các dòng trùng nối lại bằng "; ")
   const qtyByDish = new Map();
-  for (const { dishId, quantity } of input.items) {
+  const noteByDish = new Map();
+  for (const { dishId, quantity, note } of input.items) {
     qtyByDish.set(dishId, (qtyByDish.get(dishId) || 0) + quantity);
+    if (note) noteByDish.set(dishId, [noteByDish.get(dishId), note].filter(Boolean).join('; '));
   }
 
   // Lỗi trong transaction của PostgreSQL làm hỏng cả transaction -> trùng mã thì phải chạy lại cả transaction
@@ -36,7 +38,7 @@ export async function createOrder(input, user) {
 
     const items = dishes.map((d) => {
       if (!d.isAvailable) throw ApiError.badRequest(`Món "${d.name}" hiện đã hết`);
-      return { dishId: d.id, name: d.name, price: d.salePrice ?? d.price, quantity: qtyByDish.get(d.id) };
+      return { dishId: d.id, name: d.name, price: d.salePrice ?? d.price, quantity: qtyByDish.get(d.id), note: noteByDish.get(d.id) ?? null };
     });
 
     // 2. Tính tiền

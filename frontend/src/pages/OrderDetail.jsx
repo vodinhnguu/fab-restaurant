@@ -132,7 +132,10 @@ export default function OrderDetail() {
             {order.items.map((i) => (
               <li key={i.id} className="flex items-center gap-3 text-sm">
                 <img src={imageUrl(i.dish?.image)} alt="" className="h-12 w-12 rounded-lg object-cover" />
-                <span className="flex-1">{i.name} <span className="text-slate-400">× {i.quantity}</span></span>
+                <span className="flex-1">
+                  {i.name} <span className="text-slate-400">× {i.quantity}</span>
+                  {i.note && <span className="block text-xs text-ocean-700">Ghi chú: {i.note}</span>}
+                </span>
                 <span className="font-medium">{formatPrice(i.price * i.quantity)}</span>
               </li>
             ))}

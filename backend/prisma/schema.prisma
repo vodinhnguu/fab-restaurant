@@ -158,6 +158,7 @@ model OrderItem {
   name     String
   price    Int
   quantity Int
+  note     String? // Ghi chú khẩu vị riêng của món, vd "2 phần ít cay, 1 phần không hành"
 }
 
 // Mỗi lần khách bấm "Thanh toán" = 1 dòng Payment (1 đơn có thể thử trả nhiều lần).

@@ -53,7 +53,10 @@ function OrderModal({ id, onClose }) {
             <tbody>
               {order.items.map((i) => (
                 <tr key={i.id} className="border-b border-slate-100">
-                  <td className="py-2">{i.name}</td>
+                  <td className="py-2">
+                    {i.name}
+                    {i.note && <p className="text-xs font-medium text-coral-600">Ghi chú: {i.note}</p>}
+                  </td>
                   <td className="py-2 text-center text-slate-500">× {i.quantity}</td>
                   <td className="py-2 text-right">{formatPrice(i.price * i.quantity)}</td>
                 </tr>

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import ItemNote, { ItemNoteToggle } from '../components/ItemNote';
 import Button from '../components/ui/Button';
 import { EmptyState } from '../components/ui/Feedback';
 import { Field, Input, Textarea } from '../components/ui/Form';
@@ -48,6 +49,8 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [couponInput, setCouponInput] = useState('');
   const [coupon, setCoupon] = useState(null); // { code, discount, description }
+  const [noteFor, setNoteFor] = useState(null); // món đang mở ô ghi chú
+  const toggleNote = (dishId) => setNoteFor((id) => (id === dishId ? null : dishId));
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     defaultValues: { customerName: user?.name || '', phone: user?.phone || '', address: user?.address || '', note: '' },
@@ -115,7 +118,7 @@ export default function Checkout() {
       type,
       paymentMethod,
       couponCode: coupon?.code,
-      items: items.map((i) => ({ dishId: i.dishId, quantity: i.quantity })),
+      items: items.map((i) => ({ dishId: i.dishId, quantity: i.quantity, note: i.note?.trim() || undefined })),
     });
   };
 
@@ -189,15 +192,22 @@ export default function Checkout() {
         <aside className="lg:col-span-2">
           <div className="card sticky top-24 p-6">
             <h2 className="text-lg font-semibold">Đơn hàng ({items.length} món)</h2>
-            <ul className="mt-2 max-h-72 space-y-3 overflow-y-auto pt-2 pr-2">
+            <ul className="mt-2 max-h-[28rem] space-y-3 overflow-y-auto pt-2 pr-2">
               {items.map((i) => (
-                <li key={i.dishId} className="flex items-center gap-3">
-                  <div className="relative">
-                    <img src={imageUrl(i.image)} alt="" className="h-14 w-14 rounded-lg object-cover" />
-                    <span className="absolute -top-2 -right-2 grid h-5 w-5 place-items-center rounded-full bg-ocean-900 text-[11px] font-bold text-white">{i.quantity}</span>
+                <li key={i.dishId}>
+                  {/* Bấm vào món để mở ghi chú khẩu vị riêng của món đó */}
+                  <button type="button" onClick={() => toggleNote(i.dishId)} className="flex w-full items-center gap-3 rounded-lg text-left hover:bg-slate-50">
+                    <div className="relative">
+                      <img src={imageUrl(i.image)} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                      <span className="absolute -top-2 -right-2 grid h-5 w-5 place-items-center rounded-full bg-ocean-900 text-[11px] font-bold text-white">{i.quantity}</span>
+                    </div>
+                    <span className="flex-1 text-sm">{i.name}</span>
+                    <span className="text-sm font-medium">{formatPrice(i.price * i.quantity)}</span>
+                  </button>
+                  <div className="mt-1 pl-17">
+                    <ItemNoteToggle item={i} open={noteFor === i.dishId} onToggle={() => toggleNote(i.dishId)} />
                   </div>
-                  <span className="flex-1 text-sm">{i.name}</span>
-                  <span className="text-sm font-medium">{formatPrice(i.price * i.quantity)}</span>
+                  {noteFor === i.dishId && <ItemNote item={i} onDone={() => setNoteFor(null)} />}
                 </li>
               ))}
             </ul>

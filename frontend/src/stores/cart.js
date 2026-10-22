@@ -6,7 +6,7 @@ import { effectivePrice } from '../lib/format';
 export const useCartStore = create(
   persist(
     (set) => ({
-      items: [], // [{ dishId, name, slug, image, unit, price, quantity }]
+      items: [], // [{ dishId, name, slug, image, unit, category, price, quantity, note }]
       isOpen: false,
 
       open: () => set({ isOpen: true }),
@@ -28,8 +28,10 @@ export const useCartStore = create(
             slug: dish.slug,
             image: dish.image,
             unit: dish.unit,
+            category: dish.category?.name, // để gợi ý ghi chú theo loại món
             price: effectivePrice(dish),
             quantity,
+            note: '',
           };
           return { items: [...state.items, item] };
         }),
@@ -41,6 +43,10 @@ export const useCartStore = create(
               ? state.items.filter((i) => i.dishId !== dishId)
               : state.items.map((i) => (i.dishId === dishId ? { ...i, quantity: Math.min(50, quantity) } : i)),
         })),
+
+      // Ghi chú khẩu vị riêng của từng món
+      setNote: (dishId, note) =>
+        set((state) => ({ items: state.items.map((i) => (i.dishId === dishId ? { ...i, note } : i)) })),
 
       remove: (dishId) => set((state) => ({ items: state.items.filter((i) => i.dishId !== dishId) })),
       clear: () => set({ items: [] }),

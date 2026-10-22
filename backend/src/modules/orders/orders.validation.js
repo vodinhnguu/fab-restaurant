@@ -17,6 +17,7 @@ export const createOrderSchema = z
         z.object({
           dishId: z.coerce.number().int().positive(),
           quantity: z.coerce.number().int().min(1).max(50),
+          note: z.string().trim().max(200, 'Ghi chú món tối đa 200 ký tự').optional().nullable(), // khẩu vị riêng của món
         }),
       )
       .min(1, 'Giỏ hàng trống'),

@@ -1,8 +1,9 @@
 import { ShoppingBag, Trash2, X } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatPrice, imageUrl } from '../../lib/format';
 import { selectSubtotal, useCartStore } from '../../stores/cart';
+import ItemNote, { ItemNoteToggle } from '../ItemNote';
 import Button from '../ui/Button';
 import { EmptyState } from '../ui/Feedback';
 import QuantityInput from '../ui/QuantityInput';
@@ -11,6 +12,8 @@ export default function CartDrawer() {
   const { items, isOpen, close, setQuantity, remove } = useCartStore();
   const subtotal = useCartStore(selectSubtotal);
   const navigate = useNavigate();
+  const [noteFor, setNoteFor] = useState(null); // món đang mở ô ghi chú
+  const toggleNote = (dishId) => setNoteFor((id) => (id === dishId ? null : dishId));
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
@@ -42,23 +45,29 @@ export default function CartDrawer() {
           <>
             <ul className="flex-1 divide-y divide-slate-100 overflow-y-auto px-5">
               {items.map((item) => (
-                <li key={item.dishId} className="flex gap-3 py-4">
-                  <img src={imageUrl(item.image)} alt={item.name} className="h-20 w-20 rounded-xl object-cover" />
-                  <div className="flex flex-1 flex-col">
-                    <div className="flex justify-between gap-2">
-                      <Link to={`/menu/${item.slug}`} onClick={close} className="line-clamp-2 text-sm font-medium hover:text-coral-600">
-                        {item.name}
-                      </Link>
-                      <button onClick={() => remove(item.dishId)} className="text-slate-400 hover:text-red-500" aria-label="Xóa">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <span className="text-xs text-slate-500">{formatPrice(item.price)} / {item.unit}</span>
-                    <div className="mt-auto flex items-center justify-between pt-2">
-                      <QuantityInput size="sm" value={item.quantity} min={0} onChange={(q) => setQuantity(item.dishId, q)} />
-                      <span className="font-semibold">{formatPrice(item.price * item.quantity)}</span>
+                <li key={item.dishId} className="py-4">
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => toggleNote(item.dishId)} className="shrink-0" aria-label={`Ghi chú cho ${item.name}`}>
+                      <img src={imageUrl(item.image)} alt={item.name} className="h-20 w-20 rounded-xl object-cover" />
+                    </button>
+                    <div className="flex flex-1 flex-col">
+                      <div className="flex justify-between gap-2">
+                        <Link to={`/menu/${item.slug}`} onClick={close} className="line-clamp-2 text-sm font-medium hover:text-coral-600">
+                          {item.name}
+                        </Link>
+                        <button onClick={() => remove(item.dishId)} className="text-slate-400 hover:text-red-500" aria-label="Xóa">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <span className="text-xs text-slate-500">{formatPrice(item.price)} / {item.unit}</span>
+                      <ItemNoteToggle item={item} open={noteFor === item.dishId} onToggle={() => toggleNote(item.dishId)} />
+                      <div className="mt-auto flex items-center justify-between pt-2">
+                        <QuantityInput size="sm" value={item.quantity} min={0} onChange={(q) => setQuantity(item.dishId, q)} />
+                        <span className="font-semibold">{formatPrice(item.price * item.quantity)}</span>
+                      </div>
                     </div>
                   </div>
+                  {noteFor === item.dishId && <ItemNote item={item} onDone={() => setNoteFor(null)} />}
                 </li>
               ))}
             </ul>
