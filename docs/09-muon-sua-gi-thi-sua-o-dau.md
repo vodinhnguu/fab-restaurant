@@ -406,6 +406,7 @@ File: [backend/prisma/seed.js](../backend/prisma/seed.js). Sửa xong chạy `np
 | Kiểu sắp xếp món | `SORTS` (dishes.controller) ↔ `sort: z.enum` (dishes.validation) ↔ `SORT_OPTIONS` (constants) |
 | Regex số điện thoại | 7 chỗ, xem [B6](#b6-đổi-quy-tắc-số-điện-thoại-hợp-lệ) |
 | Tối đa 50 phần/món | 4 chỗ, xem [B5](#b5-đổi-số-lượng-tối-đa-mỗi-món-trong-giỏ-đang-là-50) |
+| Ghi chú món tối đa 200 ký tự | orders.validation.js (`items.note`) ↔ ItemNote.jsx (`maxLength`, `slice(0, 200)`, chữ `/200`) |
 | Mốc miễn phí ship "500.000đ" (chữ hiển thị) | `.env` ↔ Footer.jsx ↔ Home.jsx, xem [A2](#a2-đổi-phí-giao-hàng-và-mức-miễn-phí-giao-hàng) |
 | Giờ đặt muộn nhất (đóng cửa − 1 tiếng) | reservations.validation.js ↔ Reservation.jsx `timeSlots` |
 | Công thức phí ship | orders.service.js ↔ Checkout.jsx (ước tính) ↔ seed.js |

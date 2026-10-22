@@ -104,10 +104,12 @@ Content-Type: application/json
   "paymentMethod": "COD",
   "couponCode": "WELCOME10",
   "note": "Ít cay",
-  "items": [{ "dishId": 4, "quantity": 2 }, { "dishId": 17, "quantity": 1 }]
+  "items": [{ "dishId": 4, "quantity": 2, "note": "1 phần ít cay, 1 phần không hành" }, { "dishId": 17, "quantity": 1 }]
 }
 ```
 Kết quả trả về: đơn hàng đầy đủ gồm `code`, `subtotal`, `discount`, `shippingFee`, `total`, `items[]`.
+
+`items[].note` là ghi chú khẩu vị riêng của món (không bắt buộc, ≤ 200 ký tự), khác với `note` chung của cả đơn. Xem [15](15-ghi-chu-tung-mon.md).
 
 **Enum**
 - `type`: `DELIVERY` | `PICKUP`

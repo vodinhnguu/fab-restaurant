@@ -18,6 +18,7 @@ Backend là REST API dùng chung cho cả web và app mobile (Flutter) sau này.
 - Thực đơn: lọc theo danh mục, tìm kiếm (debounce), sắp xếp, phân trang. Bộ lọc lưu trên URL
 - Chi tiết món: ảnh, giá khuyến mãi, đánh giá sao, bình luận, món liên quan
 - Giỏ hàng dạng ngăn kéo trượt, lưu ở trình duyệt (F5 không mất)
+- Ghi chú khẩu vị riêng cho từng món (bấm vào món trong giỏ / trang Thanh toán), có gợi ý theo loại món
 - Thanh toán: giao tận nơi hoặc đến lấy, **mã giảm giá**, phí ship tự tính (miễn phí từ 500k), COD hoặc **thanh toán online qua VNPay**
 - Theo dõi đơn hàng theo dòng thời gian, tự cập nhật mỗi 15 giây, khách được tự hủy khi đơn còn chờ xác nhận
 - Tra cứu đơn hàng **và lịch đặt bàn** không cần tài khoản (mã + số điện thoại), tự hủy lịch đặt bàn
@@ -123,6 +124,7 @@ Nên đọc theo thứ tự:
 12. [Ma trận phân quyền](docs/12-ma-tran-phan-quyen.md): tài khoản nhân viên, 12 vai trò × 11 chức năng, backend chặn theo quyền
 13. [Sơ đồ bàn](docs/13-so-do-ban.md): chọn bàn theo khu vực khi đặt, màu bàn trống / đã có khách, sơ đồ cho admin
 14. [Lý do hủy đặt bàn](docs/14-ly-do-huy-dat-ban.md): admin chọn / ghi lý do khi hủy, khách xem lý do và đặt lại ngày giờ khác
+15. [Ghi chú từng món](docs/15-ghi-chu-tung-mon.md): ô ghi chú khẩu vị riêng cho mỗi món, gợi ý theo loại món, bếp xem trong admin
 
 👉 Mới bắt đầu? Đọc **10** trước để có bức tranh toàn cảnh. Khi đang code, mở sẵn **08** và **09** để tra cứu nhanh.
 
