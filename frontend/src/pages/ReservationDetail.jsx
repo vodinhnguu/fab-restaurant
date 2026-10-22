@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, CalendarSearch, MapPin, Phone, Users } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import CancelNotice from '../components/CancelNotice';
 import { StatusBadge } from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import { EmptyState, Spinner } from '../components/ui/Feedback';
@@ -69,6 +70,7 @@ export default function ReservationDetail() {
         </ul>
         {r.note && <p className="mt-4 text-sm text-slate-600"><span className="text-slate-500">Ghi chú:</span> {r.note}</p>}
 
+        <CancelNotice reservation={r} className="mt-4" />
         {r.status === 'PENDING' && (
           <p className="mt-4 text-sm text-amber-700">Nhà hàng sẽ gọi điện xác nhận trong ít phút.</p>
         )}

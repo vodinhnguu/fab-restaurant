@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import CancelNotice from '../../components/CancelNotice';
 import Button from '../../components/ui/Button';
 import { StatusBadge } from '../../components/ui/Badge';
 import { EmptyState, Spinner } from '../../components/ui/Feedback';
@@ -44,6 +45,7 @@ export default function MyReservations() {
               {r.area && <span>{r.area}{r.table && ` · Bàn ${r.table.code}`}</span>}
             </p>
             {r.note && <p className="mt-1 text-sm text-slate-500">Ghi chú: {r.note}</p>}
+            <CancelNotice reservation={r} className="mt-3" />
           </div>
           {['PENDING', 'CONFIRMED'].includes(r.status) && new Date(r.date) > new Date() && (
             <Button variant="outline" size="sm" loading={cancel.isPending && cancel.variables === r.code} onClick={() => window.confirm('Hủy lịch đặt bàn này?') && cancel.mutate(r.code)}>

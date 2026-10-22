@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { CalendarCheck, Clock, Phone, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import TableMap, { TableLegend } from '../components/TableMap';
 import Button from '../components/ui/Button';
@@ -22,6 +22,8 @@ export default function Reservation() {
   const user = useAuthStore((s) => s.user);
   const { data: info } = useInfo();
   const [success, setSuccess] = useState(null);
+  // Đặt lại sau khi nhà hàng hủy: điền sẵn thông tin lịch cũ, khách chỉ chọn ngày giờ mới
+  const rebook = useLocation().state?.rebook;
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
@@ -34,8 +36,14 @@ export default function Reservation() {
       area: '',
       tableId: null,
       note: '',
+      ...rebook,
     },
   });
+
+  // Danh sách khu vực tải sau khi form tạo xong -> gán lại khu vực cũ để ô chọn hiện đúng
+  useEffect(() => {
+    if (info && rebook?.area) setValue('area', rebook.area);
+  }, [info, rebook?.area, setValue]);
 
   // ----- Sơ đồ bàn: chọn khu vực -> hiện bàn trống / đã có khách tại đúng ngày giờ đã chọn -----
   const [day, time, guests, area, tableId] = watch(['day', 'time', 'guests', 'area', 'tableId']);

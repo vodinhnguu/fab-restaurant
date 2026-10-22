@@ -105,7 +105,7 @@ export async function list(req, res) {
 
 export async function updateStatus(req, res) {
   const id = Number(req.params.id);
-  const { status } = req.body;
+  const { status, reason } = req.body;
   const current = await prisma.reservation.findUnique({ where: { id } });
   if (!current) throw ApiError.notFound('Không tìm thấy lịch đặt bàn');
   if (!RESERVATION_FLOW[current.status].includes(status)) {
@@ -113,7 +113,8 @@ export async function updateStatus(req, res) {
   }
 
   // Điều kiện status trong where: nếu 2 admin bấm cùng lúc, người sau sẽ không ghi đè được
-  const { count } = await prisma.reservation.updateMany({ where: { id, status: current.status }, data: { status } });
+  const data = status === 'CANCELLED' ? { status, cancelReason: reason } : { status };
+  const { count } = await prisma.reservation.updateMany({ where: { id, status: current.status }, data });
   if (count === 0) throw ApiError.conflict('Lịch đặt bàn vừa được người khác cập nhật, vui lòng tải lại trang');
 
   const r = await prisma.reservation.findUnique({ where: { id }, include });

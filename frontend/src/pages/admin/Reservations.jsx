@@ -9,7 +9,7 @@ import TableMap, { TableLegend } from '../../components/TableMap';
 import Button from '../../components/ui/Button';
 import { StatusBadge } from '../../components/ui/Badge';
 import { EmptyState, Pagination, Spinner } from '../../components/ui/Feedback';
-import { Input, Select } from '../../components/ui/Form';
+import { Field, Input, Select, Textarea } from '../../components/ui/Form';
 import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { RESERVATION_STATUS } from '../../lib/constants';
@@ -25,6 +25,50 @@ const ACTIONS = {
   CONFIRMED: [['COMPLETED', 'Khách đã đến', 'primary'], ['CANCELLED', 'Hủy', 'outline']],
 };
 
+// Lý do hủy có sẵn để bấm nhanh; "Lý do khác" thì tự gõ
+const CANCEL_REASONS = ['Hết bàn vào khung giờ này', 'Nhà hàng có sự kiện / đóng cửa', 'Không liên lạc được với khách'];
+const OTHER = 'Lý do khác';
+
+// ---------- Hộp thoại hủy lịch: bắt buộc chọn / nhập lý do để khách biết mà đặt lại ----------
+function CancelDialog({ reservation, loading, onClose, onConfirm }) {
+  const [choice, setChoice] = useState('');
+  const [text, setText] = useState('');
+  const reason = (choice === OTHER ? text : choice).trim();
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={`Hủy lịch ${reservation.code}`}
+      size="sm"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Đóng</Button>
+          <Button variant="danger" disabled={!reason} loading={loading} onClick={() => onConfirm(reason)}>Hủy lịch</Button>
+        </>
+      }
+    >
+      <p className="mb-4 text-sm text-slate-600">
+        {reservation.name} · {formatDateTime(reservation.date)} · {reservation.guests} khách.
+        Lý do sẽ hiện cho khách xem để đặt lại ngày giờ khác.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {[...CANCEL_REASONS, OTHER].map((r) => (
+          <button key={r} type="button" onClick={() => setChoice(r)}
+            className={clsx('rounded-full border px-3 py-1.5 text-sm', choice === r ? 'border-ocean-900 bg-ocean-900 text-white' : 'border-slate-300 text-slate-700 hover:bg-slate-100')}>
+            {r}
+          </button>
+        ))}
+      </div>
+      {choice === OTHER && (
+        <Field label="Lý do" className="mt-4" required>
+          <Textarea autoFocus maxLength={300} value={text} onChange={(e) => setText(e.target.value)} placeholder="Ghi lý do cho khách..." />
+        </Field>
+      )}
+    </Modal>
+  );
+}
+
 // Giờ gần nhất trong danh sách khung giờ (để sơ đồ mở ra đúng lúc đang phục vụ)
 function nearestSlot(slots) {
   const now = dayjs().format('HH:mm');
@@ -32,7 +76,7 @@ function nearestSlot(slots) {
 }
 
 // ---------- Sơ đồ bàn: xem bàn trống / đã có khách tại 1 thời điểm ----------
-function TableMapView({ update }) {
+function TableMapView({ update, onAction }) {
   const can = useCan();
   const { data: info } = useInfo();
   const slots = timeSlots(info?.openingHours.open, info?.openingHours.close);
@@ -98,7 +142,7 @@ function TableMapView({ update }) {
                 <div className="flex gap-2 border-t border-slate-100 pt-3">
                   {ACTIONS[r.status].map(([s, label, variant]) => (
                     <Button key={s} size="sm" variant={variant} loading={update.isPending}
-                      onClick={() => update.mutate({ id: r.id, status: s }, { onSuccess: () => setSelected(null) })}>{label}</Button>
+                      onClick={() => onAction(r, s, () => setSelected(null))}>{label}</Button>
                   ))}
                 </div>
               )}
@@ -124,7 +168,7 @@ export default function Reservations() {
   });
 
   const update = useMutation({
-    mutationFn: ({ id, status }) => reservationApi.updateStatus(id, status),
+    mutationFn: ({ id, status, reason }) => reservationApi.updateStatus(id, status, reason),
     onSuccess: () => {
       toast.success('Đã cập nhật');
       qc.invalidateQueries({ queryKey: ['admin-reservations'] });
@@ -135,6 +179,17 @@ export default function Reservations() {
 
   const set = (k, v) => setFilters((f) => ({ ...f, [k]: v, page: k === 'page' ? v : 1 }));
   const [view, setView] = useState('list'); // 'list' | 'map'
+  const [cancelling, setCancelling] = useState(null); // lịch đang mở hộp thoại hủy
+
+  // Bấm nút hành động: Hủy thì mở hộp thoại hỏi lý do, còn lại cập nhật luôn
+  const onAction = (r, status, onDone) => {
+    if (status === 'CANCELLED') {
+      onDone?.();
+      setCancelling(r);
+    } else {
+      update.mutate({ id: r.id, status }, { onSuccess: onDone });
+    }
+  };
 
   return (
     <>
@@ -153,7 +208,16 @@ export default function Reservations() {
         }
       />
 
-      {view === 'map' ? <TableMapView update={update} /> : (<>
+      {cancelling && (
+        <CancelDialog
+          reservation={cancelling}
+          loading={update.isPending}
+          onClose={() => setCancelling(null)}
+          onConfirm={(reason) => update.mutate({ id: cancelling.id, status: 'CANCELLED', reason }, { onSuccess: () => setCancelling(null) })}
+        />
+      )}
+
+      {view === 'map' ? <TableMapView update={update} onAction={onAction} /> : (<>
 
       <div className="mb-4 flex flex-wrap gap-2">
         <Input type="date" value={filters.date} onChange={(e) => set('date', e.target.value)} className="w-44" />
@@ -186,11 +250,14 @@ export default function Reservations() {
                   <Td className="text-center">{r.guests}</Td>
                   <Td>{r.area || '-'}{r.table && <p className="text-xs font-semibold text-ocean-700">Bàn {r.table.code}</p>}</Td>
                   <Td className="max-w-48 truncate text-slate-500" title={r.note}>{r.note || '-'}</Td>
-                  <Td><StatusBadge map={RESERVATION_STATUS} value={r.status} /></Td>
+                  <Td>
+                    <StatusBadge map={RESERVATION_STATUS} value={r.status} />
+                    {r.cancelReason && <p className="mt-1 max-w-48 text-xs text-red-600" title={r.cancelReason}>Lý do: {r.cancelReason}</p>}
+                  </Td>
                   <Td className="whitespace-nowrap">
                     <div className="flex gap-1">
                       {can('RESERVATIONS', 'edit') && ACTIONS[r.status]?.map(([s, label, variant]) => (
-                        <Button key={s} size="sm" variant={variant} onClick={() => update.mutate({ id: r.id, status: s })}>{label}</Button>
+                        <Button key={s} size="sm" variant={variant} onClick={() => onAction(r, s)}>{label}</Button>
                       ))}
                     </div>
                   </Td>

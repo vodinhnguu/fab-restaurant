@@ -56,7 +56,7 @@ export const reservationApi = {
   cancel: (code, phone) => api.post(`/reservations/${code}/cancel`, { phone }),
   // admin
   list: (params) => api.get('/reservations', { params }),
-  updateStatus: (id, status) => api.patch(`/reservations/${id}/status`, { status }),
+  updateStatus: (id, status, reason) => api.patch(`/reservations/${id}/status`, { status, reason }),
 };
 
 export const reviewApi = {

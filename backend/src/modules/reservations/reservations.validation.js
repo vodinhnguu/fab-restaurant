@@ -40,9 +40,16 @@ export const cancelReservationSchema = z.object({
   phone: z.string().trim().max(15).optional(),
 });
 
-export const updateReservationStatusSchema = z.object({
-  status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']),
-});
+// Nhà hàng hủy lịch thì bắt buộc ghi lý do để khách biết mà đặt lại giờ khác
+export const updateReservationStatusSchema = z
+  .object({
+    status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']),
+    reason: z.string().trim().max(300, 'Lý do tối đa 300 ký tự').optional(),
+  })
+  .refine((r) => r.status !== 'CANCELLED' || r.reason, {
+    message: 'Vui lòng nhập lý do hủy',
+    path: ['reason'],
+  });
 
 export const reservationQuerySchema = z.object({
   status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']).optional(),

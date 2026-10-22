@@ -182,22 +182,23 @@ model Payment {
 }
 
 model Reservation {
-  id        Int               @id @default(autoincrement())
-  code      String            @unique
-  userId    Int?
-  user      User?             @relation(fields: [userId], references: [id])
-  name      String
-  phone     String
-  email     String?
-  date      DateTime // Ngày giờ đến
-  guests    Int
-  area      String? // Khu vực mong muốn: trong nhà, ngoài trời, phòng VIP
-  tableId   Int? // Bàn khách chọn trên sơ đồ (không bắt buộc)
-  table     DiningTable?      @relation(fields: [tableId], references: [id], onDelete: SetNull)
-  note      String?
-  status    ReservationStatus @default(PENDING)
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  id           Int               @id @default(autoincrement())
+  code         String            @unique
+  userId       Int?
+  user         User?             @relation(fields: [userId], references: [id])
+  name         String
+  phone        String
+  email        String?
+  date         DateTime // Ngày giờ đến
+  guests       Int
+  area         String? // Khu vực mong muốn: trong nhà, ngoài trời, phòng VIP
+  tableId      Int? // Bàn khách chọn trên sơ đồ (không bắt buộc)
+  table        DiningTable?      @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  note         String?
+  status       ReservationStatus @default(PENDING)
+  cancelReason String? // Lý do nhà hàng hủy lịch, hiện cho khách xem để đặt lại giờ khác
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
   @@index([date])
   @@index([tableId, date])
