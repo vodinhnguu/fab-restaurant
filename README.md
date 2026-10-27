@@ -125,6 +125,7 @@ Nên đọc theo thứ tự:
 13. [Sơ đồ bàn](docs/13-so-do-ban.md): chọn bàn theo khu vực khi đặt, màu bàn trống / đã có khách, sơ đồ cho admin
 14. [Lý do hủy đặt bàn](docs/14-ly-do-huy-dat-ban.md): admin chọn / ghi lý do khi hủy, khách xem lý do và đặt lại ngày giờ khác
 15. [Ghi chú từng món](docs/15-ghi-chu-tung-mon.md): ô ghi chú khẩu vị riêng cho mỗi món, gợi ý theo loại món, bếp xem trong admin
+16. [Đặc tả app mobile cho Stitch AI](docs/16-dac-ta-app-mobile-stitch.md): 25 màn hình app khách hàng, bố cục, quy tắc, API từng màn và prompt dán vào Stitch
 
 👉 Mới bắt đầu? Đọc **10** trước để có bức tranh toàn cảnh. Khi đang code, mở sẵn **08** và **09** để tra cứu nhanh.
 
