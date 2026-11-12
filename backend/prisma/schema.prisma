@@ -138,6 +138,7 @@ model Order {
   total         Int
   couponCode    String?
   note          String?
+  cancelReason  String? // Lý do nhà hàng hủy đơn, khách xem được. Trống = khách tự hủy (hoặc đơn chưa hủy)
   items         OrderItem[]
   payments      Payment[]
   createdAt     DateTime      @default(now())

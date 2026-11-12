@@ -108,12 +108,14 @@ export async function findAccessibleOrder(code, user, phone, action = 'view') {
   return order;
 }
 
-export async function changeStatus(order, nextStatus) {
+// cancelReason: lý do khi NHÀ HÀNG hủy (khách tự hủy thì không truyền -> để trống)
+export async function changeStatus(order, nextStatus, cancelReason = null) {
   if (!STATUS_FLOW[order.status].includes(nextStatus)) {
     throw ApiError.badRequest(`Không thể chuyển đơn từ ${order.status} sang ${nextStatus}`);
   }
 
   const data = { status: nextStatus };
+  if (nextStatus === 'CANCELLED') data.cancelReason = cancelReason || null;
   // COD hoàn thành = đã thu tiền
   if (nextStatus === 'COMPLETED' && order.paymentMethod === 'COD') data.paymentStatus = 'PAID';
   // Hủy đơn đã thanh toán = hoàn tiền

@@ -4,12 +4,13 @@ import dayjs from 'dayjs';
 import { LayoutGrid, List } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import CancelReasonDialog from '../../components/CancelReasonDialog';
 import PageHeader from '../../components/PageHeader';
 import TableMap, { TableLegend } from '../../components/TableMap';
 import Button from '../../components/ui/Button';
 import { StatusBadge } from '../../components/ui/Badge';
 import { EmptyState, Pagination, Spinner } from '../../components/ui/Feedback';
-import { Field, Input, Select, Textarea } from '../../components/ui/Form';
+import { Input, Select } from '../../components/ui/Form';
 import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { RESERVATION_STATUS } from '../../lib/constants';
@@ -25,49 +26,8 @@ const ACTIONS = {
   CONFIRMED: [['COMPLETED', 'Khách đã đến', 'primary'], ['CANCELLED', 'Hủy', 'outline']],
 };
 
-// Lý do hủy có sẵn để bấm nhanh; "Lý do khác" thì tự gõ
+// Lý do hủy có sẵn để bấm nhanh; "Lý do khác" thì tự gõ (hộp thoại dùng chung: components/CancelReasonDialog.jsx)
 const CANCEL_REASONS = ['Hết bàn vào khung giờ này', 'Nhà hàng có sự kiện / đóng cửa', 'Không liên lạc được với khách'];
-const OTHER = 'Lý do khác';
-
-// ---------- Hộp thoại hủy lịch: bắt buộc chọn / nhập lý do để khách biết mà đặt lại ----------
-function CancelDialog({ reservation, loading, onClose, onConfirm }) {
-  const [choice, setChoice] = useState('');
-  const [text, setText] = useState('');
-  const reason = (choice === OTHER ? text : choice).trim();
-
-  return (
-    <Modal
-      open
-      onClose={onClose}
-      title={`Hủy lịch ${reservation.code}`}
-      size="sm"
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose}>Đóng</Button>
-          <Button variant="danger" disabled={!reason} loading={loading} onClick={() => onConfirm(reason)}>Hủy lịch</Button>
-        </>
-      }
-    >
-      <p className="mb-4 text-sm text-slate-600">
-        {reservation.name} · {formatDateTime(reservation.date)} · {reservation.guests} khách.
-        Lý do sẽ hiện cho khách xem để đặt lại ngày giờ khác.
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {[...CANCEL_REASONS, OTHER].map((r) => (
-          <button key={r} type="button" onClick={() => setChoice(r)}
-            className={clsx('rounded-full border px-3 py-1.5 text-sm', choice === r ? 'border-ocean-900 bg-ocean-900 text-white' : 'border-slate-300 text-slate-700 hover:bg-slate-100')}>
-            {r}
-          </button>
-        ))}
-      </div>
-      {choice === OTHER && (
-        <Field label="Lý do" className="mt-4" required>
-          <Textarea autoFocus maxLength={300} value={text} onChange={(e) => setText(e.target.value)} placeholder="Ghi lý do cho khách..." />
-        </Field>
-      )}
-    </Modal>
-  );
-}
 
 // Giờ gần nhất trong danh sách khung giờ (để sơ đồ mở ra đúng lúc đang phục vụ)
 function nearestSlot(slots) {
@@ -209,8 +169,11 @@ export default function Reservations() {
       />
 
       {cancelling && (
-        <CancelDialog
-          reservation={cancelling}
+        <CancelReasonDialog
+          title={`Hủy lịch ${cancelling.code}`}
+          description={`${cancelling.name} · ${formatDateTime(cancelling.date)} · ${cancelling.guests} khách. Lý do sẽ hiện cho khách xem để đặt lại ngày giờ khác.`}
+          reasons={CANCEL_REASONS}
+          confirmLabel="Hủy lịch"
           loading={update.isPending}
           onClose={() => setCancelling(null)}
           onConfirm={(reason) => update.mutate({ id: cancelling.id, status: 'CANCELLED', reason }, { onSuccess: () => setCancelling(null) })}

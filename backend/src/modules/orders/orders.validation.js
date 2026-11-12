@@ -27,9 +27,16 @@ export const createOrderSchema = z
     path: ['address'],
   });
 
-export const updateStatusSchema = z.object({
-  status: z.enum(['PENDING', 'CONFIRMED', 'PREPARING', 'DELIVERING', 'COMPLETED', 'CANCELLED']),
-});
+// Nhà hàng hủy đơn thì bắt buộc ghi lý do để khách biết vì sao (giống hủy đặt bàn)
+export const updateStatusSchema = z
+  .object({
+    status: z.enum(['PENDING', 'CONFIRMED', 'PREPARING', 'DELIVERING', 'COMPLETED', 'CANCELLED']),
+    reason: z.string().trim().max(300, 'Lý do tối đa 300 ký tự').optional(),
+  })
+  .refine((o) => o.status !== 'CANCELLED' || o.reason, {
+    message: 'Vui lòng nhập lý do hủy',
+    path: ['reason'],
+  });
 
 export const phoneSchema = z.object({
   phone: z.string().trim().optional(),

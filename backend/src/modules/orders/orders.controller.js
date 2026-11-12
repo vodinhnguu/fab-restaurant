@@ -87,9 +87,11 @@ export async function detail(req, res) {
   res.json({ success: true, data: order });
 }
 
+// Nhân viên đổi trạng thái. Hủy đơn thì kèm `reason` (zod đã bắt buộc) -> lưu vào cancelReason cho khách xem
 export async function updateStatus(req, res) {
   const order = await prisma.order.findUnique({ where: { id: Number(req.params.id) } });
   if (!order) throw ApiError.notFound('Không tìm thấy đơn hàng');
-  const updated = await orderService.changeStatus(order, req.body.status);
+  const { status, reason } = req.body;
+  const updated = await orderService.changeStatus(order, status, reason);
   res.json({ success: true, data: updated });
 }

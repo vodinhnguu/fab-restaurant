@@ -4,6 +4,7 @@ import { Eye, RefreshCw, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import CancelReasonDialog from '../../components/CancelReasonDialog';
 import PageHeader from '../../components/PageHeader';
 import Button from '../../components/ui/Button';
 import { StatusBadge } from '../../components/ui/Badge';
@@ -17,20 +18,48 @@ import { useDocumentTitle } from '../../lib/hooks';
 import { useCan } from '../../lib/permissions';
 import { orderApi } from '../../services';
 
+// Lý do hủy đơn có sẵn để bấm nhanh; "Lý do khác" thì tự gõ. Khách sẽ thấy lý do ở trang chi tiết đơn.
+// Muốn thêm / sửa lý do thì sửa mảng này, backend nhận mọi lý do dạng chữ (tối đa 300 ký tự).
+const CANCEL_REASONS = [
+  'Món / hải sản trong đơn đã hết',
+  'Không liên lạc được với khách',
+  'Địa chỉ ngoài khu vực giao hàng',
+  'Nhà hàng quá tải / sắp đóng cửa',
+  'Khách yêu cầu hủy qua điện thoại',
+];
+
 function OrderModal({ id, onClose }) {
   const qc = useQueryClient();
   const can = useCan();
+  const [cancelling, setCancelling] = useState(false); // đang mở hộp thoại chọn lý do hủy
   const { data: order, isLoading } = useQuery({ queryKey: ['admin-order', id], queryFn: () => orderApi.detail(id), enabled: !!id });
 
   const update = useMutation({
-    mutationFn: (status) => orderApi.updateStatus(id, status),
-    onSuccess: () => {
-      toast.success('Đã cập nhật trạng thái');
+    mutationFn: ({ status, reason }) => orderApi.updateStatus(id, status, reason),
+    onSuccess: (_, { status }) => {
+      toast.success(status === 'CANCELLED' ? 'Đã hủy đơn, khách sẽ thấy lý do hủy' : 'Đã cập nhật trạng thái');
+      setCancelling(false);
       qc.invalidateQueries({ queryKey: ['admin-orders'] });
       qc.invalidateQueries({ queryKey: ['admin-order', id] });
     },
     onError: (e) => toast.error(e.message),
   });
+
+  // Hủy đơn: tạm thay cửa sổ chi tiết bằng hộp thoại chọn lý do (không mở 2 cửa sổ chồng nhau),
+  // hủy xong tự quay lại cửa sổ chi tiết
+  if (id && order && cancelling) {
+    return (
+      <CancelReasonDialog
+        title={`Hủy đơn ${order.code}`}
+        description={`${order.customerName} · ${order.phone} · ${formatPrice(order.total)}. Lý do sẽ hiện ở trang chi tiết đơn để khách biết vì sao đơn bị hủy.`}
+        reasons={CANCEL_REASONS}
+        confirmLabel="Hủy đơn"
+        loading={update.isPending}
+        onClose={() => setCancelling(false)}
+        onConfirm={(reason) => update.mutate({ status: 'CANCELLED', reason })}
+      />
+    );
+  }
 
   return (
     <Modal open={!!id} onClose={onClose} title={order ? `Đơn ${order.code}` : 'Chi tiết đơn'} size="lg">
@@ -47,6 +76,9 @@ function OrderModal({ id, onClose }) {
             {order.note && <p className="sm:col-span-2 rounded-lg bg-amber-50 p-2"><span className="text-slate-500">Ghi chú:</span> {order.note}</p>}
             <p className="flex items-center gap-2"><span className="text-slate-500">Thanh toán:</span> {PAYMENT_METHOD[order.paymentMethod]} <StatusBadge map={PAYMENT_STATUS} value={order.paymentStatus} /></p>
             <p className="flex items-center gap-2"><span className="text-slate-500">Trạng thái:</span> <StatusBadge map={ORDER_STATUS} value={order.status} /></p>
+            {order.cancelReason && (
+              <p className="sm:col-span-2 rounded-lg bg-red-50 p-2 text-red-700"><span className="text-slate-500">Lý do hủy (khách xem được):</span> {order.cancelReason}</p>
+            )}
           </div>
 
           <table className="w-full">
@@ -101,8 +133,8 @@ function OrderModal({ id, onClose }) {
                       key={s}
                       size="sm"
                       variant={s === 'CANCELLED' ? 'danger' : 'primary'}
-                      loading={update.isPending && update.variables === s}
-                      onClick={() => (s !== 'CANCELLED' || window.confirm('Hủy đơn này?')) && update.mutate(s)}
+                      loading={update.isPending && update.variables?.status === s}
+                      onClick={() => (s === 'CANCELLED' ? setCancelling(true) : update.mutate({ status: s }))}
                     >
                       {STATUS_ACTION_LABEL[s]}
                     </Button>
@@ -187,7 +219,10 @@ export default function Orders() {
                   <Td className="whitespace-nowrap">{ORDER_TYPE[o.type]}</Td>
                   <Td className="text-right font-semibold whitespace-nowrap">{formatPrice(o.total)}</Td>
                   <Td><StatusBadge map={PAYMENT_STATUS} value={o.paymentStatus} /></Td>
-                  <Td><StatusBadge map={ORDER_STATUS} value={o.status} /></Td>
+                  <Td>
+                    <StatusBadge map={ORDER_STATUS} value={o.status} />
+                    {o.cancelReason && <p className="mt-1 max-w-48 text-xs text-red-600" title={o.cancelReason}>Lý do: {o.cancelReason}</p>}
+                  </Td>
                   <Td><Button size="sm" variant="ghost" onClick={() => setSelected(o.id)}><Eye className="h-4 w-4" /> Xem</Button></Td>
                 </tr>
               ))}

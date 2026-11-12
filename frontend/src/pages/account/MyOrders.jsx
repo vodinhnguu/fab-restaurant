@@ -35,6 +35,8 @@ export default function MyOrders() {
             </div>
             <StatusBadge map={ORDER_STATUS} value={o.status} />
           </div>
+          {/* Nhà hàng hủy (có lý do) thì báo ngay ở danh sách, bấm vào xem chi tiết */}
+          {o.cancelReason && <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">Nhà hàng đã hủy đơn · Lý do: {o.cancelReason}</p>}
           <div className="mt-4 flex items-center gap-2">
             {o.items.slice(0, 4).map((i) => (
               <img key={i.id} src={imageUrl(i.dish?.image)} alt={i.name} title={i.name} className="h-12 w-12 rounded-lg object-cover" />

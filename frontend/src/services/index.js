@@ -37,7 +37,8 @@ export const orderApi = {
   // admin
   list: (params) => api.get('/orders', { params }),
   detail: (id) => api.get(`/orders/${id}`).then((r) => r.data),
-  updateStatus: (id, status) => api.patch(`/orders/${id}/status`, { status }),
+  // Hủy đơn (status = CANCELLED) thì bắt buộc kèm reason, khách sẽ thấy lý do này
+  updateStatus: (id, status, reason) => api.patch(`/orders/${id}/status`, { status, reason }),
 };
 
 export const paymentApi = {

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { Check, CircleCheck, CreditCard, LoaderCircle, PackageSearch } from 'lucide-react';
+import { Check, CircleCheck, CreditCard, LoaderCircle, PackageSearch, PackageX } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import Button from '../components/ui/Button';
@@ -13,10 +13,27 @@ import { orderApi, paymentApi } from '../services';
 
 const STEPS = ['PENDING', 'CONFIRMED', 'PREPARING', 'DELIVERING', 'COMPLETED'];
 
-function Timeline({ order }) {
-  if (order.status === 'CANCELLED') {
+// Đơn đã hủy: có cancelReason = nhà hàng hủy -> báo lý do cho khách; không có = khách tự hủy
+function CancelledNotice({ order }) {
+  if (!order.cancelReason) {
     return <div className="rounded-xl bg-red-50 p-4 text-center font-medium text-red-700">Đơn hàng đã bị hủy</div>;
   }
+  return (
+    <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm">
+      <p className="flex items-center gap-2 font-semibold text-red-700">
+        <PackageX className="h-4 w-4" /> Nhà hàng đã hủy đơn này
+      </p>
+      <p className="mt-1 text-red-700">Lý do: {order.cancelReason}</p>
+      {order.paymentStatus === 'REFUNDED' && (
+        <p className="mt-1 text-slate-700">Số tiền bạn đã thanh toán online sẽ được nhà hàng hoàn lại.</p>
+      )}
+      <p className="mt-1 text-slate-600">Rất xin lỗi bạn vì sự bất tiện này. Cần hỗ trợ thêm, bạn vui lòng gọi nhà hàng.</p>
+    </div>
+  );
+}
+
+function Timeline({ order }) {
+  if (order.status === 'CANCELLED') return <CancelledNotice order={order} />;
   const steps = order.type === 'PICKUP' ? STEPS.filter((s) => s !== 'DELIVERING') : STEPS;
   const current = steps.indexOf(order.status);
 
@@ -88,8 +105,9 @@ export default function OrderDetail() {
     );
   }
 
-  // Đơn vừa đặt (trong 10 phút) thì hiện lời cảm ơn, đơn cũ thì hiện tiêu đề bình thường
-  const isNew = Date.now() - new Date(order.createdAt).getTime() < 10 * 60 * 1000;
+  // Đơn vừa đặt (trong 10 phút) thì hiện lời cảm ơn, đơn cũ thì hiện tiêu đề bình thường.
+  // Đơn đã bị hủy thì không cảm ơn (tránh vừa "Cảm ơn bạn đã đặt món!" vừa báo nhà hàng hủy)
+  const isNew = order.status !== 'CANCELLED' && Date.now() - new Date(order.createdAt).getTime() < 10 * 60 * 1000;
   const needPay = order.paymentMethod === 'ONLINE' && order.paymentStatus === 'UNPAID' && order.status !== 'CANCELLED';
 
   return (
