@@ -260,7 +260,7 @@ Mở http://localhost:5173. Khi `pull` code mới về, nhớ chạy lại `npm 
 | Vai trò | Email | Mật khẩu | Ghi chú |
 |---|---|---|---|
 | Admin | `admin@fab.vn` | `admin123` | Vào được `/admin` |
-| Nhân viên | `quanly@` `thungan@` `letan@` `bep@fab.vn` | `123456` | Vào `/admin` nhưng chỉ thấy mục được cấp quyền |
+| Nhân viên | `chunha@` `quanly@` `totruong@` `phucvu@` `letan@` `thungan@` `kythuat@` `tapvu@` `bep@` `tiepthuc@` `hohaisan@fab.vn` | `123456` | Mỗi vai trò 1 tài khoản. Vào `/admin` nhưng chỉ thấy mục được cấp quyền. Thiếu tài khoản thì chạy `npm --prefix backend run db:seed-staff` |
 | Khách | `khach@fab.vn` | `123456` | Tên *Nguyễn Văn An*, SĐT `0901234567`. Có sẵn 1 đơn **đã hoàn thành** (mã `FAB0000DEMO`) để thử chức năng đánh giá |
 | Khách | `binh@fab.vn`, `chau@fab.vn` | `123456` | Đã đánh giá các món nổi bật |
 
@@ -596,6 +596,7 @@ Toàn bộ chi tiết (luồng, code, đăng ký sandbox, thẻ test): [11-thanh
 
 - Khách chỉ hủy được khi đơn còn `PENDING`.
 - Khi hủy (dù là khách hay admin), `changeStatus` chạy trong transaction: **trả lại `soldCount`** cho từng món, **trả lại 1 lượt** dùng mã giảm giá, và nếu đơn đã thanh toán thì chuyển `paymentStatus` sang `REFUNDED`.
+- Nhân viên hủy thì **bắt buộc** ghi lý do, lưu ở `cancelReason`. Khách thấy khung đỏ "Nhà hàng đã hủy đơn này · Lý do: …" thay cho thanh tiến trình. Khách tự hủy thì không có lý do. Chi tiết: [18-ly-do-huy-don-hang.md](18-ly-do-huy-don-hang.md).
 
 **🎓 Kiến thức học được:** query string (`useSearchParams`); polling; `retry: false` (sai mã thì báo lỗi ngay, không thử lại); chống lộ thông tin (404 thay cho 403); "đơn vừa đặt" tính bằng `Date.now() - createdAt < 10 phút`.
 
@@ -677,7 +678,7 @@ Token có 3 phần ngăn bởi dấu chấm: `header.payload.chữ_ký`. Payload
 3. Tìm user trong DB → không còn hoặc `isActive = false` → 401
 4. Gắn `req.user = user` cho controller dùng
 
-Các biến thể: `optionalAuth` (có token thì gắn user, không có cũng cho qua; dùng cho đặt hàng và đặt bàn), `requireRole('ADMIN')`, `requireAdmin = [requireAuth, requireRole('ADMIN')]`.
+Các biến thể: `optionalAuth` (có token thì gắn user, không có cũng cho qua; dùng cho đặt hàng và đặt bàn), `requireRole('ADMIN')`, `requireAdmin` (cho qua tài khoản ADMIN và nhân viên giữ vai trò Chủ nhà hàng, xem `isFullAdmin` ở [12-ma-tran-phan-quyen.md](12-ma-tran-phan-quyen.md)).
 
 ### 15.3 Phía frontend
 

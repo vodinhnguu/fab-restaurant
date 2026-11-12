@@ -64,6 +64,7 @@ cd frontend && npm run dev
 | `npm run dev` | Chạy server, tự khởi động lại khi sửa code (nodemon) |
 | `npm run db:migrate` | Sau khi sửa `schema.prisma`: tạo migration và cập nhật DB |
 | `npm run db:seed` | **Xóa hết dữ liệu** rồi nạp lại dữ liệu mẫu |
+| `npm run db:seed-staff` | Thêm tài khoản nhân viên demo còn thiếu (mỗi vai trò 1 tài khoản, mật khẩu `123456`). **Không xóa** gì, chạy nhiều lần không sao |
 | `npm run db:reset` | Xóa DB, chạy lại toàn bộ migration và seed |
 | `npm run db:studio` | Mở giao diện web để xem/sửa dữ liệu (http://localhost:5555) |
 
@@ -85,6 +86,9 @@ cd frontend && npm run dev
 | Frontend báo "Không thể kết nối máy chủ" | Backend chưa chạy, hoặc chạy sai cổng (phải là 4000, khớp với proxy trong `vite.config.js`) |
 | `EADDRINUSE :::4000` | Cổng 4000 đang bị chiếm → tắt tiến trình cũ (`lsof -i :4000` rồi `kill <PID>`) hoặc đổi `PORT` |
 | Đăng nhập xong vẫn bị đá ra | `JWT_SECRET` vừa bị đổi nên token cũ không còn hợp lệ → đăng nhập lại |
+| Tài khoản nhân viên (`bep@fab.vn`, `thungan@fab.vn`, `kythuat@fab.vn`...) báo "Email hoặc mật khẩu không đúng" | Database được seed **trước** khi dự án có ma trận phân quyền, nên chưa có tài khoản nhân viên (pull code mới không tự thêm dữ liệu). Chạy `npm --prefix backend run db:seed-staff` để thêm tài khoản còn thiếu, không mất dữ liệu cũ |
+| "Bạn thao tác quá nhiều lần" khi đăng nhập | Sai mật khẩu quá 20 lần trong 15 phút (đăng nhập đúng không tính). Đợi 15 phút, hoặc lưu lại 1 file bất kỳ trong `backend/src/` để nodemon khởi động lại backend (bộ đếm bị xóa) |
+| Nhân viên đăng nhập được nhưng `/admin` báo "Chưa có trang cho công việc của bạn" | Vai trò đó chỉ có quyền ở chức năng chưa có trang web (Thiết bị & bảo trì, Hồ hải sản, Phiếu bếp), vd Kỹ thuật. Muốn họ thấy thêm mục nào thì admin cấp quyền Xem ở trang Phân quyền |
 
 ## 5. Deploy (đưa lên Internet)
 

@@ -31,6 +31,7 @@ npm run dev             # backend :4000, frontend :5173
 
 - Postgres cài sẵn trên máy (không dùng Docker): `createdb fab_restaurant`, sửa `DATABASE_URL` trong `backend/.env` cho đúng user của máy.
 - Đã có dữ liệu, chỉ cần cập nhật bảng sau khi pull: `npm --prefix backend run db:deploy` (không xóa dữ liệu). Đừng chạy `npm run setup` khi người dùng có dữ liệu thật, hãy hỏi trước.
+- Thiếu tài khoản nhân viên demo (đăng nhập `bep@fab.vn`... báo sai mật khẩu, thường do database tạo trước khi có ma trận phân quyền): `npm --prefix backend run db:seed-staff`. Chỉ thêm tài khoản còn thiếu, không xóa gì.
 - `backend/.env` không có trên git. Thanh toán VNPay cần `VNP_TMN_CODE`, `VNP_HASH_SECRET`; bỏ trống thì web chỉ nhận tiền mặt. Người dùng tự chép khóa này giữa các máy.
 
 ## Tài khoản demo (dữ liệu mẫu, không phải tài khoản thật)
@@ -40,11 +41,20 @@ Tạo bởi `npm run setup` / `npm run db:seed`. Dùng để đăng nhập thử
 | Vai trò | Email | Mật khẩu | Thấy gì |
 |---|---|---|---|
 | Admin | `admin@fab.vn` | `admin123` | Toàn bộ trang `/admin` |
+| Chủ nhà hàng | `chunha@fab.vn` | `123456` | Ngang Admin: mọi mục, sửa ma trận phân quyền, quản lý tài khoản Admin / Chủ (`isFullAdmin`) |
 | Quản lý | `quanly@fab.vn` | `123456` | Admin, chỉ xem nhân sự / phân quyền |
-| Thu ngân | `thungan@fab.vn` | `123456` | Tổng quan, đơn hàng, đặt bàn, món, mã giảm giá |
+| Tổ trưởng | `totruong@fab.vn` | `123456` | Tổng quan, đơn hàng, đặt bàn, món, đánh giá, xem nhân sự |
+| Phục vụ | `phucvu@fab.vn` | `123456` | Đơn hàng, đặt bàn (xem), món |
 | Lễ tân | `letan@fab.vn` | `123456` | Đặt bàn (xác nhận / hủy), xem đơn hàng, món, mã giảm giá, đánh giá |
+| Thu ngân | `thungan@fab.vn` | `123456` | Tổng quan, đơn hàng, đặt bàn, món, mã giảm giá |
+| Kỹ thuật | `kythuat@fab.vn` | `123456` | Chỉ có quyền ở chức năng chưa có trang web, `/admin` hiện thông báo "Chưa có trang" |
+| Tạp vụ | `tapvu@fab.vn` | `123456` | Đặt bàn (chỉ xem) |
 | Bếp | `bep@fab.vn` | `123456` | Đơn hàng, món ăn, danh mục |
+| Tiếp thực | `tiepthuc@fab.vn` | `123456` | Đơn hàng, đặt bàn (xem), món |
+| Hồ hải sản | `hohaisan@fab.vn` | `123456` | Đơn hàng, món |
 | Khách hàng | `khach@fab.vn` | `123456` | Có sẵn đơn đã hoàn thành `FAB0000DEMO` để thử đánh giá |
+
+Danh sách nhân viên demo nằm ở `backend/prisma/seed-staff.js` (mỗi vai trò 1 tài khoản). Cột "Thấy gì" là quyền **mặc định** (`backend/src/config/permissions.js`). Quyền thật lấy theo ma trận trong DB, admin sửa được trên giao diện nên có thể khác bảng này.
 
 Mã giảm giá mẫu: `WELCOME10`, `FAB50K`, `HAISAN20`.
 
@@ -52,7 +62,7 @@ Mã giảm giá mẫu: `WELCOME10`, `FAB50K`, `HAISAN20`.
 
 - API: `POST http://localhost:4000/api/v1/auth/login` với `{ "email", "password" }`, lấy `data.token`, gửi kèm header `Authorization: Bearer <token>`.
 - Trình duyệt (vd Playwright): vào `/login`, điền `input[type=email]`, `input[type=password]`, bấm `button[type=submit]`. Trang login có sẵn nút điền nhanh từng tài khoản demo.
-- Đăng nhập bị giới hạn **20 lần / 15 phút / IP** (lỗi 429). Khi test nhiều, đăng nhập 1 lần rồi dùng lại token, hoặc khởi động lại backend (`touch backend/src/server.js` khi đang `npm run dev`) để xóa bộ đếm.
+- Đăng nhập bị giới hạn **20 lần SAI / 15 phút / IP** (lỗi 429), đăng nhập đúng không bị trừ lượt. Lỡ bị chặn thì khởi động lại backend (`touch backend/src/server.js` khi đang `npm run dev`) để xóa bộ đếm.
 
 ## Kiểm tra trước khi báo xong
 

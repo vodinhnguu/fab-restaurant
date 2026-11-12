@@ -66,7 +66,8 @@ App Flutter sau này: đọc `cancelReason`, khác `null` thì hiện khung báo
 | Cột `cancelReason` | [backend/prisma/schema.prisma](../backend/prisma/schema.prisma) |
 | Bắt buộc lý do khi hủy (zod) | [reservations.validation.js](../backend/src/modules/reservations/reservations.validation.js): `updateReservationStatusSchema` |
 | Lưu lý do | [reservations.controller.js](../backend/src/modules/reservations/reservations.controller.js): `updateStatus` |
-| Hộp thoại hủy, danh sách lý do có sẵn | [frontend/src/pages/admin/Reservations.jsx](../frontend/src/pages/admin/Reservations.jsx): `CANCEL_REASONS`, `CancelDialog` |
+| Danh sách lý do có sẵn, mở hộp thoại | [frontend/src/pages/admin/Reservations.jsx](../frontend/src/pages/admin/Reservations.jsx): `CANCEL_REASONS` |
+| Hộp thoại hủy (dùng chung với hủy đơn hàng, xem [18](18-ly-do-huy-don-hang.md)) | [frontend/src/components/CancelReasonDialog.jsx](../frontend/src/components/CancelReasonDialog.jsx) |
 | Khung báo hủy + nút đặt lại | [frontend/src/components/CancelNotice.jsx](../frontend/src/components/CancelNotice.jsx) |
 | Điền sẵn form khi đặt lại | [frontend/src/pages/Reservation.jsx](../frontend/src/pages/Reservation.jsx): `rebook` (đọc từ `location.state`) |
 
@@ -75,7 +76,7 @@ App Flutter sau này: đọc `cancelReason`, khác `null` thì hiện khung báo
 ## 5. Luồng chạy (để học)
 
 ```
-Admin bấm Hủy → CancelDialog (chọn lý do)
+Admin bấm Hủy → CancelReasonDialog (chọn lý do)
   → PATCH /reservations/:id/status { status: CANCELLED, reason }
   → zod kiểm tra có reason → controller lưu status + cancelReason
 Khách mở trang của mình → GET /reservations/my (có cancelReason)

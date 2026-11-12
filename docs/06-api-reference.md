@@ -80,7 +80,7 @@ Ký hiệu cột Quyền: 🌐 công khai · 👤 cần đăng nhập · 🔓 c�
 | POST | `/orders/:code/cancel` | 🔓 | Khách tự hủy (chỉ khi đơn còn `PENDING` và chưa thanh toán online) |
 | GET | `/orders` | 🛡️ | Query: `status`, `search`, `from`, `to`, `page`. `meta.statusCounts` = số đơn theo từng trạng thái |
 | GET | `/orders/:id` | 🛡️ | Chi tiết, kèm `payments` (lịch sử thanh toán VNPay) |
-| PATCH | `/orders/:id/status` | 🛡️ | `{ status }`, phải đúng thứ tự trong STATUS_FLOW |
+| PATCH | `/orders/:id/status` | 🛡️ | `{ status, reason? }`, phải đúng thứ tự trong STATUS_FLOW. Hủy (`CANCELLED`) thì **bắt buộc** `reason` ≤ 300 ký tự, lưu vào `cancelReason` cho khách xem (xem [18](18-ly-do-huy-don-hang.md)). Mọi API trả đơn hàng đều có thêm field `cancelReason` |
 
 ## Thanh toán VNPay
 Chi tiết luồng: [11-thanh-toan-vnpay.md](11-thanh-toan-vnpay.md). Đơn `paymentMethod: "ONLINE"` chỉ tạo được khi `/info` trả `onlinePayment: true`.
@@ -146,7 +146,7 @@ Kết quả trả về: đơn hàng đầy đủ gồm `code`, `subtotal`, `disc
 | Method | Endpoint | Mô tả |
 |---|---|---|
 | GET | `/users?search=&role=&staffRoleId=&page=` | Danh sách người dùng. `role`: `CUSTOMER` / `STAFF` / `ADMIN` |
-| POST | `/users` | Tạo tài khoản nhân viên: `{ name, email, phone?, password, role?: STAFF|ADMIN, staffRoleId }`. Chỉ ADMIN tạo được tài khoản ADMIN |
+| POST | `/users` | Tạo tài khoản nhân viên: `{ name, email, phone?, password, role?: STAFF|ADMIN, staffRoleId }`. Chỉ ADMIN hoặc Chủ nhà hàng tạo được tài khoản ADMIN |
 | POST | `/users/:id/reset-password` | `{ password }` đặt lại mật khẩu (không dùng cho chính mình) |
 | PATCH | `/users/:id` | `{ role?, staffRoleId?, isActive? }`. `role: STAFF` bắt buộc có vai trò. Không tự sửa chính mình; nhân viên không sửa được tài khoản ADMIN |
 | GET | `/stats/overview?days=30` | Doanh thu, số đơn, `revenueByDay[]`, `topDishes[]`, `ordersByStatus[]`, `recentOrders[]` |

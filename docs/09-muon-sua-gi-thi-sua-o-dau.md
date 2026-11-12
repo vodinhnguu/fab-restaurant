@@ -83,7 +83,7 @@ Backend dùng giá trị này để tính tiền thật. Trang thanh toán cũng
 
 Dòng "Miễn phí giao hàng cho đơn từ ..." ở **Footer** và ở mục ưu điểm (mảng `FEATURES`) của **trang chủ** cũng đọc số từ `info.freeShippingMin`, nên chỉ cần đổi `.env` là cả web cập nhật theo.
 
-Chỗ duy nhất còn viết cứng là [seed.js](../backend/prisma/seed.js#L159) (dòng 159). Chỗ này chỉ ảnh hưởng đến các đơn hàng **mẫu**.
+Chỗ duy nhất còn viết cứng là [seed.js](../backend/prisma/seed.js#L170) (dòng 170). Chỗ này chỉ ảnh hưởng đến các đơn hàng **mẫu**.
 
 ### A3. Đổi màu chủ đạo của website
 
@@ -226,7 +226,10 @@ Hiện tại khách chỉ được hủy khi đơn còn `PENDING`. Sửa 2 chỗ
 | Hủy được khi ở trạng thái nào | [reservations.controller.js](../backend/src/modules/reservations/reservations.controller.js#L34) dòng 34 | [MyReservations.jsx](../frontend/src/pages/account/MyReservations.jsx#L46) dòng 46 |
 | Admin thấy nút nào ở trạng thái nào | | [admin/Reservations.jsx](../frontend/src/pages/admin/Reservations.jsx): `ACTIONS` |
 | Lý do hủy có sẵn để admin bấm nhanh | (nhận mọi lý do, ≤ 300 ký tự) | [admin/Reservations.jsx](../frontend/src/pages/admin/Reservations.jsx): `CANCEL_REASONS` |
-| Bắt buộc lý do khi admin hủy | [reservations.validation.js](../backend/src/modules/reservations/reservations.validation.js): `updateReservationStatusSchema` | `CancelDialog`: nút Hủy lịch mờ khi chưa có lý do |
+| Bắt buộc lý do khi admin hủy | [reservations.validation.js](../backend/src/modules/reservations/reservations.validation.js): `updateReservationStatusSchema` | [CancelReasonDialog.jsx](../frontend/src/components/CancelReasonDialog.jsx): nút Hủy lịch mờ khi chưa có lý do |
+| Lý do hủy **đơn hàng** có sẵn để nhân viên bấm nhanh | (nhận mọi lý do, ≤ 300 ký tự) | [admin/Orders.jsx](../frontend/src/pages/admin/Orders.jsx): `CANCEL_REASONS` |
+| Bắt buộc lý do khi nhân viên hủy đơn hàng | [orders.validation.js](../backend/src/modules/orders/orders.validation.js): `updateStatusSchema` | `CancelReasonDialog` (dùng chung với đặt bàn) |
+| Câu báo hủy đơn khách nhìn thấy | | [OrderDetail.jsx](../frontend/src/pages/OrderDetail.jsx): `CancelledNotice`; [MyOrders.jsx](../frontend/src/pages/account/MyOrders.jsx) |
 
 ### B5. Đổi số lượng tối đa mỗi món trong giỏ (đang là 50)
 
@@ -380,17 +383,18 @@ File: [backend/prisma/seed.js](../backend/prisma/seed.js). Sửa xong chạy `np
 | Danh mục mẫu | 20-29: mảng `categories` |
 | Món mẫu | 32-66: mảng `dishes`, mỗi dòng là `[tên, danh mục, giá, giá KM, đơn vị, mã ảnh Unsplash, nổi bật, mô tả]` |
 | Tài khoản admin | 91-99 |
-| Tài khoản khách | 102-106 (mật khẩu chung ở dòng 100) |
+| Tài khoản khách | 108-120 (mật khẩu chung ở dòng 108) |
+| Tài khoản nhân viên (mỗi vai trò 1 tài khoản) | Không nằm trong seed.js mà ở mảng `DEMO_STAFF` trong [seed-staff.js](../backend/prisma/seed-staff.js#L20-L32). Thêm / sửa xong chạy `npm run db:seed-staff` (chỉ thêm tài khoản còn thiếu, **không xóa** dữ liệu) |
 | Mã giảm giá mẫu | 142-148 |
 | Số đơn mẫu (80) và khoảng thời gian (30 ngày) | khoảng dòng 152-154 |
 | Lịch đặt bàn mẫu | 235-242 |
 
 **Đổi email/mật khẩu demo** thì nhớ sửa cả:
-- 2 nút điền nhanh trên [Login.jsx](../frontend/src/pages/Login.jsx#L49-L56) dòng 49-56,
-- bảng tài khoản trong [README.md](../README.md),
-- dòng in ra màn hình cuối file seed.
+- các nút điền nhanh trên [Login.jsx](../frontend/src/pages/Login.jsx#L52-L82) dòng 52-82,
+- bảng tài khoản trong [README.md](../README.md) và [CLAUDE.md](../CLAUDE.md),
+- dòng in ra màn hình cuối file seed (tài khoản nhân viên tự lấy theo `DEMO_STAFF`).
 
-**Trước khi chạy thật:** xóa khối "Tài khoản demo" (dòng 49-56) trong [Login.jsx](../frontend/src/pages/Login.jsx#L49-L56) và đổi mật khẩu admin.
+**Trước khi chạy thật:** xóa khối "Tài khoản demo" (dòng 52-82) trong [Login.jsx](../frontend/src/pages/Login.jsx#L52-L82), đổi mật khẩu admin, **không** chạy `db:seed-staff` trên máy chủ thật (mật khẩu `123456` ai cũng biết).
 
 ---
 
@@ -423,6 +427,7 @@ File: [backend/prisma/seed.js](../backend/prisma/seed.js). Sửa xong chạy `np
 | `backend/.env` | **Tắt backend (`Ctrl+C`) và chạy lại** `npm run dev` |
 | `backend/prisma/schema.prisma` | `npm run db:migrate` trong `backend/`, rồi khởi động lại backend |
 | `backend/prisma/seed.js` | `npm run db:seed` (⚠️ xóa hết dữ liệu cũ) |
+| `backend/prisma/seed-staff.js` | `npm run db:seed-staff` (chỉ thêm tài khoản còn thiếu, không xóa) |
 | File trong `frontend/src/` | Không cần làm gì. Vite tự cập nhật trình duyệt (Hot Module Replacement) |
 | `frontend/index.html` | Thường tự tải lại. Nếu không thấy thì F5 |
 | `frontend/vite.config.js` hoặc `frontend/.env` | Tắt frontend và chạy lại |

@@ -8,9 +8,15 @@ Mỗi bộ phận trong nhà hàng (Thu ngân, Bếp, Lễ tân...) được **X
 |---|---|---|
 | `CUSTOMER` | Khách hàng | Không |
 | `STAFF` | Nhân viên, gắn với **1 vai trò** (`staffRoleId`) | Có, chỉ thấy mục vai trò đó được Xem |
-| `ADMIN` | Quản trị viên | Có, toàn quyền, là người duy nhất được sửa ma trận |
+| `ADMIN` | Quản trị viên | Có, toàn quyền, được sửa ma trận |
 
-Tài khoản demo (mật khẩu `123456`): `quanly@fab.vn` (Quản lý), `thungan@fab.vn` (Thu ngân), `letan@fab.vn` (Lễ tân), `bep@fab.vn` (Bếp).
+**Chủ nhà hàng ngang hàng với Admin.** Tài khoản `STAFF` giữ vai trò Chủ nhà hàng (`OWNER`) được làm mọi việc của `ADMIN`: toàn quyền 11 chức năng, sửa ma trận, tạo tài khoản Admin, gán vai trò Chủ, sửa / khóa / đặt lại mật khẩu tài khoản Admin và Chủ khác. Hai loại này gọi chung là **người toàn quyền**, kiểm tra bằng hàm `isFullAdmin(user)` (backend: [permissions.service.js](../backend/src/modules/permissions/permissions.service.js), frontend: [lib/permissions.js](../frontend/src/lib/permissions.js)). Quản lý và các vai trò khác chỉ có quyền theo ma trận.
+
+Tài khoản demo (mật khẩu `123456`), mỗi vai trò 1 tài khoản: `chunha@fab.vn` (Chủ nhà hàng), `quanly@fab.vn` (Quản lý), `totruong@fab.vn` (Tổ trưởng), `phucvu@fab.vn` (Phục vụ), `letan@fab.vn` (Lễ tân), `thungan@fab.vn` (Thu ngân), `kythuat@fab.vn` (Kỹ thuật), `tapvu@fab.vn` (Tạp vụ), `bep@fab.vn` (Bếp), `tiepthuc@fab.vn` (Tiếp thực), `hohaisan@fab.vn` (Hồ hải sản). Danh sách nằm ở [seed-staff.js](../backend/prisma/seed-staff.js).
+
+> Database tạo trước khi có ma trận phân quyền sẽ thiếu các tài khoản này. Chạy `npm --prefix backend run db:seed-staff` để thêm (không xóa dữ liệu).
+>
+> Vai trò chỉ có quyền ở chức năng **chưa có trang web** (Phiếu bếp, Hồ hải sản, Thiết bị & bảo trì), vd Kỹ thuật, vẫn đăng nhập được. Vào `/admin` sẽ thấy thông báo "Chưa có trang cho công việc của bạn" thay vì trang trắng (`AdminHome` trong [App.jsx](../frontend/src/App.jsx)).
 
 ## 2. Dùng trên giao diện
 
@@ -21,7 +27,7 @@ Tài khoản demo (mật khẩu `123456`): `quanly@fab.vn` (Quản lý), `thunga
 - **Sửa**: bấm tên cột để chọn / bỏ cả cột, ô "Tất cả" để chọn cả dòng. Tích Thêm / Sửa / Xóa thì Xem tự bật.
 - **Thêm vai trò** / **Xóa**: chỉ xóa được vai trò tự tạo và không còn nhân viên nào giữ.
 - **Chủ nhà hàng** luôn toàn quyền (biểu tượng khóa), chỉ đổi được tên và mô tả.
-- Nhân viên có quyền Xem "Nhân sự & phân quyền" chỉ được xem trang này, không sửa được.
+- Chỉ Admin và Chủ nhà hàng sửa được trang này. Nhân viên khác có quyền Xem "Nhân sự & phân quyền" (vd Quản lý) chỉ được xem.
 
 **Admin → Người dùng** (`/admin/users`): quản lý nhân viên ngay trong trang admin, nhân viên **không cần tự đăng ký**.
 
@@ -44,9 +50,9 @@ Gọi API ───────► requirePermission('ORDERS', 'edit') đọc qu
 ```
 
 - [backend/src/config/permissions.js](../backend/src/config/permissions.js): 11 chức năng (`MODULES`) và quyền mặc định của 12 vai trò.
-- [backend/src/modules/permissions/permissions.service.js](../backend/src/modules/permissions/permissions.service.js): `userPermissions(user)` và `can(user, module, action)`.
-- [backend/src/middlewares/auth.js](../backend/src/middlewares/auth.js): `requirePermission(...)`. Mỗi request đọc quyền mới nhất từ DB, nên admin đổi quyền thì nhân viên bị ảnh hưởng ngay ở lần gọi API tiếp theo.
-- [frontend/src/lib/permissions.js](../frontend/src/lib/permissions.js): `useCan()`, `canAccessAdmin()`. Menu khai báo `module` trong [frontend/src/lib/adminMenu.js](../frontend/src/lib/adminMenu.js).
+- [backend/src/modules/permissions/permissions.service.js](../backend/src/modules/permissions/permissions.service.js): `isFullAdmin(user)`, `userPermissions(user)` và `can(user, module, action)`.
+- [backend/src/middlewares/auth.js](../backend/src/middlewares/auth.js): `requirePermission(...)` và `requireAdmin` (chỉ người toàn quyền: ADMIN hoặc Chủ nhà hàng). Mỗi request đọc quyền mới nhất từ DB, nên admin đổi quyền thì nhân viên bị ảnh hưởng ngay ở lần gọi API tiếp theo.
+- [frontend/src/lib/permissions.js](../frontend/src/lib/permissions.js): `useCan()`, `canAccessAdmin()`, `isFullAdmin()`. Menu khai báo `module` trong [frontend/src/lib/adminMenu.js](../frontend/src/lib/adminMenu.js).
 
 Ví dụ ẩn nút trong một trang:
 
@@ -63,7 +69,7 @@ const can = useCan();
 | `RolePermission` | 1 dòng = 1 vai trò × 1 chức năng: `canView`, `canCreate`, `canEdit`, `canDelete` |
 | `User.staffRoleId` | Vai trò của nhân viên (chỉ dùng khi `role = STAFF`) |
 
-DB mới chưa có vai trò thì lần đầu mở trang Phân quyền, backend tự tạo 12 vai trò mặc định. `npm run db:seed` cũng tạo lại từ đầu, kèm 4 nhân viên demo.
+DB mới chưa có vai trò thì lần đầu mở trang Phân quyền, backend tự tạo 12 vai trò mặc định. `npm run db:seed` cũng tạo lại từ đầu, kèm 11 nhân viên demo (mỗi vai trò 1 người).
 
 ## 5. Quyền cần có cho từng API
 
@@ -82,14 +88,14 @@ DB mới chưa có vai trò thì lần đầu mở trang Phân quyền, backend 
 | `POST /users` (thêm nhân viên) | Nhân sự · Thêm |
 | `PATCH /users/:id`, `POST /users/:id/reset-password` | Nhân sự · Sửa |
 | `GET /permissions` | Nhân sự · Xem |
-| `POST / PUT / DELETE /permissions/roles` | Chỉ ADMIN |
+| `POST / PUT / DELETE /permissions/roles` | Chỉ ADMIN hoặc Chủ nhà hàng (`requireAdmin`) |
 
 API tra cứu / hủy bằng mã (`/orders/track/:code`, `/orders/:code/cancel`, và tương tự với đặt bàn) cũng xét quyền khi nhân viên dùng: có Xem thì tra cứu được đơn của người khác, phải có Sửa mới hủy được.
 
 ### Chống tự nâng quyền
 
-- Chỉ ADMIN sửa được ma trận (nếu không, nhân viên có quyền Nhân sự có thể tự cấp thêm quyền cho vai trò của mình).
-- Nhân viên có quyền Thêm / Sửa nhân sự **không** được: tạo hoặc sửa tài khoản ADMIN, đặt lại mật khẩu của ADMIN, gán hoặc sửa người giữ vai trò Chủ nhà hàng.
+- Chỉ ADMIN và Chủ nhà hàng sửa được ma trận (nếu không, nhân viên có quyền Nhân sự có thể tự cấp thêm quyền cho vai trò của mình).
+- Nhân viên khác (kể cả Quản lý) có quyền Thêm / Sửa nhân sự **không** được: tạo hoặc sửa tài khoản ADMIN, đặt lại mật khẩu của ADMIN, gán hoặc sửa người giữ vai trò Chủ nhà hàng.
 - Không ai tự sửa / khóa / đặt lại mật khẩu chính mình ở trang Người dùng (đổi mật khẩu của mình ở trang Tài khoản).
 
 ## 6. API ma trận

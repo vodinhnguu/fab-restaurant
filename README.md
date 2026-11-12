@@ -62,6 +62,7 @@ Mở http://localhost:5173
 **Máy khác / sau khi `git pull`:**
 - Máy mới clone về: chạy đủ 4 bước trên.
 - Máy đã chạy rồi, chỉ pull code mới: `npm run install:all` rồi `npm --prefix backend run db:deploy` (cập nhật bảng, **không xóa** dữ liệu), sau đó `npm run dev`.
+- Không đăng nhập được tài khoản nhân viên (`bep@fab.vn`, `thungan@fab.vn`...)? Database được tạo trước khi có các tài khoản này. Chạy `npm --prefix backend run db:seed-staff` để thêm tài khoản còn thiếu (**không xóa** dữ liệu).
 - `backend/.env` không có trên git (chứa khóa bí mật). Muốn dùng VNPay trên máy mới thì tự chép `VNP_TMN_CODE`, `VNP_HASH_SECRET` sang.
 - Dùng Claude Code: file [CLAUDE.md](CLAUDE.md) ghi sẵn cách chạy và tài khoản demo, AI tự đọc khi mở dự án.
 
@@ -69,7 +70,7 @@ Mở http://localhost:5173
 |---|---|---|
 | Admin | admin@fab.vn | admin123 |
 | Khách hàng | khach@fab.vn | 123456 |
-| Nhân viên (Quản lý / Thu ngân / Lễ tân / Bếp) | quanly@ / thungan@ / letan@ / bep@fab.vn | 123456 |
+| Nhân viên, mỗi vai trò 1 tài khoản | chunha@ / quanly@ / totruong@ / phucvu@ / letan@ / thungan@ / kythuat@ / tapvu@ / bep@ / tiepthuc@ / hohaisan@fab.vn | 123456 |
 
 Mã giảm giá mẫu: `WELCOME10`, `FAB50K`, `HAISAN20`
 
@@ -85,7 +86,8 @@ fab-restaurant/
 │   ├── prisma/
 │   │   ├── schema.prisma    # Định nghĩa bảng dữ liệu
 │   │   ├── migrations/      # Lịch sử thay đổi DB
-│   │   └── seed.js          # Dữ liệu mẫu
+│   │   ├── seed.js          # Dữ liệu mẫu (xóa hết rồi tạo lại)
+│   │   └── seed-staff.js    # Tài khoản nhân viên demo (chỉ thêm, không xóa)
 │   └── src/
 │       ├── config/          # Biến môi trường, thông tin nhà hàng
 │       ├── middlewares/     # auth, validate, error, upload
@@ -126,6 +128,8 @@ Nên đọc theo thứ tự:
 14. [Lý do hủy đặt bàn](docs/14-ly-do-huy-dat-ban.md): admin chọn / ghi lý do khi hủy, khách xem lý do và đặt lại ngày giờ khác
 15. [Ghi chú từng món](docs/15-ghi-chu-tung-mon.md): ô ghi chú khẩu vị riêng cho mỗi món, gợi ý theo loại món, bếp xem trong admin
 16. [Đặc tả app mobile cho Stitch AI](docs/16-dac-ta-app-mobile-stitch.md): 25 màn hình app khách hàng, bố cục, quy tắc, API từng màn và prompt dán vào Stitch
+17. [Tư liệu viết báo cáo](docs/17-tu-lieu-viet-bao-cao.md): toàn bộ thông tin để viết báo cáo đồ án theo từng chương: yêu cầu, use case, quy tắc nghiệp vụ, sơ đồ, từ điển dữ liệu, 54 API, ma trận quyền, ca kiểm thử, hạn chế, câu hỏi bảo vệ
+18. [Lý do hủy đơn hàng](docs/18-ly-do-huy-don-hang.md): nhân viên chọn / ghi lý do khi hủy đơn, khách xem lý do ở trang chi tiết đơn và danh sách đơn của mình
 
 👉 Mới bắt đầu? Đọc **10** trước để có bức tranh toàn cảnh. Khi đang code, mở sẵn **08** và **09** để tra cứu nhanh.
 

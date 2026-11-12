@@ -635,6 +635,7 @@ same info card, coral button "Xem đơn & thanh toán lại".
    - Đến lấy: bỏ bước "Đang giao".
    - Bước đã qua: tròn coral có dấu ✓; bước hiện tại: tròn coral có vòng sáng; bước sau: xám.
    - Đơn đã hủy: thay timeline bằng khung đỏ "Đơn hàng đã bị hủy".
+   - Đơn bị **nhà hàng** hủy (có `cancelReason`): khung đỏ "Nhà hàng đã hủy đơn này" + "Lý do: {cancelReason}" + (nếu trạng thái thanh toán "Đã hoàn tiền") "Số tiền bạn đã thanh toán online sẽ được nhà hàng hoàn lại." + "Rất xin lỗi bạn vì sự bất tiện này. Cần hỗ trợ thêm, bạn vui lòng gọi nhà hàng." Đơn đã hủy thì không hiện "Cảm ơn bạn đã đặt món!".
 4. **Thẻ "Thông tin nhận hàng"**: Người nhận, Điện thoại, Hình thức ("Giao tận nơi" / "Đến lấy tại quán"), Địa chỉ (nếu có), Ghi chú (nếu có), Thanh toán ("Tiền mặt khi nhận" / "VNPay") + nhãn trạng thái thanh toán, Trạng thái đơn (nhãn).
 5. **Thẻ "Chi tiết đơn"**: mỗi món: ảnh 48, "Tôm sú hấp bia × 2", dòng "Ghi chú: 2 phần ít cay" (Ocean 700, nếu có), thành tiền. Đơn **Hoàn thành** + đã đăng nhập: mỗi món có nút nhỏ "Đánh giá" → S14.
    - Tổng: Tạm tính, Giảm giá (kèm nhãn mã), Phí giao hàng ("Miễn phí" nếu 0), **Tổng cộng**.
@@ -661,7 +662,7 @@ same info card, coral button "Xem đơn & thanh toán lại".
 - Chưa đăng nhập phải có **SĐT** đi kèm mã. Không tìm thấy → icon hộp kính lúp, "Không tìm thấy đơn hàng", "Kiểm tra lại mã đơn và số điện thoại đặt hàng.", nút "Tra cứu đơn khác" → S16.
 - Quay lại từ màn này (khi vừa đặt) → về S04, không về S09.
 
-**API:** `GET /orders/track/:code?phone=`, `POST /orders/:code/cancel` `{ phone }`, `POST /payments/vnpay/:code` `{ phone }`.
+**API:** `GET /orders/track/:code?phone=` (có `cancelReason`), `POST /orders/:code/cancel` `{ phone }`, `POST /payments/vnpay/:code` `{ phone }`.
 
 ```text
 Order tracking screen. Top: green check circle, title "Cảm ơn bạn đã đặt món!",
@@ -708,6 +709,7 @@ full-width coral button "Gửi đánh giá".
 **Bố cục:**
 - Thanh tab con trên đầu: "Đơn hàng" | "Đặt bàn".
 - Danh sách thẻ đơn: mã (đơn cách) + ngày giờ, nhãn trạng thái bên phải; hàng ảnh tối đa 4 món + "+2" nếu nhiều hơn; tổng tiền (coral) + mũi tên ›. Bấm → S13.
+- Đơn bị nhà hàng hủy (có `cancelReason`): dưới dòng mã đơn có dải đỏ nhạt "Nhà hàng đã hủy đơn · Lý do: {cancelReason}".
 - Lọc nhanh bằng chip: "Tất cả", "Đang xử lý" (Chờ xác nhận / Đã xác nhận / Đang chế biến / Đang giao), "Hoàn thành", "Đã hủy" (lọc ngay trên máy).
 - Cuộn tới cuối tải thêm trang.
 - Liên kết dưới cùng: "Tra cứu đơn khác bằng mã" → S16.
@@ -1076,6 +1078,7 @@ A set of reusable state screens for the same app:
 | Giữ bàn | 120 phút / lượt; bận nếu có lịch trong ±2 tiếng | `docs/13` |
 | Hủy đặt bàn (khách) | Khi Chờ xác nhận / Đã xác nhận **và chưa tới giờ** | `/reservations/:code/cancel` |
 | Lý do hủy | Có `cancelReason` ⇒ nhà hàng hủy ⇒ hiện khung đỏ + nút đặt lại | `docs/14` |
+| Lý do hủy đơn | Đơn có `cancelReason` ⇒ nhà hàng hủy ⇒ khung đỏ kèm lý do ở chi tiết đơn, dòng đỏ ở danh sách đơn | `docs/18` |
 | Đánh giá | Cần đăng nhập + đã có đơn Hoàn thành chứa món; 1 người 1 đánh giá / món, gửi lại là sửa | `/reviews` |
 | Xem đơn / lịch | Chủ (đăng nhập), hoặc đúng SĐT đã đặt (bỏ dấu cách) | `findAccessibleOrder` |
 | Giới hạn | Đăng nhập / đăng ký / đổi mật khẩu: 20 lần / 15 phút. Tra cứu: 60 lần / 15 phút. Sơ đồ bàn: 300 lần / 15 phút | `rateLimit.js` |
