@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { seedDefaultTables } from '../src/config/tables.js';
 import { seedDefaultRoles } from '../src/modules/permissions/permissions.service.js';
+import { DEMO_STAFF, seedDemoStaff } from './seed-staff.js';
 
 const prisma = new PrismaClient();
 
@@ -118,16 +119,8 @@ async function main() {
     );
   }
 
-  // Nhân viên demo (mật khẩu 123456) - đăng nhập để thử ma trận phân quyền
-  const staffRoles = Object.fromEntries((await prisma.staffRole.findMany()).map((r) => [r.key, r.id]));
-  for (const [name, email, phone, roleKey] of [
-    ['Phạm Quản Lý', 'quanly@fab.vn', '0930000001', 'MANAGER'],
-    ['Đỗ Thu Ngân', 'thungan@fab.vn', '0930000002', 'CASHIER'],
-    ['Hoàng Lễ Tân', 'letan@fab.vn', '0930000003', 'RECEPTIONIST'],
-    ['Bùi Đầu Bếp', 'bep@fab.vn', '0930000004', 'KITCHEN'],
-  ]) {
-    await prisma.user.create({ data: { name, email, phone, passwordHash: customerHash, role: 'STAFF', staffRoleId: staffRoles[roleKey] } });
-  }
+  // Nhân viên demo (mỗi vai trò 1 tài khoản, mật khẩu 123456): danh sách nằm trong seed-staff.js
+  await seedDemoStaff(prisma);
 
   console.log('📂 Tạo danh mục & món ăn...');
   const catMap = {};
@@ -264,7 +257,7 @@ async function main() {
   console.log('✅ Seed xong!');
   console.log('   Admin:     admin@fab.vn / admin123');
   console.log('   Khách hàng: khach@fab.vn / 123456');
-  console.log('   Nhân viên: quanly@ / thungan@ / letan@ / bep@fab.vn - mật khẩu 123456');
+  console.log('   Nhân viên (mật khẩu 123456): ' + DEMO_STAFF.map((s) => s[1]).join(', '));
   console.log(`   (admin id ${admin.id})`);
 }
 

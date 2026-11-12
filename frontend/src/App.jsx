@@ -1,9 +1,10 @@
+import { Wrench } from 'lucide-react';
 import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AdminLayout from './components/layout/AdminLayout';
 import CustomerLayout from './components/layout/CustomerLayout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
-import { Spinner } from './components/ui/Feedback';
+import { EmptyState, Spinner } from './components/ui/Feedback';
 import Home from './pages/Home';
 import { ADMIN_MENU } from './lib/adminMenu';
 import { can } from './lib/permissions';
@@ -43,7 +44,16 @@ function AdminHome() {
   const user = useAuthStore((s) => s.user);
   if (can(user, 'DASHBOARD')) return <Dashboard />;
   const first = ADMIN_MENU.find((m) => can(user, m.module));
-  return first ? <Navigate to={first.to} replace /> : null;
+  if (first) return <Navigate to={first.to} replace />;
+  // Vai trò chỉ có quyền ở chức năng chưa có trang web (vd Kỹ thuật, Tạp vụ: Thiết bị & bảo trì)
+  // -> báo rõ cho nhân viên thay vì để trang trắng
+  return (
+    <EmptyState
+      icon={Wrench}
+      title="Chưa có trang cho công việc của bạn"
+      description={`Vai trò ${user?.staffRole?.name ?? 'của bạn'} chỉ có quyền ở các chức năng chưa có trang trên web (vd Thiết bị & bảo trì, Hồ hải sản, Phiếu bếp). Cần thêm quyền thì báo admin.`}
+    />
+  );
 }
 
 export default function App() {

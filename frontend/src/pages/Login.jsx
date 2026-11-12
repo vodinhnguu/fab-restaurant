@@ -51,19 +51,35 @@ export default function Login() {
 
         {/* Tài khoản demo - xóa khi đưa vào sử dụng thật */}
         <div className="rounded-xl bg-sand-100 p-3 text-xs text-slate-600">
-          <p className="mb-2 font-semibold">Tài khoản demo:</p>
-          <div className="flex flex-wrap gap-2">
-            {[
+          {/* Danh sách nhân viên khớp với backend/prisma/seed-staff.js (mật khẩu 123456) */}
+          {[
+            ['Tài khoản demo:', [
               ['Admin', 'admin@fab.vn', 'admin123'],
               ['Khách hàng', 'khach@fab.vn', '123456'],
-              ['Quản lý', 'quanly@fab.vn', '123456'],
-              ['Thu ngân', 'thungan@fab.vn', '123456'],
-              ['Lễ tân', 'letan@fab.vn', '123456'],
-              ['Bếp', 'bep@fab.vn', '123456'],
-            ].map(([label, email, password]) => (
-              <button key={email} type="button" onClick={() => fillDemo(email, password)} className="rounded-lg bg-white px-2 py-1 ring-1 ring-slate-200 hover:ring-ocean-300">{label}</button>
-            ))}
-          </div>
+            ]],
+            ['Nhân viên (mật khẩu 123456):', [
+              ['Chủ nhà hàng', 'chunha@fab.vn'],
+              ['Quản lý', 'quanly@fab.vn'],
+              ['Tổ trưởng', 'totruong@fab.vn'],
+              ['Phục vụ', 'phucvu@fab.vn'],
+              ['Lễ tân', 'letan@fab.vn'],
+              ['Thu ngân', 'thungan@fab.vn'],
+              ['Kỹ thuật', 'kythuat@fab.vn'],
+              ['Tạp vụ', 'tapvu@fab.vn'],
+              ['Bếp', 'bep@fab.vn'],
+              ['Tiếp thực', 'tiepthuc@fab.vn'],
+              ['Hồ hải sản', 'hohaisan@fab.vn'],
+            ]],
+          ].map(([heading, accounts]) => (
+            <div key={heading} className="mt-2 first:mt-0">
+              <p className="mb-2 font-semibold">{heading}</p>
+              <div className="flex flex-wrap gap-2">
+                {accounts.map(([label, email, password = '123456']) => (
+                  <button key={email} type="button" onClick={() => fillDemo(email, password)} className="rounded-lg bg-white px-2 py-1 ring-1 ring-slate-200 hover:ring-ocean-300">{label}</button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </form>
     </div>
