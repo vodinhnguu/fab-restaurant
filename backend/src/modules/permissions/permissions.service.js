@@ -17,12 +17,17 @@ export async function seedDefaultRoles(db) {
   await db.rolePermission.createMany({ data, skipDuplicates: true });
 }
 
+// Toàn quyền như quản trị viên: tài khoản ADMIN, hoặc nhân viên giữ vai trò Chủ nhà hàng (OWNER).
+// Được làm cả những việc ma trận không cấp được: sửa ma trận, tạo / sửa tài khoản Admin và Chủ nhà hàng.
+// user cần include staffRole (req.user và kết quả login đã có sẵn).
+export const isFullAdmin = (user) => user?.role === 'ADMIN' || (user?.role === 'STAFF' && user.staffRole?.key === OWNER_KEY);
+
 // Quyền của 1 tài khoản (user đã include staffRole.permissions):
-// ADMIN = toàn quyền, STAFF = theo vai trò được gán, còn lại = không có quyền gì
+// ADMIN / Chủ nhà hàng = toàn quyền, STAFF = theo vai trò được gán, còn lại = không có quyền gì
 export function userPermissions(user) {
   const result = {};
   for (const module of MODULE_KEYS) {
-    if (user?.role === 'ADMIN') {
+    if (isFullAdmin(user)) {
       result[module] = { view: true, create: true, edit: true, delete: true };
       continue;
     }

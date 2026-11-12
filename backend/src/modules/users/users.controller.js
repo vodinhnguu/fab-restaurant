@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { OWNER_KEY } from '../../config/permissions.js';
 import { prisma } from '../../lib/prisma.js';
+import { isFullAdmin } from '../permissions/permissions.service.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { getPagination, paginationMeta } from '../../utils/helpers.js';
 
@@ -44,13 +45,14 @@ const publicFields = {
 };
 
 // Nhân viên có quyền quản lý nhân sự vẫn KHÔNG được đụng tới tài khoản ADMIN / người giữ vai trò Chủ.
+// Chỉ người toàn quyền (ADMIN hoặc Chủ nhà hàng, xem isFullAdmin) mới được.
 // Không ai tự sửa / khóa / đặt lại mật khẩu chính mình ở đây (đổi mật khẩu của mình ở trang Tài khoản).
 async function findManageableUser(actor, id) {
   if (id === actor.id) throw ApiError.badRequest('Không thể tự thay đổi tài khoản của chính mình ở đây');
   const target = await prisma.user.findUnique({ where: { id }, include: { staffRole: true } });
   if (!target) throw ApiError.notFound('Không tìm thấy tài khoản');
-  if (actor.role !== 'ADMIN' && (target.role === 'ADMIN' || target.staffRole?.key === OWNER_KEY)) {
-    throw ApiError.forbidden('Chỉ quản trị viên (ADMIN) mới được thay đổi tài khoản này');
+  if (!isFullAdmin(actor) && (target.role === 'ADMIN' || target.staffRole?.key === OWNER_KEY)) {
+    throw ApiError.forbidden('Chỉ quản trị viên hoặc chủ nhà hàng mới được thay đổi tài khoản này');
   }
   return target;
 }
@@ -60,8 +62,8 @@ async function checkStaffRole(actor, staffRoleId) {
   if (!staffRoleId) throw ApiError.badRequest('Vui lòng chọn vai trò cho nhân viên');
   const staffRole = await prisma.staffRole.findUnique({ where: { id: staffRoleId } });
   if (!staffRole) throw ApiError.badRequest('Vai trò không tồn tại');
-  if (actor.role !== 'ADMIN' && staffRole.key === OWNER_KEY) {
-    throw ApiError.forbidden('Chỉ quản trị viên mới được gán vai trò Chủ nhà hàng');
+  if (!isFullAdmin(actor) && staffRole.key === OWNER_KEY) {
+    throw ApiError.forbidden('Chỉ quản trị viên hoặc chủ nhà hàng mới được gán vai trò Chủ nhà hàng');
   }
   return staffRoleId;
 }
@@ -88,7 +90,7 @@ export async function list(req, res) {
 
 export async function create(req, res) {
   const { password, role, staffRoleId, ...rest } = req.body;
-  if (role === 'ADMIN' && req.user.role !== 'ADMIN') throw ApiError.forbidden('Chỉ quản trị viên mới tạo được tài khoản quản trị');
+  if (role === 'ADMIN' && !isFullAdmin(req.user)) throw ApiError.forbidden('Chỉ quản trị viên hoặc chủ nhà hàng mới tạo được tài khoản quản trị');
   if (await prisma.user.findUnique({ where: { email: rest.email } })) throw ApiError.conflict('Email đã được sử dụng');
 
   const user = await prisma.user.create({
@@ -105,8 +107,8 @@ export async function create(req, res) {
 
 export async function update(req, res) {
   const target = await findManageableUser(req.user, Number(req.params.id));
-  if (req.user.role !== 'ADMIN' && req.body.role === 'ADMIN') {
-    throw ApiError.forbidden('Chỉ quản trị viên (ADMIN) mới được cấp quyền quản trị');
+  if (!isFullAdmin(req.user) && req.body.role === 'ADMIN') {
+    throw ApiError.forbidden('Chỉ quản trị viên hoặc chủ nhà hàng mới được cấp quyền quản trị');
   }
 
   const data = { ...req.body };

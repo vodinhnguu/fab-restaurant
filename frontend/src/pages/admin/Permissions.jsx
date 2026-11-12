@@ -11,6 +11,7 @@ import { Field, Input, Textarea } from '../../components/ui/Form';
 import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { useDocumentTitle } from '../../lib/hooks';
+import { isFullAdmin } from '../../lib/permissions';
 import { permissionApi } from '../../services';
 import { useAuthStore } from '../../stores/auth';
 
@@ -245,8 +246,8 @@ function FullMatrix({ roles, modules, actions, onPick }) {
 export default function Permissions() {
   useDocumentTitle('Quản trị - Phân quyền');
   const qc = useQueryClient();
-  // Sửa ma trận chỉ dành cho ADMIN (backend cũng chặn); nhân viên chỉ được xem
-  const isAdmin = useAuthStore((s) => s.user?.role === 'ADMIN');
+  // Sửa ma trận chỉ dành cho ADMIN / Chủ nhà hàng (backend cũng chặn); nhân viên khác chỉ được xem
+  const isAdmin = useAuthStore((s) => isFullAdmin(s.user));
   const { data, isLoading, error, refetch } = useQuery({ queryKey: ['permissions'], queryFn: permissionApi.list });
   const [view, setView] = useState('roles'); // 'roles' | 'matrix'
   const [selectedId, setSelectedId] = useState(null);
@@ -299,7 +300,7 @@ export default function Permissions() {
 
       {!isAdmin && (
         <p className="mb-4 flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          <Lock className="h-4 w-4" /> Bạn chỉ được xem. Chỉ quản trị viên (ADMIN) mới sửa được ma trận phân quyền.
+          <Lock className="h-4 w-4" /> Bạn chỉ được xem. Chỉ quản trị viên hoặc chủ nhà hàng mới sửa được ma trận phân quyền.
         </p>
       )}
 

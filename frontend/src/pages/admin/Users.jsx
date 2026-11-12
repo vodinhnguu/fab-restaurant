@@ -12,7 +12,7 @@ import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { formatDate } from '../../lib/format';
 import { useDocumentTitle } from '../../lib/hooks';
-import { ROLE_LABEL, useCan } from '../../lib/permissions';
+import { isFullAdmin, ROLE_LABEL, useCan } from '../../lib/permissions';
 import { permissionApi, userApi } from '../../services';
 import { useAuthStore } from '../../stores/auth';
 
@@ -139,9 +139,9 @@ export default function Users() {
   const { data: matrix } = useQuery({ queryKey: ['permissions'], queryFn: permissionApi.list });
   const staffRoles = matrix?.roles ?? [];
   const can = useCan();
-  const isAdmin = me.role === 'ADMIN';
+  const isAdmin = isFullAdmin(me); // ADMIN hoặc Chủ nhà hàng
 
-  // Được sửa dòng này không: không tự sửa mình; nhân viên không đụng tới ADMIN / Chủ nhà hàng
+  // Được sửa dòng này không: không tự sửa mình; nhân viên thường không đụng tới ADMIN / Chủ nhà hàng
   const editable = (u) =>
     u.id !== me.id && can('STAFF', 'edit') && (isAdmin || (u.role !== 'ADMIN' && staffRoles.find((r) => r.id === u.staffRole?.id)?.key !== 'OWNER'));
 

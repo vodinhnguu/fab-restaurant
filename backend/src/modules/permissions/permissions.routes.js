@@ -7,7 +7,7 @@ import { roleSchema } from './permissions.validation.js';
 const router = Router();
 
 // Nhân viên có quyền Xem "Nhân sự & phân quyền" thì xem được ma trận.
-// Sửa ma trận chỉ ADMIN: tránh nhân viên tự nâng quyền cho chính vai trò của mình.
+// Sửa ma trận chỉ ADMIN hoặc Chủ nhà hàng (requireAdmin): tránh nhân viên tự nâng quyền cho chính vai trò của mình.
 router.get('/', requirePermission('STAFF', 'view'), ctrl.list);
 router.get('/roles/:id', requirePermission('STAFF', 'view'), ctrl.detail);
 router.post('/roles', requireAdmin, validate(roleSchema), ctrl.create);

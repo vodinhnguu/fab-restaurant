@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
-import { can } from '../modules/permissions/permissions.service.js';
+import { can, isFullAdmin } from '../modules/permissions/permissions.service.js';
 import { ApiError } from '../utils/ApiError.js';
 
 // Lấy token từ header "Authorization: Bearer <token>"
@@ -54,11 +54,18 @@ export function requireRole(...roles) {
   };
 }
 
-export const requireAdmin = [requireAuth, requireRole('ADMIN')];
+// Việc chỉ người toàn quyền được làm (vd sửa ma trận phân quyền): tài khoản ADMIN hoặc Chủ nhà hàng
+export const requireAdmin = [
+  requireAuth,
+  (req, res, next) => {
+    if (!isFullAdmin(req.user)) throw ApiError.forbidden('Chỉ quản trị viên hoặc chủ nhà hàng mới làm được thao tác này');
+    next();
+  },
+];
 
 // Kiểm tra quyền theo ma trận phân quyền, vd: requirePermission('ORDERS', 'edit').
 // Truyền nhiều cặp = có 1 trong các quyền là được: requirePermission(['MENU', 'create'], ['MENU', 'edit'])
-// ADMIN luôn qua; STAFF xét theo vai trò; khách hàng bị chặn.
+// ADMIN / Chủ nhà hàng luôn qua; STAFF xét theo vai trò; khách hàng bị chặn.
 export function requirePermission(...args) {
   const pairs = typeof args[0] === 'string' ? [args] : args;
   return [
