@@ -14,6 +14,9 @@ class AppConfig {
     defaultValue: 'http://10.0.2.2:4000/api/v1',
   );
 
+  /// Địa chỉ server không có "/api/v1", để ghép ảnh "/uploads/abc.jpg".
+  static String get serverOrigin => Uri.parse(apiBaseUrl).origin;
+
   /// Hiện ở cuối màn Tài khoản (S22).
   static const appVersion = '1.0.0';
 }

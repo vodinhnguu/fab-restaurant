@@ -2,7 +2,7 @@
 
 App Flutter cho khách hàng nằm ở thư mục [`mobile/`](../mobile). Giao diện và quy tắc của từng màn lấy theo [16-dac-ta-app-mobile-stitch.md](16-dac-ta-app-mobile-stitch.md). Tài liệu này nói **file nằm ở đâu, sửa ở đâu, đang làm tới bước nào**.
 
-- Công nghệ: Flutter 3.41, `go_router` (chuyển màn), `flutter_riverpod` (dữ liệu dùng chung), `google_fonts`.
+- Công nghệ: Flutter 3.41, `go_router` (chuyển màn), `flutter_riverpod` (dữ liệu dùng chung), `dio` (gọi API), `flutter_secure_storage` (lưu token), `shared_preferences` (lưu giỏ hàng), `intl` (định dạng), `google_fonts`.
 - Riverpod dùng bản 2.6 (bản mới nhất chạy được với Flutter trên máy) và **viết tay**, không dùng phần tự sinh code (`riverpod_generator`, `build_runner`) để khỏi phải chạy thêm lệnh mỗi lần sửa.
 
 ---
@@ -28,13 +28,28 @@ App Flutter cho khách hàng nằm ở thư mục [`mobile/`](../mobile). Giao d
 
 **Địa chỉ API** ở [mobile/lib/app/config.dart](../mobile/lib/app/config.dart). Mặc định `http://10.0.2.2:4000/api/v1`: trong máy ảo Android, `10.0.2.2` chính là `localhost` của máy tính. Điện thoại thật thì dùng IP máy tính trong cùng Wi-Fi: `flutter run --dart-define=API_URL=http://192.168.1.10:4000/api/v1`.
 
+Bản **debug** được gọi `http://` (khai báo `usesCleartextTraffic` ở `android/app/src/debug/AndroidManifest.xml`). Bản phát hành thì server phải dùng `https`.
+
 **Kiểm tra trước khi báo xong:**
 
 ```bash
 cd mobile
 flutter analyze   # tìm lỗi, cảnh báo
-flutter test      # chạy test (test/widget_test.dart)
+flutter test      # chạy test, KHÔNG cần bật backend (dùng server giả)
+
+# Thử với backend thật (bật `npm run dev` trước). Chỉ đăng nhập / đọc, không tạo dữ liệu:
+flutter test test/live_api_test.dart --dart-define=LIVE_API=true --dart-define=API_URL=http://localhost:4000/api/v1
 ```
+
+| File test | Kiểm tra gì |
+|---|---|
+| `test/widget_test.dart` | Mở app, bấm qua các tab và màn |
+| `test/services/api_client_test.dart` | Bóc `data` / `meta`, gắn token, câu lỗi tiếng Việt, lỗi từng ô, 401, 429, mất mạng |
+| `test/state/auth_state_test.dart` | Mở app có / không có token, token hết hạn, đăng nhập, đăng xuất |
+| `test/state/cart_state_test.dart` | Cộng dồn, tối đa 50, xóa / hoàn tác, ghi chú 200 ký tự, tắt app vẫn còn giỏ |
+| `test/utils/format_and_validators_test.dart` | `850.000đ`, giờ Việt Nam, "3 ngày trước", phí ship, kiểm tra SĐT / email |
+| `test/live_api_test.dart` | Gọi backend thật (mặc định bỏ qua) |
+| `test/helpers/fake_server.dart` | "Server giả" dùng chung cho các test trên |
 
 **Lỗi thường gặp khi build Android:**
 
@@ -65,12 +80,31 @@ mobile/
    │  └─ app_theme.dart        ← font, nút, ô nhập, chip, thẻ (mục 2.2, 2.3)
    ├─ screens/                 ← MỖI MÀN 1 FILE, tên file bắt đầu bằng mã màn
    ├─ widgets/                 ← mảnh giao diện dùng ở ≥ 2 màn
+   │  ├─ app_snackbar.dart     ← showAppSnack('...'), gọi ở đâu cũng được
+   │  ├─ confirm_dialog.dart   ← showConfirmDialog(...) hỏi "Không" / "Hủy đơn"
+   │  ├─ state_views.dart      ← AsyncView, LoadingView, EmptyView, ErrorView (mất mạng), SkeletonBox
+   │  ├─ status_badge.dart     ← nhãn trạng thái đơn / thanh toán / đặt bàn
+   │  ├─ quantity_stepper.dart ← [ − ] 1 [ + ]
    │  └─ placeholder_screen.dart  ← khung giữ chỗ, xóa khi làm xong cả 25 màn
-   ├─ services/                ← (Bước 1) gọi API
-   ├─ state/                   ← (Bước 1) dữ liệu dùng chung: đăng nhập, giỏ hàng, /info
-   ├─ models/                  ← (Bước 1) Dish, Order, Reservation...
-   └─ utils/                   ← (Bước 1) định dạng tiền / ngày, kiểm tra email / SĐT
+   ├─ services/                ← gọi API (mỗi nhóm API 1 file)
+   │  ├─ api_client.dart       ← CỬA NGÕ: gắn token, bóc data/meta, đổi lỗi sang tiếng Việt, 401, 429
+   │  ├─ api_exception.dart    ← lỗi API: message, fieldErrors, isNetwork, retryAfterMinutes
+   │  ├─ token_store.dart      ← lưu token mã hóa
+   │  ├─ auth_service.dart     ← /auth/*
+   │  └─ info_service.dart     ← /info
+   ├─ state/                   ← dữ liệu dùng chung nhiều màn (Riverpod)
+   │  ├─ app_providers.dart    ← apiClientProvider, kho lưu trên máy, sự kiện hết phiên
+   │  ├─ auth_state.dart       ← authProvider, currentUserProvider, isLoggedInProvider
+   │  ├─ info_state.dart       ← infoProvider (GET /info)
+   │  ├─ cart_state.dart       ← cartProvider, cartCountProvider, cartSubtotalProvider
+   │  └─ guest_history.dart    ← guestOrdersProvider, guestReservationsProvider
+   ├─ models/                  ← User, RestaurantInfo, CartItem, GuestEntry, trạng thái (status.dart)
+   └─ utils/
+      ├─ format.dart           ← formatMoney, formatDateTime (giờ VN), timeAgo, imageUrl
+      └─ validators.dart       ← Validators.phone / email / name / newPassword...
 ```
+
+Các bước sau thêm dần: `services/dish_service.dart` (Bước 3), `order_service.dart` (Bước 4), `reservation_service.dart` (Bước 6) và model tương ứng.
 
 So với web: `screens/` ≈ `frontend/src/pages/`, `widgets/` ≈ `components/`, `services/` ≈ `services/`, `state/` ≈ `stores/`.
 
@@ -141,6 +175,48 @@ Muốn sửa màn nào: trong VS Code bấm `Ctrl+P`, gõ mã màn (vd `s05`) l�
 
 Luôn dùng tên đường trong `AppRoutes`, không gõ tay chuỗi `'/menu'`.
 
+**Dùng dữ liệu chung và gọi API trong màn hình** (Riverpod):
+
+```dart
+// 1. Màn cần dữ liệu chung thì kế thừa ConsumerWidget (hoặc ConsumerStatefulWidget nếu có ô nhập)
+class AccountScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);   // null = khách. Đổi là màn tự vẽ lại
+    final count = ref.watch(cartCountProvider);     // số món trong giỏ
+    ...
+  }
+}
+
+// 2. Dữ liệu tải từ API: AsyncView lo sẵn đang tải / lỗi / mất mạng / "Thử lại" (mục C01)
+AsyncView(
+  value: ref.watch(infoProvider),
+  onRetry: () => ref.invalidate(infoProvider),
+  data: (info) => Text(info.phone),
+)
+
+// 3. Bấm nút gọi API: bắt ApiException, hiện câu lỗi tiếng Việt của backend
+Future<void> _submit() async {
+  try {
+    await ref.read(authProvider.notifier).login(email: email, password: password);
+    showAppSnack('Xin chào, ${ref.read(currentUserProvider)!.name}!');
+  } on ApiException catch (e) {
+    // e.fieldErrors['email'] → hiện dưới ô Email; e.retryAfterMinutes → lỗi 429
+    showAppSnack(e.message, error: true);
+  }
+}
+
+// 4. Giỏ hàng
+ref.read(cartProvider.notifier).add(item);
+final removed = ref.read(cartProvider.notifier).remove(dishId);
+showAppSnack('Đã xóa món', action: 'Hoàn tác', onAction: () => ref.read(cartProvider.notifier).restore(removed!));
+```
+
+Đã lo sẵn ở `api_client.dart`, màn hình **không** phải tự làm:
+- Gắn token vào mọi request.
+- Gặp 401 khi đang đăng nhập (token hết hạn): tự xóa token, hiện "Phiên đăng nhập đã hết hạn...", mở S02, giỏ hàng giữ nguyên.
+- Sai mật khẩu (401 khi chưa đăng nhập) chỉ báo lỗi bình thường.
+
 **Làm thật một màn (thay khung giữ chỗ):**
 
 1. Dán prompt Stitch của màn đó (docs/16), lưu ảnh vào `mobile/design/SXX.png`.
@@ -160,6 +236,11 @@ Luôn dùng tên đường trong `AppRoutes`, không gõ tay chuỗi `'/menu'`.
 | Tên / icon / thứ tự 5 tab dưới | `lib/app/main_shell.dart` và các nhánh trong `lib/app/router.dart` |
 | Thêm màn mới | Tạo file trong `lib/screens/`, thêm tên đường ở `routes.dart`, thêm `GoRoute` ở `router.dart` |
 | Địa chỉ API | `lib/app/config.dart` hoặc `--dart-define=API_URL=...` |
+| Câu báo lỗi chung (mất mạng, 404, 429...) | `lib/services/api_client.dart` (cuối file) |
+| Câu báo lỗi ô nhập (SĐT, email...) | `lib/utils/validators.dart` |
+| Cách hiện tiền, ngày giờ | `lib/utils/format.dart` |
+| Quy tắc giỏ hàng (tối đa 50 phần, ghi chú 200 ký tự) | `lib/state/cart_state.dart` |
+| Chữ / màu nhãn trạng thái | `lib/models/status.dart` (chữ), `lib/widgets/status_badge.dart` (màu) |
 | Tên app hiện trên điện thoại | `android/app/src/main/AndroidManifest.xml` (`android:label`) |
 
 ---
@@ -169,7 +250,7 @@ Luôn dùng tên đường trong `AppRoutes`, không gõ tay chuỗi `'/menu'`.
 | Bước | Làm gì | Xong |
 |---|---|---|
 | 0 | Project, theme, router, 5 tab, 25 màn giữ chỗ | ✅ |
-| 1 | `api_client` (gắn token, xử lý 401 / 429), state chung (info, auth, giỏ hàng), widget cơ bản, định dạng tiền / ngày | ⬜ |
+| 1 | `api_client` (gắn token, xử lý 401 / 429), state chung (info, auth, giỏ hàng), widget cơ bản, định dạng tiền / ngày | ✅ |
 | 2 | S01 (thật), S02, S03, S22 | ⬜ |
 | 3 | S04, S05, S06, S08, S07, thanh giỏ nổi | ⬜ |
 | 4 | S09, S10, S13 | ⬜ |

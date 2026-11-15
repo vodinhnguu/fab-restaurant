@@ -4,8 +4,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fab_seafood/main.dart';
+import 'package:fab_seafood/services/token_store.dart';
+import 'package:fab_seafood/state/app_providers.dart';
 
 /// Bấm 1 tab ở thanh tab dưới theo tên.
 Future<void> tapTab(WidgetTester tester, String label) async {
@@ -24,7 +27,16 @@ Future<void> tapButton(WidgetTester tester, String label) async {
 
 void main() {
   testWidgets('Mở app, đi qua 5 tab và vài màn chính', (tester) async {
-    await tester.pumpWidget(const ProviderScope(child: FabApp()));
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        tokenStoreProvider.overrideWithValue(MemoryTokenStore()),
+      ],
+      child: const FabApp(),
+    ));
 
     // S01 Splash
     expect(find.text('FAB Seafood'), findsOneWidget);
