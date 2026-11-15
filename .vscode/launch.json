@@ -1,0 +1,21 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "App mobile (thiết bị đang chọn)",
+			"type": "dart",
+			"request": "launch",
+			"cwd": "mobile",
+			"program": "lib/main.dart"
+		},
+		{
+			"name": "App mobile (Chrome)",
+			"type": "dart",
+			"request": "launch",
+			"cwd": "mobile",
+			"program": "lib/main.dart",
+			"deviceId": "chrome",
+			"args": ["--dart-define=API_URL=http://localhost:4000/api/v1"]
+		}
+	]
+}

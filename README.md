@@ -1,7 +1,7 @@
 # 🦞 FAB Seafood - Website nhà hàng hải sản
 
 Dự án FAB: website đặt món và đặt bàn cho nhà hàng hải sản, gồm **trang khách hàng** và **trang quản trị (Admin)**.
-Backend là REST API dùng chung cho cả web và app mobile (Flutter) sau này.
+Backend là REST API dùng chung cho cả web và app mobile Flutter (thư mục `mobile/`, đang làm, xem [docs/19](docs/19-app-mobile.md)).
 
 | Phần | Công nghệ |
 |---|---|
@@ -103,6 +103,13 @@ fab-restaurant/
 │       ├── services/        # Hàm gọi API
 │       ├── stores/          # Zustand: auth, cart
 │       └── lib/             # axios, format, hằng số, hooks
+├── mobile/                  # App Flutter cho khách hàng (docs/19)
+│   ├── design/              # Ảnh Stitch, đặt tên theo mã màn (S04.png...)
+│   └── lib/
+│       ├── app/             # Cấu hình, đường đi (router), khung 5 tab
+│       ├── theme/           # Màu, font, kiểu nút / ô nhập
+│       ├── screens/         # Mỗi màn 1 file, tên theo mã màn: s05_menu_screen.dart
+│       └── widgets/         # Mảnh giao diện dùng ở nhiều màn
 └── docs/                    # 📚 Tài liệu học tập
 ```
 
@@ -130,6 +137,7 @@ Nên đọc theo thứ tự:
 16. [Đặc tả app mobile cho Stitch AI](docs/16-dac-ta-app-mobile-stitch.md): 25 màn hình app khách hàng, bố cục, quy tắc, API từng màn và prompt dán vào Stitch
 17. [Tư liệu viết báo cáo](docs/17-tu-lieu-viet-bao-cao.md): toàn bộ thông tin để viết báo cáo đồ án theo từng chương: yêu cầu, use case, quy tắc nghiệp vụ, sơ đồ, từ điển dữ liệu, 54 API, ma trận quyền, ca kiểm thử, hạn chế, câu hỏi bảo vệ
 18. [Lý do hủy đơn hàng](docs/18-ly-do-huy-don-hang.md): nhân viên chọn / ghi lý do khi hủy đơn, khách xem lý do ở trang chi tiết đơn và danh sách đơn của mình
+19. [App mobile Flutter](docs/19-app-mobile.md): cách chạy app, cấu trúc thư mục, màn nào ở file nào, quy ước viết màn hình, tiến độ từng bước
 
 👉 Mới bắt đầu? Đọc **10** trước để có bức tranh toàn cảnh. Khi đang code, mở sẵn **08** và **09** để tra cứu nhanh.
 

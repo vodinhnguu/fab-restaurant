@@ -15,7 +15,7 @@ File này được Claude Code tự đọc khi mở dự án. Người dùng là
 
 - `backend/`: Express 5 + Prisma + PostgreSQL, JavaScript (không TypeScript), API `/api/v1`, JWT Bearer.
 - `frontend/`: React + Vite + Tailwind v4, React Query, Zustand.
-- App mobile Flutter sẽ làm sau, dùng chung API nên giữ API dễ dùng cho Flutter.
+- `mobile/`: app Flutter cho khách hàng (go_router + Riverpod 2 viết tay, không codegen), dùng chung API nên giữ API dễ dùng cho Flutter. Đặc tả màn hình: `docs/16-dac-ta-app-mobile-stitch.md`; cấu trúc, quy ước, tiến độ: `docs/19-app-mobile.md`. Mỗi màn 1 file `lib/screens/**/sXX_*.dart`. Kiểm tra: `cd mobile && flutter analyze && flutter test`.
 - Bản đồ mã nguồn: `docs/08-ban-do-ma-nguon.md`. Muốn sửa gì ở đâu: `docs/09-muon-sua-gi-thi-sua-o-dau.md`.
 
 ## Chạy trên máy mới (vừa clone / pull về)
