@@ -5,6 +5,14 @@ import { can } from '../permissions/permissions.service.js';
 import { assertTableAvailable, tableMap } from './tables.service.js';
 
 const include = { table: { select: { id: true, code: true, area: true, seats: true } } };
+// Trang admin: kèm lịch sử chuyển bàn (có tên nhân viên, lý do nội bộ) -> KHÔNG dùng cho API của khách
+const adminInclude = {
+  ...include,
+  tableChanges: { orderBy: { createdAt: 'desc' }, include: { changedBy: { select: { id: true, name: true } } } },
+};
+
+// Lịch ở các trạng thái này mới chuyển bàn được (COMPLETED = khách đã đến, đang ngồi muốn đổi chỗ)
+const MOVABLE = ['PENDING', 'CONFIRMED', 'COMPLETED'];
 
 // Các bước chuyển trạng thái hợp lệ (giống STATUS_FLOW của đơn hàng).
 // Lịch đã hủy / đã hoàn thành thì không đổi được nữa.
@@ -97,7 +105,7 @@ export async function list(req, res) {
   }
 
   const [items, total] = await prisma.$transaction([
-    prisma.reservation.findMany({ where, include, orderBy: { date: 'asc' }, skip, take }),
+    prisma.reservation.findMany({ where, include: adminInclude, orderBy: { date: 'asc' }, skip, take }),
     prisma.reservation.count({ where }),
   ]);
   res.json({ success: true, data: items, meta: paginationMeta(total, page, limit) });
@@ -117,6 +125,53 @@ export async function updateStatus(req, res) {
   const { count } = await prisma.reservation.updateMany({ where: { id, status: current.status }, data });
   if (count === 0) throw ApiError.conflict('Lịch đặt bàn vừa được người khác cập nhật, vui lòng tải lại trang');
 
-  const r = await prisma.reservation.findUnique({ where: { id }, include });
+  const r = await prisma.reservation.findUnique({ where: { id }, include: adminInclude });
   res.json({ success: true, data: r });
+}
+
+// PATCH /reservations/:id/table { tableId, reason? }: lễ tân chuyển bàn (lịch đã có bàn) hoặc xếp bàn (lịch chưa có bàn).
+// Bàn mới phải đang phục vụ, đủ ghế, không trùng giờ với lịch khác (cùng luật như lúc khách tự chọn bàn).
+// Mỗi lần chuyển lưu 1 dòng ReservationTableChange để xem lại sau.
+export async function moveTable(req, res) {
+  const id = Number(req.params.id);
+  const { tableId, reason } = req.body;
+
+  const current = await prisma.reservation.findUnique({ where: { id }, include });
+  if (!current) throw ApiError.notFound('Không tìm thấy lịch đặt bàn');
+  if (!MOVABLE.includes(current.status)) throw ApiError.badRequest('Lịch đã hủy, không chuyển bàn được');
+  if (current.tableId === tableId) throw ApiError.badRequest(`Khách đang ở bàn ${current.table.code} rồi`);
+
+  try {
+    // Serializable: 2 lễ tân cùng chuyển 2 lịch vào 1 bàn thì người sau bị từ chối (giống lúc khách đặt)
+    await prisma.$transaction(
+      async (tx) => {
+        const table = await assertTableAvailable(tx, tableId, current.date, current.guests);
+        // Điều kiện tableId cũ trong where: người khác vừa chuyển lịch này thì không ghi đè
+        const { count } = await tx.reservation.updateMany({
+          where: { id, tableId: current.tableId, status: { in: MOVABLE } },
+          data: { tableId: table.id, area: table.area },
+        });
+        if (count === 0) throw ApiError.conflict('Lịch này vừa được người khác cập nhật, vui lòng tải lại');
+        await tx.reservationTableChange.create({
+          data: {
+            reservationId: id,
+            fromTableCode: current.table?.code ?? null,
+            fromArea: current.table?.area ?? current.area ?? null,
+            toTableCode: table.code,
+            toArea: table.area,
+            reason: reason || null,
+            changedById: req.user.id,
+          },
+        });
+      },
+      { isolationLevel: 'Serializable' },
+    );
+  } catch (err) {
+    if (err?.code === 'P2034') throw ApiError.conflict('Bàn vừa được xếp cho khách khác, vui lòng chọn bàn khác');
+    throw err;
+  }
+
+  const r = await prisma.reservation.findUnique({ where: { id }, include: adminInclude });
+  const message = current.table ? `Đã chuyển từ bàn ${current.table.code} sang bàn ${r.table.code}` : `Đã xếp bàn ${r.table.code}`;
+  res.json({ success: true, data: r, message });
 }

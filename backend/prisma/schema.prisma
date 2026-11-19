@@ -99,6 +99,7 @@ model User {
 
   cleaningAssigned CleaningTask[] @relation("CleaningAssignee") // Việc vệ sinh được giao / đã làm
   cleaningCreated  CleaningTask[] @relation("CleaningCreator") // Việc vệ sinh người này tạo / báo
+  tableChanges     ReservationTableChange[] // Các lần nhân viên này chuyển bàn cho khách
 }
 
 model Category {
@@ -215,11 +216,30 @@ model Reservation {
   note         String?
   status       ReservationStatus @default(PENDING)
   cancelReason String? // Lý do nhà hàng hủy lịch, hiện cho khách xem để đặt lại giờ khác
+  tableChanges ReservationTableChange[] // Lịch sử chuyển bàn (lễ tân)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 
   @@index([date])
   @@index([tableId, date])
+}
+
+// 1 lần lễ tân chuyển bàn / xếp bàn cho 1 lịch đặt. Tài liệu: docs/21-le-tan-chuyen-ban.md
+// Lưu MÃ bàn dạng chữ (giống OrderItem lưu tên món) để lịch sử vẫn đọc được khi bàn bị đổi / xóa.
+model ReservationTableChange {
+  id            Int         @id @default(autoincrement())
+  reservationId Int
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  fromTableCode String? // Bàn cũ, trống = lịch chưa có bàn (lần "xếp bàn" đầu tiên)
+  fromArea      String?
+  toTableCode   String // Bàn mới
+  toArea        String
+  reason        String? // vd "Khách muốn ngồi view biển"
+  changedById   Int?
+  changedBy     User?       @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime    @default(now())
+
+  @@index([reservationId])
 }
 
 // Bàn trong nhà hàng, vẽ thành sơ đồ theo khu vực. Bàn mặc định: src/config/tables.js

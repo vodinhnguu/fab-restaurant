@@ -1,10 +1,11 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
-import { LayoutGrid, List } from 'lucide-react';
+import { ArrowLeftRight, CalendarClock, LayoutGrid, List } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import CancelReasonDialog from '../../components/CancelReasonDialog';
+import MoveTableDialog from '../../components/MoveTableDialog';
 import PageHeader from '../../components/PageHeader';
 import TableMap, { TableLegend } from '../../components/TableMap';
 import Button from '../../components/ui/Button';
@@ -17,14 +18,9 @@ import { RESERVATION_STATUS } from '../../lib/constants';
 import { formatDateTime } from '../../lib/format';
 import { useDocumentTitle, useInfo } from '../../lib/hooks';
 import { useCan } from '../../lib/permissions';
-import { timeSlots, toVnIso } from '../../lib/reservation';
+import { MOVABLE_STATUSES, RESERVATION_ACTIONS, timeSlots, toVnIso } from '../../lib/reservation';
 import { reservationApi } from '../../services';
-
-// Hành động hợp lệ cho từng trạng thái
-const ACTIONS = {
-  PENDING: [['CONFIRMED', 'Xác nhận', 'primary'], ['CANCELLED', 'Hủy', 'outline']],
-  CONFIRMED: [['COMPLETED', 'Khách đã đến', 'primary'], ['CANCELLED', 'Hủy', 'outline']],
-};
+import ReservationsToday from './ReservationsToday';
 
 // Lý do hủy có sẵn để bấm nhanh; "Lý do khác" thì tự gõ (hộp thoại dùng chung: components/CancelReasonDialog.jsx)
 const CANCEL_REASONS = ['Hết bàn vào khung giờ này', 'Nhà hàng có sự kiện / đóng cửa', 'Không liên lạc được với khách'];
@@ -36,7 +32,7 @@ function nearestSlot(slots) {
 }
 
 // ---------- Sơ đồ bàn: xem bàn trống / đã có khách tại 1 thời điểm ----------
-function TableMapView({ update, onAction }) {
+function TableMapView({ update, onAction, onMove }) {
   const can = useCan();
   const { data: info } = useInfo();
   const slots = timeSlots(info?.openingHours.open, info?.openingHours.close);
@@ -79,7 +75,7 @@ function TableMapView({ update, onAction }) {
                 {a.name}
                 <span className="text-xs font-normal text-slate-500">trống {count(a.tables, 'free')}/{a.tables.length}</span>
               </h3>
-              <TableMap area={a} selectBusy onSelect={setSelected} />
+              <TableMap area={a} selectBusy onSelect={(t) => setSelected({ ...t, area: a.name })} />
             </div>
           ))}
         </div>
@@ -98,9 +94,16 @@ function TableMapView({ update, onAction }) {
               <p className="text-base font-semibold">{r.name}</p>
               <p><a href={`tel:${r.phone}`} className="text-ocean-600">{r.phone}</a></p>
               <p>{formatDateTime(r.date)} · {r.guests} khách</p>
-              {can('RESERVATIONS', 'edit') && ACTIONS[r.status] && (
-                <div className="flex gap-2 border-t border-slate-100 pt-3">
-                  {ACTIONS[r.status].map(([s, label, variant]) => (
+              {can('RESERVATIONS', 'edit') && MOVABLE_STATUSES.includes(r.status) && (
+                <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+                  <Button size="sm" variant="outline" onClick={() => {
+                    // Thông tin bàn trên sơ đồ chưa kèm bàn của lịch -> ghép lại để hộp thoại chuyển bàn dùng
+                    onMove({ ...r, table: { id: selected.id, code: selected.code, area: selected.area, seats: selected.seats } });
+                    setSelected(null);
+                  }}>
+                    <ArrowLeftRight className="h-4 w-4" /> Chuyển bàn
+                  </Button>
+                  {RESERVATION_ACTIONS[r.status]?.map(([s, label, variant]) => (
                     <Button key={s} size="sm" variant={variant} loading={update.isPending}
                       onClick={() => onAction(r, s, () => setSelected(null))}>{label}</Button>
                   ))}
@@ -138,8 +141,10 @@ export default function Reservations() {
   });
 
   const set = (k, v) => setFilters((f) => ({ ...f, [k]: v, page: k === 'page' ? v : 1 }));
-  const [view, setView] = useState('list'); // 'list' | 'map'
+  // Mặc định mở tab Hôm nay: lễ tân đứng quầy thấy ngay khách sắp đến (docs/21-le-tan-chuyen-ban.md)
+  const [view, setView] = useState('today'); // 'today' | 'list' | 'map'
   const [cancelling, setCancelling] = useState(null); // lịch đang mở hộp thoại hủy
+  const [moving, setMoving] = useState(null); // lịch đang mở hộp thoại chuyển bàn
 
   // Bấm nút hành động: Hủy thì mở hộp thoại hỏi lý do, còn lại cập nhật luôn
   const onAction = (r, status, onDone) => {
@@ -158,7 +163,7 @@ export default function Reservations() {
         subtitle="Quản lý lịch đặt bàn của khách"
         actions={
           <div className="flex rounded-xl border border-slate-300 bg-white p-0.5">
-            {[['list', 'Danh sách', List], ['map', 'Sơ đồ bàn', LayoutGrid]].map(([key, label, Icon]) => (
+            {[['today', 'Hôm nay', CalendarClock], ['list', 'Danh sách', List], ['map', 'Sơ đồ bàn', LayoutGrid]].map(([key, label, Icon]) => (
               <button key={key} onClick={() => setView(key)}
                 className={clsx('inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium', view === key ? 'bg-ocean-900 text-white' : 'text-slate-600 hover:bg-slate-100')}>
                 <Icon className="h-4 w-4" /> {label}
@@ -180,7 +185,10 @@ export default function Reservations() {
         />
       )}
 
-      {view === 'map' ? <TableMapView update={update} onAction={onAction} /> : (<>
+      {moving && <MoveTableDialog reservation={moving} onClose={() => setMoving(null)} />}
+
+      {view === 'today' ? <ReservationsToday onAction={onAction} onMove={setMoving} /> :
+       view === 'map' ? <TableMapView update={update} onAction={onAction} onMove={setMoving} /> : (<>
 
       <div className="mb-4 flex flex-wrap gap-2">
         <Input type="date" value={filters.date} onChange={(e) => set('date', e.target.value)} className="w-44" />
@@ -211,7 +219,11 @@ export default function Reservations() {
                   <Td><p className="font-medium">{r.name}</p><a href={`tel:${r.phone}`} className="text-xs text-ocean-600">{r.phone}</a></Td>
                   <Td className="whitespace-nowrap">{formatDateTime(r.date)}</Td>
                   <Td className="text-center">{r.guests}</Td>
-                  <Td>{r.area || '-'}{r.table && <p className="text-xs font-semibold text-ocean-700">Bàn {r.table.code}</p>}</Td>
+                  <Td>
+                    {r.area || '-'}
+                    {r.table && <p className="text-xs font-semibold text-ocean-700">Bàn {r.table.code}</p>}
+                    {r.tableChanges?.[0]?.fromTableCode && <p className="text-xs text-slate-500" title={r.tableChanges[0].reason ?? ''}>chuyển từ {r.tableChanges[0].fromTableCode}</p>}
+                  </Td>
                   <Td className="max-w-48 truncate text-slate-500" title={r.note}>{r.note || '-'}</Td>
                   <Td>
                     <StatusBadge map={RESERVATION_STATUS} value={r.status} />
@@ -219,7 +231,12 @@ export default function Reservations() {
                   </Td>
                   <Td className="whitespace-nowrap">
                     <div className="flex gap-1">
-                      {can('RESERVATIONS', 'edit') && ACTIONS[r.status]?.map(([s, label, variant]) => (
+                      {can('RESERVATIONS', 'edit') && MOVABLE_STATUSES.includes(r.status) && (
+                        <Button size="sm" variant="ghost" onClick={() => setMoving(r)} title={r.table ? 'Chuyển sang bàn khác' : 'Xếp bàn cho khách'}>
+                          <ArrowLeftRight className="h-4 w-4" /> {r.table ? 'Chuyển bàn' : 'Xếp bàn'}
+                        </Button>
+                      )}
+                      {can('RESERVATIONS', 'edit') && RESERVATION_ACTIONS[r.status]?.map(([s, label, variant]) => (
                         <Button key={s} size="sm" variant={variant} onClick={() => onAction(r, s)}>{label}</Button>
                       ))}
                     </div>

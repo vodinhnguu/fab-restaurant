@@ -1,5 +1,15 @@
 // Tiện ích dùng chung cho trang đặt bàn (khách) và quản lý đặt bàn (admin)
 
+// Nút hành động của nhân viên theo trạng thái lịch: [trạng thái mới, nhãn nút, kiểu nút]
+export const RESERVATION_ACTIONS = {
+  PENDING: [['CONFIRMED', 'Xác nhận', 'primary'], ['CANCELLED', 'Hủy', 'outline']],
+  CONFIRMED: [['COMPLETED', 'Khách đã đến', 'primary'], ['CANCELLED', 'Hủy', 'outline']],
+};
+
+// Lịch ở các trạng thái này chuyển / xếp bàn được (khớp MOVABLE ở backend).
+// COMPLETED = khách đã đến, đang ngồi muốn đổi chỗ.
+export const MOVABLE_STATUSES = ['PENDING', 'CONFIRMED', 'COMPLETED'];
+
 // Danh sách khung giờ 30 phút một, từ giờ mở cửa đến trước giờ đóng 1 tiếng
 export function timeSlots(open = '10:00', close = '22:00') {
   const slots = [];
@@ -18,15 +28,18 @@ export const toVnIso = (day, time) => new Date(`${day}T${time}:00+07:00`).toISOS
 export const TABLE_STATUS = {
   free: { label: 'Bàn trống', box: 'border-green-400 bg-green-50 text-green-800 hover:bg-green-100', dot: 'bg-green-500' },
   selected: { label: 'Bàn bạn chọn', box: 'border-ocean-700 bg-ocean-600 text-white ring-4 ring-ocean-200', dot: 'bg-ocean-600' },
+  // Chỉ dùng khi lễ tân chuyển bàn: bàn khách đang giữ
+  current: { label: 'Bàn hiện tại của khách', box: 'border-violet-500 bg-violet-100 text-violet-800 ring-2 ring-violet-200', dot: 'bg-violet-500' },
   pending: { label: 'Đã đặt - chờ xác nhận', box: 'border-amber-400 bg-amber-50 text-amber-800', dot: 'bg-amber-400' },
   occupied: { label: 'Đã có khách', box: 'border-red-400 bg-red-50 text-red-700', dot: 'bg-red-500' },
   small: { label: 'Không đủ ghế', box: 'border-dashed border-slate-300 bg-slate-50 text-slate-400', dot: 'bg-slate-300' },
   inactive: { label: 'Tạm ngưng', box: 'border-slate-200 bg-slate-100 text-slate-400 line-through', dot: 'bg-slate-200' },
 };
 
-// Trạng thái hiển thị của 1 bàn
-export function tableState(table, { guests, selectedId } = {}) {
+// Trạng thái hiển thị của 1 bàn. currentId: bàn khách đang giữ (lúc lễ tân chuyển bàn)
+export function tableState(table, { guests, selectedId, currentId } = {}) {
   if (table.id === selectedId) return 'selected';
+  if (table.id === currentId) return 'current';
   if (table.status !== 'free') return table.status;
   if (guests && table.seats < guests) return 'small';
   return 'free';

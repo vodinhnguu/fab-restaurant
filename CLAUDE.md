@@ -45,7 +45,7 @@ Tạo bởi `npm run setup` / `npm run db:seed`. Dùng để đăng nhập thử
 | Quản lý | `quanly@fab.vn` | `123456` | Admin, chỉ xem nhân sự / phân quyền; vệ sinh: hủy việc, quản lý khu vực |
 | Tổ trưởng | `totruong@fab.vn` | `123456` | Tổng quan, đơn hàng, đặt bàn, món, đánh giá, xem nhân sự, 4 trang vệ sinh (giao việc) |
 | Phục vụ | `phucvu@fab.vn` | `123456` | Đơn hàng, đặt bàn (xem), món, khu vực cần dọn (báo cần dọn) |
-| Lễ tân | `letan@fab.vn` | `123456` | Đặt bàn (xác nhận / hủy), xem đơn hàng, món, mã giảm giá, đánh giá, khu vực cần dọn (báo) |
+| Lễ tân | `letan@fab.vn` | `123456` | Đặt bàn: tab Hôm nay, xác nhận / hủy, chuyển bàn (`docs/21-le-tan-chuyen-ban.md`); xem đơn hàng, món, mã giảm giá, đánh giá, khu vực cần dọn (báo) |
 | Thu ngân | `thungan@fab.vn` | `123456` | Tổng quan, đơn hàng, đặt bàn, món, mã giảm giá |
 | Kỹ thuật | `kythuat@fab.vn` | `123456` | Chỉ có quyền ở chức năng chưa có trang web, `/admin` hiện thông báo "Chưa có trang" |
 | Tạp vụ | `tapvu@fab.vn` | `123456` | Nhóm Vệ sinh: Tổng quan, Nhiệm vụ vệ sinh, Khu vực cần dọn, Lịch sử công việc (`docs/20-ve-sinh.md`). Không dọn bàn (việc của phục vụ) |

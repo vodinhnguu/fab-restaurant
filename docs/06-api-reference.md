@@ -125,8 +125,9 @@ Kết quả trả về: đơn hàng đầy đủ gồm `code`, `subtotal`, `disc
 | GET | `/reservations/my` | 👤 | Lịch của tôi |
 | GET | `/reservations/track/:code?phone=` | 🔓 | Xem 1 lịch (chủ lịch, admin, hoặc đúng SĐT; SĐT có dấu cách vẫn được) |
 | POST | `/reservations/:code/cancel` | 🔓 | `{ phone? }`. Hủy khi đang `PENDING` hoặc `CONFIRMED` **và chưa tới giờ hẹn** |
-| GET | `/reservations` | 🛡️ | Query: `status`, `date=YYYY-MM-DD`, `search`, `page` |
+| GET | `/reservations` | 🛡️ | Query: `status`, `date=YYYY-MM-DD`, `search`, `page`, `limit` (≤ 100). Mỗi lịch kèm `tableChanges[]` (lịch sử chuyển bàn, chỉ nhân viên thấy) |
 | PATCH | `/reservations/:id/status` | 🛡️ | `{ status: PENDING|CONFIRMED|CANCELLED|COMPLETED, reason? }`. Hủy (`CANCELLED`) thì **bắt buộc** `reason` ≤ 300 ký tự, lưu vào `cancelReason` cho khách xem (xem [14](14-ly-do-huy-dat-ban.md)) |
+| PATCH | `/reservations/:id/table` | 🛡️ | Lễ tân chuyển / xếp bàn: `{ tableId, reason? }`. Lịch phải đang `PENDING` / `CONFIRMED` / `COMPLETED`; bàn mới đang phục vụ, đủ ghế, không trùng giờ. Lưu lịch sử vào `ReservationTableChange` (xem [21](21-le-tan-chuyen-ban.md)) |
 
 ## Đánh giá
 | Method | Endpoint | Quyền | Mô tả |

@@ -38,6 +38,7 @@ Ví dụ: bàn T03 có khách đặt lúc 19:00.
 - Chọn ngày, giờ (nút **Bây giờ** để về giờ hiện tại); xem cả 3 khu cùng lúc kèm tổng số bàn trống / chờ / có khách.
 - Bấm vào bàn để xem tên, SĐT, giờ, số khách; bấm **Xác nhận**, **Khách đã đến** hoặc **Hủy** ngay tại đó (cần quyền Sửa đặt bàn).
 - Ở chế độ **Danh sách**, cột "Khu vực / Bàn" hiện số bàn khách đã chọn.
+- **Chuyển bàn / Xếp bàn**: lễ tân đổi bàn cho khách trên sơ đồ đúng giờ khách đến, có lưu lịch sử. Xem [21-le-tan-chuyen-ban.md](21-le-tan-chuyen-ban.md).
 
 ## 4. Dữ liệu
 

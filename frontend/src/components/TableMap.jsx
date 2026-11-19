@@ -17,7 +17,8 @@ export function TableLegend({ keys = ['free', 'selected', 'pending', 'occupied',
 // Sơ đồ 1 khu vực. Bàn đặt theo lưới (x = cột, y = hàng) giống vị trí thật trong nhà hàng.
 // - Khách: bấm bàn trống để chọn (onSelect)
 // - Admin: bấm bàn bất kỳ để xem thông tin khách (onSelect nhận cả bàn bận)
-export default function TableMap({ area, guests, selectedId, onSelect, selectBusy = false }) {
+// - Lễ tân chuyển bàn: currentId = bàn khách đang giữ (tô tím), chỉ bấm được bàn trống đủ ghế
+export default function TableMap({ area, guests, selectedId, currentId, onSelect, selectBusy = false }) {
   const isOutdoor = area.name.toLowerCase().includes('biển');
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
@@ -28,7 +29,7 @@ export default function TableMap({ area, guests, selectedId, onSelect, selectBus
       )}
       <div className="grid min-w-[280px] gap-2 sm:gap-3" style={{ gridTemplateColumns: `repeat(${area.cols}, minmax(0, 1fr))` }}>
         {area.tables.map((t) => {
-          const state = tableState(t, { guests, selectedId });
+          const state = tableState(t, { guests, selectedId, currentId });
           const clickable = selectBusy || state === 'free' || state === 'selected';
           return (
             <button

@@ -63,3 +63,9 @@ export const reservationQuerySchema = z.object({
 export const tableMapQuerySchema = z.object({
   date: z.coerce.date({ error: 'Thiếu thời gian' }),
 });
+
+// Lễ tân chuyển bàn / xếp bàn cho 1 lịch (docs/21-le-tan-chuyen-ban.md). Lý do không bắt buộc, chỉ nhân viên xem.
+export const moveTableSchema = z.object({
+  tableId: z.coerce.number({ error: 'Vui lòng chọn bàn' }).int().positive('Vui lòng chọn bàn'),
+  reason: z.string().trim().max(200, 'Lý do tối đa 200 ký tự').optional().nullable(),
+});

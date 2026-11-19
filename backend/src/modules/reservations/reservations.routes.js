@@ -6,6 +6,7 @@ import * as ctrl from './reservations.controller.js';
 import {
   cancelReservationSchema,
   createReservationSchema,
+  moveTableSchema,
   reservationQuerySchema,
   tableMapQuerySchema,
   updateReservationStatusSchema,
@@ -29,5 +30,7 @@ router.post('/:code/cancel', trackLimiter, optionalAuth, validate(cancelReservat
 
 router.get('/', requirePermission('RESERVATIONS', 'view'), validate(reservationQuerySchema, 'query'), ctrl.list);
 router.patch('/:id/status', requirePermission('RESERVATIONS', 'edit'), validate(updateReservationStatusSchema), ctrl.updateStatus);
+// Lễ tân chuyển bàn / xếp bàn (docs/21-le-tan-chuyen-ban.md)
+router.patch('/:id/table', requirePermission('RESERVATIONS', 'edit'), validate(moveTableSchema), ctrl.moveTable);
 
 export default router;

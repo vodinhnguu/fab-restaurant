@@ -32,6 +32,7 @@ Backend là REST API dùng chung cho cả web và app mobile Flutter (thư mục
 - Dashboard: doanh thu, số đơn, biểu đồ doanh thu theo ngày, top món bán chạy, đơn mới nhất
 - Quản lý đơn hàng: lọc theo trạng thái, tìm kiếm, xem chi tiết, chuyển trạng thái theo đúng quy trình
 - Quản lý đặt bàn: lọc theo ngày và trạng thái, xác nhận, hủy (bắt buộc ghi lý do cho khách xem), đánh dấu khách đã đến
+- Lễ tân: tab "Hôm nay" (khách sắp đến / trễ giờ), chuyển bàn / xếp bàn trên sơ đồ, lưu lịch sử chuyển bàn
 - CRUD món ăn (upload ảnh, bật/tắt còn món), danh mục, mã giảm giá
 - Kiểm duyệt đánh giá, quản lý người dùng (phân quyền, khóa tài khoản)
 - Vệ sinh cho tạp vụ: tổng quan, nhiệm vụ vệ sinh (nhận việc / hoàn thành), khu vực cần dọn, lịch sử công việc; phục vụ / lễ tân báo "cần dọn"
@@ -140,6 +141,7 @@ Nên đọc theo thứ tự:
 18. [Lý do hủy đơn hàng](docs/18-ly-do-huy-don-hang.md): nhân viên chọn / ghi lý do khi hủy đơn, khách xem lý do ở trang chi tiết đơn và danh sách đơn của mình
 19. [App mobile Flutter](docs/19-app-mobile.md): cách chạy app, cấu trúc thư mục, màn nào ở file nào, quy ước viết màn hình, tiến độ từng bước
 20. [Vệ sinh & dọn dẹp](docs/20-ve-sinh.md): 4 trang của tạp vụ (tổng quan, nhiệm vụ, khu vực cần dọn, lịch sử), ai được làm gì, API `/cleaning`
+21. [Lễ tân: chuyển bàn](docs/21-le-tan-chuyen-ban.md): tab Hôm nay, chuyển / xếp bàn trên sơ đồ, lịch sử chuyển bàn, hủy bàn
 
 👉 Mới bắt đầu? Đọc **10** trước để có bức tranh toàn cảnh. Khi đang code, mở sẵn **08** và **09** để tra cứu nhanh.
 

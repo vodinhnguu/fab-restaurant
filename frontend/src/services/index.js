@@ -58,6 +58,8 @@ export const reservationApi = {
   // admin
   list: (params) => api.get('/reservations', { params }),
   updateStatus: (id, status, reason) => api.patch(`/reservations/${id}/status`, { status, reason }),
+  // Lễ tân chuyển bàn / xếp bàn: trả { data, message } (docs/21-le-tan-chuyen-ban.md)
+  moveTable: (id, tableId, reason) => api.patch(`/reservations/${id}/table`, { tableId, reason }),
 };
 
 export const reviewApi = {
