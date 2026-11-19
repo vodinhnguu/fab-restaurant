@@ -3,6 +3,7 @@ import { env, isVnpayEnabled } from './config/env.js';
 import { restaurant } from './config/restaurant.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import categoryRoutes from './modules/categories/categories.routes.js';
+import cleaningRoutes from './modules/cleaning/cleaning.routes.js';
 import couponRoutes from './modules/coupons/coupons.routes.js';
 import dishRoutes from './modules/dishes/dishes.routes.js';
 import orderRoutes from './modules/orders/orders.routes.js';
@@ -31,5 +32,6 @@ router.use('/users', userRoutes);
 router.use('/stats', statsRoutes);
 router.use('/permissions', permissionRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/cleaning', cleaningRoutes);
 
 export default router;

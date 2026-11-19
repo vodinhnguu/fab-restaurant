@@ -142,6 +142,22 @@ Kết quả trả về: đơn hàng đầy đủ gồm `code`, `subtotal`, `disc
 | POST | `/coupons/check` | 🌐 | `{ code, subtotal }` → `{ code, discount, description }` |
 | GET / POST / PUT / DELETE | `/coupons`, `/coupons/:id` | 🛡️ | CRUD. `{ code, type: PERCENT|FIXED, value, minOrder?, maxDiscount?, usageLimit?, startsAt?, expiresAt?, isActive? }` |
 
+## Vệ sinh (tạp vụ)
+Cần đăng nhập, quyền theo chức năng `CLEANING`. Chi tiết luồng và quyền: [20-ve-sinh.md](20-ve-sinh.md).
+
+| Method | Endpoint | Quyền | Mô tả |
+|---|---|---|---|
+| GET | `/cleaning/overview` | 🛡️ Xem | Số việc chờ / đang làm / gấp / xong hôm nay, việc của tôi, khu cần dọn, khu lâu chưa dọn |
+| GET | `/cleaning/areas?all=` | 🛡️ Xem | Khu vực + `openTasks[]`, `needsCleaning`, `isStale` |
+| POST / PUT | `/cleaning/areas`, `/cleaning/areas/:id` | 🛡️ Xóa | `{ name, description?, sortOrder?, isActive? }` |
+| POST | `/cleaning/areas/:id/clean` | 🛡️ Sửa | `{ note? }` "Đã dọn xong" cả khu |
+| GET | `/cleaning/tasks?status=OPEN\|TODO\|IN_PROGRESS&mine=true&areaId=` | 🛡️ Xem | Việc chưa xong, việc gấp trước |
+| POST | `/cleaning/tasks` | 🛡️ Thêm | `{ title, areaId, note?, priority?: NORMAL\|URGENT, assigneeId? }` |
+| PUT | `/cleaning/tasks/:id` | 🛡️ Sửa | Sửa / giao việc (chỉ việc chưa xong) |
+| PATCH | `/cleaning/tasks/:id/status` | 🛡️ Sửa | `{ status: IN_PROGRESS\|DONE\|CANCELLED, note? }`. Hủy cần quyền Xóa + bắt buộc `note` |
+| GET | `/cleaning/history?from=&to=&userId=&areaId=&status=DONE\|CANCELLED&page=` | 🛡️ Xem | Mặc định 7 ngày, `meta.byUser` |
+| GET | `/cleaning/staff` | 🛡️ Thêm/Sửa | Nhân viên giao việc được |
+
 ## Người dùng, thống kê, upload (Admin / nhân viên có quyền)
 | Method | Endpoint | Mô tả |
 |---|---|---|

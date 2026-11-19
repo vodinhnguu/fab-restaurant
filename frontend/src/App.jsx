@@ -6,7 +6,7 @@ import CustomerLayout from './components/layout/CustomerLayout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import { EmptyState, Spinner } from './components/ui/Feedback';
 import Home from './pages/Home';
-import { ADMIN_MENU } from './lib/adminMenu';
+import { allowedMenu } from './lib/adminMenu';
 import { can } from './lib/permissions';
 import { authApi } from './services';
 import { useAuthStore } from './stores/auth';
@@ -38,14 +38,19 @@ const AdminCoupons = lazy(() => import('./pages/admin/Coupons'));
 const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminPermissions = lazy(() => import('./pages/admin/Permissions'));
+const CleaningOverview = lazy(() => import('./pages/admin/cleaning/Overview'));
+const CleaningTasks = lazy(() => import('./pages/admin/cleaning/Tasks'));
+const CleaningAreas = lazy(() => import('./pages/admin/cleaning/Areas'));
+const CleaningHistory = lazy(() => import('./pages/admin/cleaning/History'));
 
 // /admin: có quyền xem Tổng quan thì vào Dashboard, không thì chuyển tới trang đầu tiên được phép
+// (vd Tạp vụ -> /admin/cleaning: tổng quan công việc vệ sinh)
 function AdminHome() {
   const user = useAuthStore((s) => s.user);
   if (can(user, 'DASHBOARD')) return <Dashboard />;
-  const first = ADMIN_MENU.find((m) => can(user, m.module));
+  const first = allowedMenu(user, can)[0];
   if (first) return <Navigate to={first.to} replace />;
-  // Vai trò chỉ có quyền ở chức năng chưa có trang web (vd Kỹ thuật, Tạp vụ: Thiết bị & bảo trì)
+  // Vai trò chỉ có quyền ở chức năng chưa có trang web (vd Kỹ thuật: Thiết bị & bảo trì)
   // -> báo rõ cho nhân viên thay vì để trang trắng
   return (
     <EmptyState
@@ -110,6 +115,15 @@ export default function App() {
             <Route element={<ProtectedRoute module="STAFF" />}>
               <Route path="users" element={<AdminUsers />} />
               <Route path="permissions" element={<AdminPermissions />} />
+            </Route>
+            {/* Vệ sinh (docs/20-ve-sinh.md): Khu vực cần dọn chỉ cần Xem, 3 trang còn lại cần Sửa */}
+            <Route element={<ProtectedRoute module="CLEANING" />}>
+              <Route path="cleaning/areas" element={<CleaningAreas />} />
+            </Route>
+            <Route element={<ProtectedRoute module="CLEANING" action="edit" />}>
+              <Route path="cleaning" element={<CleaningOverview />} />
+              <Route path="cleaning/tasks" element={<CleaningTasks />} />
+              <Route path="cleaning/history" element={<CleaningHistory />} />
             </Route>
           </Route>
         </Route>

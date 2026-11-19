@@ -149,6 +149,7 @@ Module đơn giản thì không có `service` (controller gọi thẳng Prisma).
 | [reviews.routes.js](../backend/src/modules/reviews/reviews.routes.js) + [reviews.controller.js](../backend/src/modules/reviews/reviews.controller.js) | `upsert`: mỗi người chỉ có **1** đánh giá/món (gửi lại thì sửa đánh giá cũ). Chỉ người có đơn **đã hoàn thành** chứa món đó mới được đánh giá. `recalcRating` tính lại `ratingAvg` và `ratingCount` của món sau mỗi lần thêm/sửa/xóa. |
 | [users.routes.js](../backend/src/modules/users/users.routes.js) + [users.controller.js](../backend/src/modules/users/users.controller.js) | Mỗi route xét quyền "Nhân sự & phân quyền" theo ma trận (`requirePermission('STAFF', ...)`). Danh sách người dùng, thêm nhân viên, đổi vai trò, khóa/mở khóa, đặt lại mật khẩu. Tài khoản Admin và người giữ vai trò Chủ nhà hàng chỉ người toàn quyền (`isFullAdmin`: Admin hoặc Chủ nhà hàng) mới sửa được (`findManageableUser`). **Không ai tự khóa hoặc tự hạ quyền chính mình.** `publicFields` chọn các cột được trả về (không có `passwordHash`). |
 | [stats.routes.js](../backend/src/modules/stats/stats.routes.js) + [stats.controller.js](../backend/src/modules/stats/stats.controller.js) | `GET /overview?days=30` cho dashboard. Doanh thu **chỉ tính đơn `COMPLETED`**. Chạy song song nhiều truy vấn bằng `Promise.all`. Doanh thu theo ngày dùng **SQL thuần** (`$queryRaw`) để nhóm theo ngày giờ Việt Nam, sau đó lấp các ngày trống bằng 0 để biểu đồ liền mạch. |
+| [cleaning/](../backend/src/modules/cleaning/) (`cleaning.routes.js`, `cleaning.validation.js`, `cleaning.controller.js`) | Việc vệ sinh của tạp vụ, API `/cleaning/*`. `CLEANING_FLOW`: Chờ làm → Đang làm → Đã xong (hoặc Hủy). `cleanArea` = "Đã dọn xong" cả khu. Khu vực mặc định ở [config/cleaning.js](../backend/src/config/cleaning.js). Xem [20-ve-sinh.md](20-ve-sinh.md). |
 | [upload.routes.js](../backend/src/modules/upload/upload.routes.js) | `POST /upload` (admin, `multipart/form-data`, trường `image`) → trả về `{ url: '/uploads/xxx.jpg' }`. |
 
 ---
@@ -272,6 +273,10 @@ Mọi trang admin đều theo một khuôn: `useQuery` lấy danh sách → hi�
 | `/admin/coupons` | [admin/Coupons.jsx](../frontend/src/pages/admin/Coupons.jsx) | `CouponForm`. Hàm `statusOf` tính nhãn Tắt / Hết hạn / Hết lượt / Hoạt động. Ngày bắt đầu tính từ 00:00, ngày hết hạn tính tới 23:59:59 giờ VN. |
 | `/admin/reviews` | [admin/Reviews.jsx](../frontend/src/pages/admin/Reviews.jsx) | Danh sách đánh giá, xóa đánh giá vi phạm. |
 | `/admin/users` | [admin/Users.jsx](../frontend/src/pages/admin/Users.jsx) | Đổi vai trò ngay trên bảng, khóa/mở khóa tài khoản. Không thể thao tác trên chính mình. |
+| `/admin/cleaning` | [admin/cleaning/Overview.jsx](../frontend/src/pages/admin/cleaning/Overview.jsx) | Tổng quan vệ sinh (trang đầu của Tạp vụ): việc của tôi, việc gấp, khu cần dọn, khu lâu chưa dọn, hôm nay ai làm bao nhiêu việc. Tự làm mới 30 giây/lần. |
+| `/admin/cleaning/tasks` | [admin/cleaning/Tasks.jsx](../frontend/src/pages/admin/cleaning/Tasks.jsx) | Tab Tất cả / Việc của tôi / Chờ làm / Đang làm (lưu trên URL), lọc khu vực. Mỗi việc là 1 [TaskCard](../frontend/src/components/cleaning/TaskCard.jsx) có nút Bắt đầu / Hoàn thành / Sửa / Hủy. |
+| `/admin/cleaning/areas` | [admin/cleaning/Areas.jsx](../frontend/src/pages/admin/cleaning/Areas.jsx) | Ô từng khu: đỏ cần dọn, vàng lâu chưa dọn, xanh sạch. Nút Báo cần dọn (mở [TaskFormModal](../frontend/src/components/cleaning/TaskFormModal.jsx)), Đã dọn xong, Quản lý khu vực (`AreaManager`). |
+| `/admin/cleaning/history` | [admin/cleaning/History.jsx](../frontend/src/pages/admin/cleaning/History.jsx) | Việc đã xong / đã hủy, gom theo ngày, lọc ngày, người làm, khu vực. |
 
 ---
 

@@ -42,14 +42,14 @@ Tạo bởi `npm run setup` / `npm run db:seed`. Dùng để đăng nhập thử
 |---|---|---|---|
 | Admin | `admin@fab.vn` | `admin123` | Toàn bộ trang `/admin` |
 | Chủ nhà hàng | `chunha@fab.vn` | `123456` | Ngang Admin: mọi mục, sửa ma trận phân quyền, quản lý tài khoản Admin / Chủ (`isFullAdmin`) |
-| Quản lý | `quanly@fab.vn` | `123456` | Admin, chỉ xem nhân sự / phân quyền |
-| Tổ trưởng | `totruong@fab.vn` | `123456` | Tổng quan, đơn hàng, đặt bàn, món, đánh giá, xem nhân sự |
-| Phục vụ | `phucvu@fab.vn` | `123456` | Đơn hàng, đặt bàn (xem), món |
-| Lễ tân | `letan@fab.vn` | `123456` | Đặt bàn (xác nhận / hủy), xem đơn hàng, món, mã giảm giá, đánh giá |
+| Quản lý | `quanly@fab.vn` | `123456` | Admin, chỉ xem nhân sự / phân quyền; vệ sinh: hủy việc, quản lý khu vực |
+| Tổ trưởng | `totruong@fab.vn` | `123456` | Tổng quan, đơn hàng, đặt bàn, món, đánh giá, xem nhân sự, 4 trang vệ sinh (giao việc) |
+| Phục vụ | `phucvu@fab.vn` | `123456` | Đơn hàng, đặt bàn (xem), món, khu vực cần dọn (báo cần dọn) |
+| Lễ tân | `letan@fab.vn` | `123456` | Đặt bàn (xác nhận / hủy), xem đơn hàng, món, mã giảm giá, đánh giá, khu vực cần dọn (báo) |
 | Thu ngân | `thungan@fab.vn` | `123456` | Tổng quan, đơn hàng, đặt bàn, món, mã giảm giá |
 | Kỹ thuật | `kythuat@fab.vn` | `123456` | Chỉ có quyền ở chức năng chưa có trang web, `/admin` hiện thông báo "Chưa có trang" |
-| Tạp vụ | `tapvu@fab.vn` | `123456` | Đặt bàn (chỉ xem) |
-| Bếp | `bep@fab.vn` | `123456` | Đơn hàng, món ăn, danh mục |
+| Tạp vụ | `tapvu@fab.vn` | `123456` | Nhóm Vệ sinh: Tổng quan, Nhiệm vụ vệ sinh, Khu vực cần dọn, Lịch sử công việc (`docs/20-ve-sinh.md`). Không dọn bàn (việc của phục vụ) |
+| Bếp | `bep@fab.vn` | `123456` | Đơn hàng, món ăn, danh mục, khu vực cần dọn (báo) |
 | Tiếp thực | `tiepthuc@fab.vn` | `123456` | Đơn hàng, đặt bàn (xem), món |
 | Hồ hải sản | `hohaisan@fab.vn` | `123456` | Đơn hàng, món |
 | Khách hàng | `khach@fab.vn` | `123456` | Có sẵn đơn đã hoàn thành `FAB0000DEMO` để thử đánh giá |

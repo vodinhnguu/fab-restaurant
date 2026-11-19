@@ -64,6 +64,19 @@ enum CouponType {
   FIXED // Giảm số tiền cố định
 }
 
+// Việc vệ sinh của tạp vụ. Tài liệu: docs/20-ve-sinh.md
+enum CleaningStatus {
+  TODO // Chờ làm
+  IN_PROGRESS // Đang làm
+  DONE // Đã xong -> hiện ở Lịch sử công việc
+  CANCELLED // Đã hủy (giao nhầm, không cần làm nữa)
+}
+
+enum CleaningPriority {
+  NORMAL // Bình thường
+  URGENT // Gấp: xếp lên đầu danh sách, tô đỏ
+}
+
 // ---------- MODELS ----------
 
 model User {
@@ -83,6 +96,9 @@ model User {
   orders       Order[]
   reservations Reservation[]
   reviews      Review[]
+
+  cleaningAssigned CleaningTask[] @relation("CleaningAssignee") // Việc vệ sinh được giao / đã làm
+  cleaningCreated  CleaningTask[] @relation("CleaningCreator") // Việc vệ sinh người này tạo / báo
 }
 
 model Category {
@@ -278,4 +294,46 @@ model RolePermission {
   canDelete Boolean   @default(false)
 
   @@unique([roleId, module])
+}
+
+// ---------- VỆ SINH (việc của tạp vụ) ----------
+// Tài liệu: docs/20-ve-sinh.md. Khu vực mặc định: src/config/cleaning.js
+// "Khu vực cần dọn" = khu đang có việc chưa xong; "Lịch sử công việc" = việc đã xong.
+// Cả hai lấy từ bảng CleaningTask nên không bao giờ lệch nhau.
+
+// Khu vực tạp vụ phụ trách: nhà vệ sinh, khu rửa chén bát, quầy rửa ly, sảnh...
+model CleaningArea {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  description   String? // Việc thường làm ở khu này, vd "Lau sàn, lau gương, thay giấy"
+  sortOrder     Int            @default(0)
+  isActive      Boolean        @default(true) // Tắt = ẩn khỏi danh sách (vd khu đang sửa chữa)
+  lastCleanedAt DateTime? // Lần gần nhất có việc ở khu này được làm xong
+  tasks         CleaningTask[]
+  createdAt     DateTime       @default(now())
+}
+
+// 1 việc vệ sinh: quản lý giao, tạp vụ tự thêm, hoặc phục vụ / lễ tân báo "cần dọn"
+model CleaningTask {
+  id          Int              @id @default(autoincrement())
+  title       String // vd "Rửa chén bát ca trưa", "Nhà vệ sinh nữ hết giấy"
+  note        String? // Mô tả thêm lúc tạo
+  areaId      Int
+  area        CleaningArea     @relation(fields: [areaId], references: [id])
+  priority    CleaningPriority @default(NORMAL)
+  status      CleaningStatus   @default(TODO)
+  assigneeId  Int? // Người được giao / người nhận việc. Trống = chưa ai nhận
+  assignee    User?            @relation("CleaningAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdById Int?
+  createdBy   User?            @relation("CleaningCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  startedAt   DateTime? // Lúc bấm "Bắt đầu"
+  completedAt DateTime? // Lúc bấm "Hoàn thành" / "Hủy"
+  resultNote  String? // Ghi chú khi xong (vd "đã báo kho hết giấy") hoặc lý do hủy
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([status])
+  @@index([areaId, status])
+  @@index([assigneeId])
+  @@index([completedAt])
 }

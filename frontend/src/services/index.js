@@ -94,6 +94,24 @@ export const statsApi = {
   overview: (days) => api.get('/stats/overview', { params: { days } }).then((r) => r.data),
 };
 
+// Vệ sinh & dọn dẹp (việc của tạp vụ). Tài liệu: docs/20-ve-sinh.md
+export const cleaningApi = {
+  overview: () => api.get('/cleaning/overview').then((r) => r.data),
+  // Khu vực + việc chưa xong của từng khu. { all: true } = kèm khu đang ẩn (quản lý)
+  areas: (params) => api.get('/cleaning/areas', { params }).then((r) => r.data),
+  createArea: (body) => api.post('/cleaning/areas', body),
+  updateArea: (id, body) => api.put(`/cleaning/areas/${id}`, body),
+  // "Đã dọn xong" cả khu: trả { data: { closed, skipped }, message }
+  cleanArea: (id, note) => api.post(`/cleaning/areas/${id}/clean`, { note }),
+  tasks: (params) => api.get('/cleaning/tasks', { params }).then((r) => r.data),
+  createTask: (body) => api.post('/cleaning/tasks', body),
+  updateTask: (id, body) => api.put(`/cleaning/tasks/${id}`, body),
+  // status: IN_PROGRESS (bắt đầu) | DONE (hoàn thành, note không bắt buộc) | CANCELLED (hủy, note = lý do)
+  updateStatus: (id, status, note) => api.patch(`/cleaning/tasks/${id}/status`, { status, note }),
+  history: (params) => api.get('/cleaning/history', { params }), // trả { data, meta }
+  staff: () => api.get('/cleaning/staff').then((r) => r.data),
+};
+
 export const uploadApi = {
   image: (file) => {
     const form = new FormData();

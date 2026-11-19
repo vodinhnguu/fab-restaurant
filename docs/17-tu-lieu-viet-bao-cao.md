@@ -66,7 +66,7 @@ Tài liệu này gom **mọi thông tin cần để viết một bản báo cáo
 | Bảng dữ liệu | 12 bảng, 8 kiểu liệt kê (enum) |
 | API | 54 endpoint: 12 module + 2 route chung (`/health`, `/info`) |
 | Trang giao diện | 24 trang: 12 trang khách, 3 trang tài khoản, 9 trang quản trị |
-| Phân quyền | 3 loại tài khoản, 12 vai trò nhân viên × 11 chức năng × 4 quyền (Xem / Thêm / Sửa / Xóa) |
+| Phân quyền | 3 loại tài khoản, 12 vai trò nhân viên × 12 chức năng × 4 quyền (Xem / Thêm / Sửa / Xóa) |
 | Sơ đồ bàn | 23 bàn ở 3 khu vực (Trong nhà 12, Ngoài trời view biển 8, Phòng VIP 3) |
 | Dữ liệu mẫu | 8 danh mục, 26 món, 81 đơn hàng, 3 mã giảm giá, 4 lịch đặt bàn, 8 tài khoản |
 
@@ -221,7 +221,7 @@ Mỗi mục dưới đây là một tiểu mục lý thuyết, kèm chỗ áp d�
 | Mức cô lập Serializable | Các transaction chạy đồng thời cho kết quả như chạy lần lượt; nếu xung đột thì một bên bị hủy | Đặt bàn có chọn bàn: 2 người không giữ được cùng 1 bàn |
 | Máy trạng thái (state machine) | Đối tượng chỉ được chuyển giữa các trạng thái theo những bước cho phép | Trạng thái đơn hàng, lịch đặt bàn, giao dịch thanh toán |
 | Chữ ký HMAC-SHA512 | Mã xác thực tạo từ dữ liệu + khóa bí mật chung; ai không có khóa thì không tạo được chữ ký đúng | Tạo link VNPay và kiểm tra kết quả VNPay gửi về |
-| Phân quyền theo vai trò (RBAC) | Quyền gán cho vai trò, người dùng nhận quyền qua vai trò | Ma trận 12 vai trò × 11 chức năng × 4 quyền |
+| Phân quyền theo vai trò (RBAC) | Quyền gán cho vai trò, người dùng nhận quyền qua vai trò | Ma trận 12 vai trò × 12 chức năng × 4 quyền |
 | Giới hạn tần suất (rate limiting) | Giới hạn số request của một IP trong một khoảng thời gian | Chống dò mật khẩu, dò SĐT, spam đơn ảo (lỗi 429) |
 | CORS | Trình duyệt chỉ cho trang web gọi API khác tên miền nếu server cho phép | Chỉ cho phép `CORS_ORIGIN` |
 | Kiểm tra dữ liệu hai lớp | Frontend kiểm tra để báo lỗi nhanh; backend kiểm tra để bảo mật | React Hook Form + Zod |
@@ -1038,9 +1038,9 @@ Chi tiết từng API và ví dụ: [docs/06-api-reference.md](06-api-reference.
 **Ba lớp:**
 1. **Loại tài khoản (`User.role`):** CUSTOMER (khách, không vào được trang quản trị), STAFF (nhân viên, quyền theo vai trò), ADMIN (toàn quyền).
 2. **Vai trò (`StaffRole`):** 12 vai trò tạo sẵn, admin thêm được vai trò mới.
-3. **Ma trận (`RolePermission`):** mỗi vai trò × 11 chức năng × 4 quyền.
+3. **Ma trận (`RolePermission`):** mỗi vai trò × 12 chức năng × 4 quyền.
 
-**11 chức năng (module):**
+**12 chức năng (module):**
 
 | Mã | Tên | Đã có trang |
 |---|---|---|
@@ -1054,24 +1054,25 @@ Chi tiết từng API và ví dụ: [docs/06-api-reference.md](06-api-reference.
 | COUPONS | Khuyến mãi & mã giảm giá | Có |
 | REVIEWS | Đánh giá khách hàng | Có |
 | STAFF | Nhân sự & phân quyền | Có (Người dùng, Phân quyền) |
-| FACILITY | Thiết bị, bảo trì & vệ sinh | Chưa |
+| FACILITY | Thiết bị & bảo trì | Chưa |
+| CLEANING | Vệ sinh & dọn dẹp | Có (Tổng quan, Nhiệm vụ vệ sinh, Khu vực cần dọn, Lịch sử công việc) |
 
 **Ma trận mặc định** (V = Xem, C = Thêm, E = Sửa, D = Xóa, "-" = không có quyền), lấy từ `DEFAULT_ROLES`:
 
-| Vai trò | DASH | ORDERS | RESERV | MENU | KITCHEN | TANK | PAYMENTS | COUPONS | REVIEWS | STAFF | FACILITY |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| Chủ nhà hàng | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED |
-| Admin | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED |
-| Quản lý | V | VCED | VCED | VCED | VCE | VCE | VE | VCED | VD | V | VCE |
-| Tổ trưởng | V | VCE | VCE | V | V | V | V | - | V | V | VC |
-| Phục vụ | - | VCE | V | V | V | V | - | - | - | - | C |
-| Lễ tân | - | V | VCE | V | - | - | - | V | V | - | C |
-| Thu ngân | V | VE | V | V | - | - | VCE | V | - | - | - |
-| Kỹ thuật | - | - | - | - | V | V | - | - | - | - | VCED |
-| Tạp vụ | - | - | V | - | - | - | - | - | - | - | VE |
-| Bếp | - | V | - | VE | VCE | VE | - | - | - | - | VC |
-| Tiếp thực | - | VE | V | V | VE | - | - | - | - | - | - |
-| Hồ hải sản | - | V | - | VE | V | VCED | - | - | - | - | VC |
+| Vai trò | DASH | ORDERS | RESERV | MENU | KITCHEN | TANK | PAYMENTS | COUPONS | REVIEWS | STAFF | FACILITY | CLEANING |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Chủ nhà hàng | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED |
+| Admin | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED |
+| Quản lý | V | VCED | VCED | VCED | VCE | VCE | VE | VCED | VD | V | VCE | VCED |
+| Tổ trưởng | V | VCE | VCE | V | V | V | V | - | V | V | VC | VCE |
+| Phục vụ | - | VCE | V | V | V | V | - | - | - | - | C | VC |
+| Lễ tân | - | V | VCE | V | - | - | - | V | V | - | C | VC |
+| Thu ngân | V | VE | V | V | - | - | VCE | V | - | - | - | - |
+| Kỹ thuật | - | - | - | - | V | V | - | - | - | - | VCED | - |
+| Tạp vụ | - | - | - | - | - | - | - | - | - | - | C | VCE |
+| Bếp | - | V | - | VE | VCE | VE | - | - | - | - | VC | VC |
+| Tiếp thực | - | VE | V | V | VE | - | - | - | - | - | - | - |
+| Hồ hải sản | - | V | - | VE | V | VCED | - | - | - | - | VC | - |
 
 **Cách hoạt động:**
 - Backend: mỗi request nạp lại user + vai trò + quyền từ DB (`loadUser`), nên khóa tài khoản hay đổi quyền có hiệu lực ngay. Route dùng `requirePermission('ORDERS', 'edit')`; ADMIN luôn qua, STAFF xét ma trận, CUSTOMER bị chặn (403).
@@ -1439,7 +1440,7 @@ Lưu ý khi deploy: đổi `JWT_SECRET`; đặt `CORS_ORIGIN` đúng domain fron
 
 - Hoàn thành website khách hàng với 18 chức năng (KH01 đến KH18) và trang quản trị với 9 chức năng (QT01 đến QT09).
 - Một REST API 54 endpoint dùng chung, sẵn sàng cho app mobile; đã có đặc tả 25 màn hình app.
-- Phân quyền chi tiết 12 vai trò × 11 chức năng × 4 quyền, chặn ở cả backend và giao diện, có cơ chế chống tự nâng quyền.
+- Phân quyền chi tiết 12 vai trò × 12 chức năng × 4 quyền, chặn ở cả backend và giao diện, có cơ chế chống tự nâng quyền.
 - Tích hợp thanh toán VNPay (sandbox) đúng quy trình: chữ ký, IPN, trang trả về, ghi nhận một lần, lưu lịch sử để đối soát.
 - Đặt bàn có sơ đồ bàn trực quan, chặn đặt trùng kể cả khi nhiều người đặt cùng lúc.
 - Đảm bảo đúng dữ liệu: tính tiền ở server, transaction, state machine, lưu giá tại thời điểm đặt, xử lý múi giờ Việt Nam.

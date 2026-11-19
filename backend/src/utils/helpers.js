@@ -46,3 +46,19 @@ export function getPagination(query, defaultLimit = 12) {
 export function paginationMeta(total, page, limit) {
   return { total, page, limit, totalPages: Math.ceil(total / limit) };
 }
+
+// ---- Ngày theo giờ Việt Nam (UTC+7) ----
+// Server deploy thường chạy giờ UTC: dùng setHours(0) sẽ lệch 7 tiếng, việc làm lúc 0h-7h sáng bị tính sang hôm trước.
+const DAY_MS = 24 * 3600 * 1000;
+const VN_OFFSET_MS = 7 * 3600 * 1000;
+
+// 0h (giờ VN) của ngày chứa thời điểm `date`, mặc định hôm nay
+export function startOfVnDay(date = new Date()) {
+  return new Date(Math.floor((date.getTime() + VN_OFFSET_MS) / DAY_MS) * DAY_MS - VN_OFFSET_MS);
+}
+
+// "2026-11-19" -> 0h ngày 19/11/2026 giờ VN
+export const vnDate = (ymd) => new Date(`${ymd}T00:00:00+07:00`);
+
+// Cộng / trừ số ngày
+export const addDays = (date, days) => new Date(date.getTime() + days * DAY_MS);

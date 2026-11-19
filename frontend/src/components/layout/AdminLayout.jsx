@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { ExternalLink, LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { ADMIN_MENU } from '../../lib/adminMenu';
+import { allowedMenu } from '../../lib/adminMenu';
 import { can } from '../../lib/permissions';
 import { useAuthStore } from '../../stores/auth';
 import Logo from './Logo';
@@ -17,8 +17,12 @@ export default function AdminLayout() {
       <div className="flex h-16 items-center px-5">
         <Logo light to="/admin" />
       </div>
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {ADMIN_MENU.filter((m) => can(user, m.module)).map(({ to, label, icon: Icon, end }) => (
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        {allowedMenu(user, can).map(({ to, label, icon: Icon, end, group }, i, list) => [
+          // Tên nhóm (vd "Vệ sinh") hiện 1 lần phía trên mục đầu tiên của nhóm
+          group && group !== list[i - 1]?.group && (
+            <p key={group} className="px-3 pt-4 pb-1 text-xs font-semibold tracking-wide text-ocean-300 uppercase">{group}</p>
+          ),
           <NavLink
             key={to}
             to={to}
@@ -31,8 +35,8 @@ export default function AdminLayout() {
             }
           >
             <Icon className="h-5 w-5" /> {label}
-          </NavLink>
-        ))}
+          </NavLink>,
+        ])}
       </nav>
       <div className="space-y-1 border-t border-white/10 p-3">
         <Link to="/" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-ocean-200 hover:bg-white/5 hover:text-white">

@@ -2,8 +2,10 @@
 // CẢNH BÁO: script này XÓA toàn bộ dữ liệu cũ trong database rồi tạo lại.
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { seedDefaultAreas } from '../src/config/cleaning.js';
 import { seedDefaultTables } from '../src/config/tables.js';
 import { seedDefaultRoles } from '../src/modules/permissions/permissions.service.js';
+import { addDays, startOfVnDay } from '../src/utils/helpers.js';
 import { DEMO_STAFF, seedDemoStaff } from './seed-staff.js';
 
 const prisma = new PrismaClient();
@@ -81,6 +83,8 @@ const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 async function main() {
   console.log('🧹 Xóa dữ liệu cũ...');
+  await prisma.cleaningTask.deleteMany();
+  await prisma.cleaningArea.deleteMany();
   await prisma.review.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
@@ -254,11 +258,76 @@ async function main() {
     ],
   });
 
+  console.log('🧽 Tạo khu vực & việc vệ sinh mẫu...');
+  await seedCleaning();
+
   console.log('✅ Seed xong!');
   console.log('   Admin:     admin@fab.vn / admin123');
   console.log('   Khách hàng: khach@fab.vn / 123456');
   console.log('   Nhân viên (mật khẩu 123456): ' + DEMO_STAFF.map((s) => s[1]).join(', '));
   console.log(`   (admin id ${admin.id})`);
+}
+
+// Việc vệ sinh mẫu cho tạp vụ (docs/20-ve-sinh.md): vài việc đang chờ / đang làm + lịch sử 7 ngày
+async function seedCleaning() {
+  await seedDefaultAreas(prisma);
+  const area = Object.fromEntries((await prisma.cleaningArea.findMany()).map((a) => [a.name, a.id]));
+  const user = Object.fromEntries(
+    (await prisma.user.findMany({ where: { email: { in: ['tapvu@fab.vn', 'quanly@fab.vn', 'phucvu@fab.vn', 'letan@fab.vn', 'totruong@fab.vn'] } } })).map((u) => [u.email.split('@')[0], u.id]),
+  );
+  const now = Date.now();
+  const minutesAgo = (m) => new Date(now - m * 60 * 1000);
+
+  // Việc chưa xong: hiện ở Nhiệm vụ vệ sinh, Khu vực cần dọn, Tổng quan
+  await prisma.cleaningTask.createMany({
+    data: [
+      { title: 'Nhà vệ sinh nữ hết giấy', note: 'Khách báo ở quầy lễ tân', areaId: area['Nhà vệ sinh nữ'], priority: 'URGENT', createdById: user.letan, createdAt: minutesAgo(5) },
+      { title: 'Lau sàn sảnh, khách làm đổ nước', areaId: area['Sảnh & lối vào'], priority: 'URGENT', createdById: user.phucvu, createdAt: minutesAgo(12) },
+      { title: 'Rửa chén bát ca trưa', areaId: area['Khu rửa chén bát'], status: 'IN_PROGRESS', assigneeId: user.tapvu, createdById: user.quanly, startedAt: minutesAgo(20), createdAt: minutesAgo(40) },
+      { title: 'Rửa và lau khô ly bia', areaId: area['Quầy rửa ly'], assigneeId: user.tapvu, createdById: user.quanly, createdAt: minutesAgo(30) },
+      { title: 'Quét lá, cát quanh khu bàn', note: 'Trước 17h đón khách tối', areaId: area['Sân ngoài trời - view biển'], createdById: user.totruong, createdAt: minutesAgo(60) },
+    ],
+  });
+
+  // Lịch sử: mỗi ngày các việc định kỳ, giờ theo giờ Việt Nam [khu vực, tên việc, giờ, phút, làm mất bao nhiêu phút]
+  const routine = [
+    ['Sảnh & lối vào', 'Quét, lau sàn sảnh đầu ca', 9, 30, 20],
+    ['Nhà vệ sinh nam', 'Dọn định kỳ', 10, 15, 15],
+    ['Nhà vệ sinh nữ', 'Dọn định kỳ', 10, 35, 15],
+    ['Khu rửa chén bát', 'Rửa chén bát ca trưa', 14, 0, 60],
+    ['Quầy rửa ly', 'Rửa ly ca trưa', 14, 30, 25],
+    ['Nhà vệ sinh nữ', 'Dọn định kỳ', 15, 0, 15],
+    ['Sàn phòng ăn trong nhà', 'Lau sàn sau ca trưa', 15, 30, 30],
+    ['Khu tập kết rác', 'Đổ rác, rửa thùng cuối ngày', 22, 30, 20],
+  ];
+  const today = startOfVnDay();
+  const done = [];
+  for (let d = 6; d >= 0; d--) {
+    for (const [i, [areaName, title, h, m, took]] of routine.entries()) {
+      const completedAt = new Date(addDays(today, -d).getTime() + (h * 60 + m) * 60 * 1000);
+      if (completedAt > new Date(now)) continue; // hôm nay chưa tới giờ
+      // Thỉnh thoảng tổ trưởng làm phụ cho tạp vụ
+      const doer = (d + i) % 7 === 0 ? user.totruong : user.tapvu;
+      done.push({
+        title,
+        areaId: area[areaName],
+        status: 'DONE',
+        assigneeId: doer,
+        createdById: doer,
+        createdAt: new Date(completedAt.getTime() - took * 60 * 1000),
+        startedAt: new Date(completedAt.getTime() - took * 60 * 1000),
+        completedAt,
+        resultNote: areaName === 'Nhà vệ sinh nữ' && d === 2 ? 'Hết xà phòng, đã báo kho' : null,
+      });
+    }
+  }
+  await prisma.cleaningTask.createMany({ data: done });
+
+  // Lần dọn gần nhất của từng khu = việc xong muộn nhất
+  for (const id of Object.values(area)) {
+    const last = done.filter((t) => t.areaId === id).at(-1);
+    if (last) await prisma.cleaningArea.update({ where: { id }, data: { lastCleanedAt: last.completedAt } });
+  }
 }
 
 main()

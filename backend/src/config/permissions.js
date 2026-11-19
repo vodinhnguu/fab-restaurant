@@ -25,7 +25,10 @@ export const MODULES = [
   { key: 'COUPONS', name: 'Khuyến mãi & mã giảm giá', description: 'Tạo và áp dụng mã giảm giá' },
   { key: 'REVIEWS', name: 'Đánh giá khách hàng', description: 'Xem, phản hồi, ẩn đánh giá' },
   { key: 'STAFF', name: 'Nhân sự & phân quyền', description: 'Tài khoản nhân viên, vai trò, ma trận quyền' },
-  { key: 'FACILITY', name: 'Thiết bị, bảo trì & vệ sinh', description: 'Báo hỏng, sửa chữa, lịch vệ sinh khu vực' },
+  { key: 'FACILITY', name: 'Thiết bị & bảo trì', description: 'Báo hỏng, sửa chữa điện nước, máy lạnh, hệ thống hồ' },
+  // Trang: /admin/cleaning (docs/20-ve-sinh.md). Xem = vào 4 trang vệ sinh, Thêm = báo cần dọn / thêm việc,
+  // Sửa = nhận và làm việc, Xóa = hủy việc + quản lý danh sách khu vực
+  { key: 'CLEANING', name: 'Vệ sinh & dọn dẹp', description: 'Rửa chén bát, rửa ly, quét lau sàn, dọn nhà vệ sinh, đổ rác' },
 ];
 
 export const MODULE_KEYS = MODULES.map((m) => m.key);
@@ -41,25 +44,25 @@ export const DEFAULT_ROLES = [
     key: 'MANAGER',
     name: 'Quản lý',
     description: 'Điều hành ca, xử lý khiếu nại, duyệt thực đơn và khuyến mãi',
-    perms: { DASHBOARD: 'V', ORDERS: 'VCED', RESERVATIONS: 'VCED', MENU: 'VCED', KITCHEN: 'VCE', SEAFOOD_TANK: 'VCE', PAYMENTS: 'VE', COUPONS: 'VCED', REVIEWS: 'VD', STAFF: 'V', FACILITY: 'VCE' },
+    perms: { DASHBOARD: 'V', ORDERS: 'VCED', RESERVATIONS: 'VCED', MENU: 'VCED', KITCHEN: 'VCE', SEAFOOD_TANK: 'VCE', PAYMENTS: 'VE', COUPONS: 'VCED', REVIEWS: 'VD', STAFF: 'V', FACILITY: 'VCE', CLEANING: 'VCED' },
   },
   {
     key: 'TEAM_LEAD',
     name: 'Tổ trưởng',
     description: 'Phân công nhân viên trong ca, giám sát phục vụ tại khu vực',
-    perms: { DASHBOARD: 'V', ORDERS: 'VCE', RESERVATIONS: 'VCE', MENU: 'V', KITCHEN: 'V', SEAFOOD_TANK: 'V', PAYMENTS: 'V', REVIEWS: 'V', STAFF: 'V', FACILITY: 'VC' },
+    perms: { DASHBOARD: 'V', ORDERS: 'VCE', RESERVATIONS: 'VCE', MENU: 'V', KITCHEN: 'V', SEAFOOD_TANK: 'V', PAYMENTS: 'V', REVIEWS: 'V', STAFF: 'V', FACILITY: 'VC', CLEANING: 'VCE' },
   },
   {
     key: 'WAITER',
     name: 'Nhân viên phục vụ',
-    description: 'Đón khách tại bàn, ghi món, tư vấn hải sản trong hồ',
-    perms: { ORDERS: 'VCE', RESERVATIONS: 'V', MENU: 'V', KITCHEN: 'V', SEAFOOD_TANK: 'V', FACILITY: 'C' },
+    description: 'Đón khách tại bàn, ghi món, tư vấn hải sản trong hồ, dọn bàn sau khi khách về',
+    perms: { ORDERS: 'VCE', RESERVATIONS: 'V', MENU: 'V', KITCHEN: 'V', SEAFOOD_TANK: 'V', FACILITY: 'C', CLEANING: 'VC' },
   },
   {
     key: 'RECEPTIONIST',
     name: 'Lễ tân',
     description: 'Nghe điện thoại, nhận đặt bàn, đón và xếp chỗ cho khách',
-    perms: { ORDERS: 'V', RESERVATIONS: 'VCE', MENU: 'V', COUPONS: 'V', REVIEWS: 'V', FACILITY: 'C' },
+    perms: { ORDERS: 'V', RESERVATIONS: 'VCE', MENU: 'V', COUPONS: 'V', REVIEWS: 'V', FACILITY: 'C', CLEANING: 'VC' },
   },
   {
     key: 'CASHIER',
@@ -76,14 +79,14 @@ export const DEFAULT_ROLES = [
   {
     key: 'CLEANER',
     name: 'Tạp vụ',
-    description: 'Vệ sinh khu vực ăn uống, nhà vệ sinh, dọn bàn sau khi khách về',
-    perms: { RESERVATIONS: 'V', FACILITY: 'VE' },
+    description: 'Vệ sinh quanh nhà hàng: rửa chén bát, rửa ly, quét lau sàn, dọn nhà vệ sinh, đổ rác (dọn bàn là việc của phục vụ)',
+    perms: { FACILITY: 'C', CLEANING: 'VCE' },
   },
   {
     key: 'KITCHEN',
     name: 'Bếp',
     description: 'Sơ chế và chế biến món, báo món hết nguyên liệu',
-    perms: { ORDERS: 'V', MENU: 'VE', KITCHEN: 'VCE', SEAFOOD_TANK: 'VE', FACILITY: 'VC' },
+    perms: { ORDERS: 'V', MENU: 'VE', KITCHEN: 'VCE', SEAFOOD_TANK: 'VE', FACILITY: 'VC', CLEANING: 'VC' },
   },
   {
     key: 'RUNNER',

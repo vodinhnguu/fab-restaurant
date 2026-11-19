@@ -48,6 +48,22 @@ export const SORT_OPTIONS = [
   { value: 'price_desc', label: 'Giá cao → thấp' },
 ];
 
+// Việc vệ sinh của tạp vụ (khớp enum CleaningStatus / CleaningPriority ở backend)
+export const CLEANING_STATUS = {
+  TODO: { label: 'Chờ làm', color: 'amber' },
+  IN_PROGRESS: { label: 'Đang làm', color: 'blue' },
+  DONE: { label: 'Đã xong', color: 'green' },
+  CANCELLED: { label: 'Đã hủy', color: 'slate' },
+};
+
+export const CLEANING_PRIORITY = {
+  NORMAL: { label: 'Bình thường', color: 'slate' },
+  URGENT: { label: 'Gấp', color: 'red' },
+};
+
+// Tên việc hay gặp của tạp vụ: bấm để điền nhanh khi thêm việc
+export const CLEANING_SUGGESTIONS = ['Rửa chén bát', 'Rửa ly', 'Quét sàn', 'Lau sàn', 'Dọn nhà vệ sinh', 'Thay giấy, xà phòng', 'Đổ rác', 'Lau cửa kính'];
+
 // Nhãn nút hành động cho admin khi chuyển trạng thái đơn
 export const STATUS_ACTION_LABEL = {
   CONFIRMED: 'Xác nhận đơn',

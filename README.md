@@ -34,6 +34,7 @@ Backend là REST API dùng chung cho cả web và app mobile Flutter (thư mục
 - Quản lý đặt bàn: lọc theo ngày và trạng thái, xác nhận, hủy (bắt buộc ghi lý do cho khách xem), đánh dấu khách đã đến
 - CRUD món ăn (upload ảnh, bật/tắt còn món), danh mục, mã giảm giá
 - Kiểm duyệt đánh giá, quản lý người dùng (phân quyền, khóa tài khoản)
+- Vệ sinh cho tạp vụ: tổng quan, nhiệm vụ vệ sinh (nhận việc / hoàn thành), khu vực cần dọn, lịch sử công việc; phục vụ / lễ tân báo "cần dọn"
 
 ---
 
@@ -130,7 +131,7 @@ Nên đọc theo thứ tự:
 9. [Muốn sửa gì thì sửa ở đâu](docs/09-muon-sua-gi-thi-sua-o-dau.md): đổi thông tin, màu sắc, quy tắc nghiệp vụ, thêm trường/trang mới, cách tìm lỗi
 10. [Sổ tay toàn tập](docs/10-so-tay-toan-tap.md): **một tài liệu đủ mọi thứ trên web**, đi qua từng chức năng (người dùng thấy gì, dữ liệu chạy qua đâu, code ở file nào, quy tắc nghiệp vụ), kèm câu hỏi tự kiểm tra và từ điển thuật ngữ
 11. [Thanh toán VNPay](docs/11-thanh-toan-vnpay.md): luồng thanh toán, chữ ký, IPN, đăng ký sandbox, chuẩn bị nhận tiền thật
-12. [Ma trận phân quyền](docs/12-ma-tran-phan-quyen.md): tài khoản nhân viên, 12 vai trò × 11 chức năng, backend chặn theo quyền
+12. [Ma trận phân quyền](docs/12-ma-tran-phan-quyen.md): tài khoản nhân viên, 12 vai trò × 12 chức năng, backend chặn theo quyền
 13. [Sơ đồ bàn](docs/13-so-do-ban.md): chọn bàn theo khu vực khi đặt, màu bàn trống / đã có khách, sơ đồ cho admin
 14. [Lý do hủy đặt bàn](docs/14-ly-do-huy-dat-ban.md): admin chọn / ghi lý do khi hủy, khách xem lý do và đặt lại ngày giờ khác
 15. [Ghi chú từng món](docs/15-ghi-chu-tung-mon.md): ô ghi chú khẩu vị riêng cho mỗi món, gợi ý theo loại món, bếp xem trong admin
@@ -138,6 +139,7 @@ Nên đọc theo thứ tự:
 17. [Tư liệu viết báo cáo](docs/17-tu-lieu-viet-bao-cao.md): toàn bộ thông tin để viết báo cáo đồ án theo từng chương: yêu cầu, use case, quy tắc nghiệp vụ, sơ đồ, từ điển dữ liệu, 54 API, ma trận quyền, ca kiểm thử, hạn chế, câu hỏi bảo vệ
 18. [Lý do hủy đơn hàng](docs/18-ly-do-huy-don-hang.md): nhân viên chọn / ghi lý do khi hủy đơn, khách xem lý do ở trang chi tiết đơn và danh sách đơn của mình
 19. [App mobile Flutter](docs/19-app-mobile.md): cách chạy app, cấu trúc thư mục, màn nào ở file nào, quy ước viết màn hình, tiến độ từng bước
+20. [Vệ sinh & dọn dẹp](docs/20-ve-sinh.md): 4 trang của tạp vụ (tổng quan, nhiệm vụ, khu vực cần dọn, lịch sử), ai được làm gì, API `/cleaning`
 
 👉 Mới bắt đầu? Đọc **10** trước để có bức tranh toàn cảnh. Khi đang code, mở sẵn **08** và **09** để tra cứu nhanh.
 

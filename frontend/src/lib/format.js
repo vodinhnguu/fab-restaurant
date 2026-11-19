@@ -25,3 +25,13 @@ export const formatCompactPrice = (n) => {
   if (n >= 1e6) return `${(n / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} triệu`;
   return formatPrice(n);
 };
+
+// Số phút -> "45 phút", "1 giờ 5 phút" (thời gian làm 1 việc vệ sinh)
+export const formatDuration = (from, to) => {
+  if (!from || !to) return null;
+  const minutes = Math.max(1, Math.round((new Date(to) - new Date(from)) / 60000));
+  if (minutes < 60) return `${minutes} phút`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m ? `${h} giờ ${m} phút` : `${h} giờ`;
+};

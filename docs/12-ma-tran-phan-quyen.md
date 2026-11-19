@@ -10,7 +10,7 @@ Mỗi bộ phận trong nhà hàng (Thu ngân, Bếp, Lễ tân...) được **X
 | `STAFF` | Nhân viên, gắn với **1 vai trò** (`staffRoleId`) | Có, chỉ thấy mục vai trò đó được Xem |
 | `ADMIN` | Quản trị viên | Có, toàn quyền, được sửa ma trận |
 
-**Chủ nhà hàng ngang hàng với Admin.** Tài khoản `STAFF` giữ vai trò Chủ nhà hàng (`OWNER`) được làm mọi việc của `ADMIN`: toàn quyền 11 chức năng, sửa ma trận, tạo tài khoản Admin, gán vai trò Chủ, sửa / khóa / đặt lại mật khẩu tài khoản Admin và Chủ khác. Hai loại này gọi chung là **người toàn quyền**, kiểm tra bằng hàm `isFullAdmin(user)` (backend: [permissions.service.js](../backend/src/modules/permissions/permissions.service.js), frontend: [lib/permissions.js](../frontend/src/lib/permissions.js)). Quản lý và các vai trò khác chỉ có quyền theo ma trận.
+**Chủ nhà hàng ngang hàng với Admin.** Tài khoản `STAFF` giữ vai trò Chủ nhà hàng (`OWNER`) được làm mọi việc của `ADMIN`: toàn quyền 12 chức năng, sửa ma trận, tạo tài khoản Admin, gán vai trò Chủ, sửa / khóa / đặt lại mật khẩu tài khoản Admin và Chủ khác. Hai loại này gọi chung là **người toàn quyền**, kiểm tra bằng hàm `isFullAdmin(user)` (backend: [permissions.service.js](../backend/src/modules/permissions/permissions.service.js), frontend: [lib/permissions.js](../frontend/src/lib/permissions.js)). Quản lý và các vai trò khác chỉ có quyền theo ma trận.
 
 Tài khoản demo (mật khẩu `123456`), mỗi vai trò 1 tài khoản: `chunha@fab.vn` (Chủ nhà hàng), `quanly@fab.vn` (Quản lý), `totruong@fab.vn` (Tổ trưởng), `phucvu@fab.vn` (Phục vụ), `letan@fab.vn` (Lễ tân), `thungan@fab.vn` (Thu ngân), `kythuat@fab.vn` (Kỹ thuật), `tapvu@fab.vn` (Tạp vụ), `bep@fab.vn` (Bếp), `tiepthuc@fab.vn` (Tiếp thực), `hohaisan@fab.vn` (Hồ hải sản). Danh sách nằm ở [seed-staff.js](../backend/prisma/seed-staff.js).
 
@@ -49,10 +49,10 @@ Vì sao mỗi người một tài khoản thay vì dùng chung 1 tài khoản ad
 Gọi API ───────► requirePermission('ORDERS', 'edit') đọc quyền từ DB          ← lớp bảo vệ thật
 ```
 
-- [backend/src/config/permissions.js](../backend/src/config/permissions.js): 11 chức năng (`MODULES`) và quyền mặc định của 12 vai trò.
+- [backend/src/config/permissions.js](../backend/src/config/permissions.js): 12 chức năng (`MODULES`) và quyền mặc định của 12 vai trò.
 - [backend/src/modules/permissions/permissions.service.js](../backend/src/modules/permissions/permissions.service.js): `isFullAdmin(user)`, `userPermissions(user)` và `can(user, module, action)`.
 - [backend/src/middlewares/auth.js](../backend/src/middlewares/auth.js): `requirePermission(...)` và `requireAdmin` (chỉ người toàn quyền: ADMIN hoặc Chủ nhà hàng). Mỗi request đọc quyền mới nhất từ DB, nên admin đổi quyền thì nhân viên bị ảnh hưởng ngay ở lần gọi API tiếp theo.
-- [frontend/src/lib/permissions.js](../frontend/src/lib/permissions.js): `useCan()`, `canAccessAdmin()`, `isFullAdmin()`. Menu khai báo `module` trong [frontend/src/lib/adminMenu.js](../frontend/src/lib/adminMenu.js).
+- [frontend/src/lib/permissions.js](../frontend/src/lib/permissions.js): `useCan()`, `canAccessAdmin()`, `isFullAdmin()`. Menu khai báo `module` trong [frontend/src/lib/adminMenu.js](../frontend/src/lib/adminMenu.js); thêm `action: 'edit'` nếu mục đó cần quyền khác Xem (vd 3 trang vệ sinh), `group` để gom mục vào 1 nhóm trên sidebar.
 
 Ví dụ ẩn nút trong một trang:
 
@@ -89,6 +89,7 @@ DB mới chưa có vai trò thì lần đầu mở trang Phân quyền, backend 
 | `PATCH /users/:id`, `POST /users/:id/reset-password` | Nhân sự · Sửa |
 | `GET /permissions` | Nhân sự · Xem |
 | `POST / PUT / DELETE /permissions/roles` | Chỉ ADMIN hoặc Chủ nhà hàng (`requireAdmin`) |
+| `/cleaning/*` (việc của tạp vụ) | Vệ sinh · Xem / Thêm (báo cần dọn) / Sửa (nhận, hoàn thành) / Xóa (hủy, quản lý khu vực). Chi tiết: [20-ve-sinh.md](20-ve-sinh.md) |
 
 API tra cứu / hủy bằng mã (`/orders/track/:code`, `/orders/:code/cancel`, và tương tự với đặt bàn) cũng xét quyền khi nhân viên dùng: có Xem thì tra cứu được đơn của người khác, phải có Sửa mới hủy được.
 
@@ -120,6 +121,6 @@ Chức năng không gửi lên = không có quyền.
 
 ## 7. Giới hạn hiện tại
 
-4 chức năng trong ma trận **chưa có trang riêng**: Phiếu bếp, Hồ hải sản & nhập hàng, Thu ngân & thanh toán, Thiết bị & vệ sinh. Quyền của chúng đã lưu sẵn; khi làm các trang này, chỉ cần dùng `requirePermission('KITCHEN', ...)` ở backend và thêm 1 dòng vào `ADMIN_MENU` ở frontend.
+4 chức năng trong ma trận **chưa có trang riêng**: Phiếu bếp, Hồ hải sản & nhập hàng, Thu ngân & thanh toán, Thiết bị & bảo trì. (Vệ sinh đã tách thành chức năng riêng `CLEANING` và có trang: [20-ve-sinh.md](20-ve-sinh.md).) Quyền của chúng đã lưu sẵn; khi làm các trang này, chỉ cần dùng `requirePermission('KITCHEN', ...)` ở backend và thêm 1 dòng vào `ADMIN_MENU` ở frontend.
 
-Muốn thêm chức năng mới: thêm vào `MODULES` trong `config/permissions.js`. Các vai trò cũ sẽ chưa có quyền gì với chức năng đó cho tới khi admin tích chọn.
+Muốn thêm chức năng mới: thêm vào `MODULES` trong `config/permissions.js`. Các vai trò cũ sẽ chưa có quyền gì với chức năng đó cho tới khi admin tích chọn, hoặc viết thêm câu `INSERT INTO "RolePermission"` vào migration như cách làm với `CLEANING` (migration `them_ve_sinh`).
