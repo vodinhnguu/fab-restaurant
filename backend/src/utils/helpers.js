@@ -62,3 +62,8 @@ export const vnDate = (ymd) => new Date(`${ymd}T00:00:00+07:00`);
 
 // Cộng / trừ số ngày
 export const addDays = (date, days) => new Date(date.getTime() + days * DAY_MS);
+
+// Món bán theo kg (hải sản sống ở hồ: tôm hùm, tôm sú, cua, cá mú, tôm tít). Giá của món là giá 1 kg;
+// tại quán nhân viên hồ hải sản cân rồi mới tính tiền. Online không đặt được. Xem docs/24-thuc-don-ban-theo-kg.md
+export const WEIGHT_UNIT = 'kg';
+export const isSoldByWeight = (dish) => dish?.unit === WEIGHT_UNIT;

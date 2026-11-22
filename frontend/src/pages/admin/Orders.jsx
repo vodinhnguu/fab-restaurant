@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import CancelReasonDialog from '../../components/CancelReasonDialog';
+import { lineAmount } from '../../components/dine-in/bill';
 import PageHeader from '../../components/PageHeader';
 import Button from '../../components/ui/Button';
 import { StatusBadge } from '../../components/ui/Badge';
@@ -13,7 +14,7 @@ import { Input } from '../../components/ui/Form';
 import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
 import { NEXT_STATUS, ORDER_STATUS, ORDER_TYPE, PAYMENT_METHOD, PAYMENT_STATUS, PAYMENT_TXN_STATUS, STATUS_ACTION_LABEL } from '../../lib/constants';
-import { formatDateTime, formatPrice } from '../../lib/format';
+import { formatDateTime, formatKg, formatPrice } from '../../lib/format';
 import { useDocumentTitle } from '../../lib/hooks';
 import { useCan } from '../../lib/permissions';
 import { orderApi } from '../../services';
@@ -89,8 +90,12 @@ function OrderModal({ id, onClose }) {
                     {i.name}
                     {i.note && <p className="text-xs font-medium text-coral-600">Ghi chú: {i.note}</p>}
                   </td>
-                  <td className="py-2 text-center text-slate-500">× {i.quantity}</td>
-                  <td className="py-2 text-right">{formatPrice(i.price * i.quantity)}</td>
+                  <td className="py-2 text-center text-slate-500">
+                    {i.weight != null
+                      ? `${formatKg(i.weight)}${i.status === 'WEIGHING' ? ' (tạm, chờ cân)' : ''}`
+                      : i.status === 'WEIGHING' ? 'Chờ cân' : `× ${i.quantity}`}
+                  </td>
+                  <td className="py-2 text-right">{formatPrice(lineAmount(i))}</td>
                 </tr>
               ))}
             </tbody>

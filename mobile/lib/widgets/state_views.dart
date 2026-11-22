@@ -123,6 +123,36 @@ class ErrorView extends StatelessWidget {
       error is ApiException ? error.message : 'Đã có lỗi xảy ra, vui lòng thử lại';
 }
 
+/// Báo lỗi gọn trong 1 khối của trang (vd khối danh mục ở S04 tải lỗi), không chiếm cả màn hình.
+class InlineError extends StatelessWidget {
+  const InlineError({super.key, required this.error, required this.onRetry});
+
+  final Object error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final isNetwork = error is ApiException && (error as ApiException).isNetwork;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+      decoration: BoxDecoration(color: AppColors.sand100, borderRadius: BorderRadius.circular(12)),
+      child: Row(
+        children: [
+          Icon(isNetwork ? Icons.wifi_off_rounded : Icons.error_outline_rounded, size: 18, color: AppColors.slate500),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isNetwork ? 'Mất kết nối mạng' : 'Không tải được dữ liệu',
+              style: const TextStyle(color: AppColors.slate500, fontSize: 13),
+            ),
+          ),
+          TextButton(onPressed: onRetry, child: const Text('Thử lại')),
+        ],
+      ),
+    );
+  }
+}
+
 /// Một khối xám nhạt để ghép thành khung xương (skeleton) lúc đang tải lần đầu.
 ///   Column(children: [SkeletonBox(height: 120), SkeletonBox(width: 80, height: 14)])
 class SkeletonBox extends StatelessWidget {

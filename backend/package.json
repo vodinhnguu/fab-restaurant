@@ -4,12 +4,15 @@
   "description": "FAB Seafood REST API (Express + Prisma + PostgreSQL)",
   "main": "src/server.js",
   "scripts": {
+    "predev": "node scripts/check-db.js",
     "dev": "nodemon --watch src src/server.js",
+    "db:check": "node scripts/check-db.js",
     "start": "node src/server.js",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:seed-staff": "node prisma/seed-staff.js",
+    "db:seed-menu": "node prisma/menu.js",
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",
     "generate": "prisma generate"

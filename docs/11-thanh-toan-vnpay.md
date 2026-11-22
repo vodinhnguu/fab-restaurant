@@ -73,7 +73,11 @@ Vì vậy cả hai đều gọi chung hàm `handleVnpayResult`. **Đường nào
 
 ## 5. Chạy thử với sandbox (miễn phí)
 
-**B1. Đăng ký tài khoản sandbox** tại https://sandbox.vnpayment.vn/devreg/. VNPay sẽ gửi email chứa:
+**B1. Đăng ký tài khoản sandbox** tại https://pay.vnpaytest.vn/dev-registration (trang "Đăng ký merchant môi trường test"; trang cũ `sandbox.vnpayment.vn/devreg/` đã báo 404 từ 11/2026. Link đổi nữa thì vào https://sandbox.vnpayment.vn/apis/docs/thanh-toan-pay/pay.html, bấm chữ "đăng ký ngay tại đây"). Điền tên website (vd `FAB Seafood`), địa chỉ website, email, mật khẩu. Lưu ý quy tắc của form:
+- **Địa chỉ website** phải là tên miền có dấu chấm, vd `fabseafood-demo.vn`. Không nhận `localhost` hay có cổng (`:5173`). Sandbox không kiểm tra tên miền có thật, app vẫn chạy ở `localhost` vì địa chỉ quay về (`VNP_RETURN_URL`) gửi kèm mỗi giao dịch. Báo "Email hoặc website đã được đăng ký" thì đổi tên miền khác.
+- **Mật khẩu** 8-15 ký tự, có đủ chữ thường, chữ HOA, số và ký tự đặc biệt (vd `Fab@2026x`).
+
+VNPay sẽ gửi email chứa:
 - `vnp_TmnCode` (mã website, khoảng 8 ký tự)
 - `vnp_HashSecret` (chuỗi bí mật)
 

@@ -83,7 +83,7 @@ Backend dùng giá trị này để tính tiền thật. Trang thanh toán cũng
 
 Dòng "Miễn phí giao hàng cho đơn từ ..." ở **Footer** và ở mục ưu điểm (mảng `FEATURES`) của **trang chủ** cũng đọc số từ `info.freeShippingMin`, nên chỉ cần đổi `.env` là cả web cập nhật theo.
 
-Chỗ duy nhất còn viết cứng là [seed.js](../backend/prisma/seed.js#L170) (dòng 170). Chỗ này chỉ ảnh hưởng đến các đơn hàng **mẫu**.
+Chỗ duy nhất còn viết cứng là [seed.js](../backend/prisma/seed.js#L100) (dòng 100). Chỗ này chỉ ảnh hưởng đến các đơn hàng **mẫu**.
 
 ### A3. Đổi màu chủ đạo của website
 
@@ -287,6 +287,11 @@ Cách tính **giảm giá** của mã nằm trong [coupons.service.js](../backen
 | Xóa món đã từng bán: ẩn hay xóa hẳn | [dishes.controller.js](../backend/src/modules/dishes/dishes.controller.js#L102-L112) |
 | Độ dài mật khẩu tối thiểu | [auth.validation.js](../backend/src/modules/auth/auth.validation.js#L12) dòng 12 và 29; [Register.jsx](../frontend/src/pages/Register.jsx#L45) dòng 45; [Profile.jsx](../frontend/src/pages/account/Profile.jsx#L55) dòng 55 |
 | Đơn mới trong bao lâu thì hiện "Cảm ơn bạn đã đặt món!" | [OrderDetail.jsx](../frontend/src/pages/OrderDetail.jsx#L124) dòng 124 (đang 10 phút) |
+| Món nào bán theo kg | Không cần sửa code: admin sửa ô "Đơn vị" của món thành `kg` ở trang Món ăn (hoặc cột đơn vị trong [menu.js](../backend/prisma/menu.js) rồi `npm run db:seed-menu`). Xem [24](24-thuc-don-ban-theo-kg.md) |
+| Món nào là Best seller | Ô "Best seller" ở trang Món ăn (cột `isFeatured`), hoặc cột best seller trong `MENU_DISHES` của [menu.js](../backend/prisma/menu.js). Trang chủ lấy 8 món, bán chạy trước ([Home.jsx](../frontend/src/pages/Home.jsx#L35-L38)) |
+| Số kg phục vụ ghi trên app (mặc định 1 kg, 0,05 đến 30 kg, nút −/+ đổi 0,1 kg) | App: `minWeight`, `maxWeight`, `weightStep` trong [cart_state.dart](../mobile/lib/state/cart_state.dart); hộp gõ số: `showAmountDialog` trong [quantity_stepper.dart](../mobile/lib/widgets/quantity_stepper.dart); backend: `weight` trong `addItemsSchema` ([dine-in.validation.js](../backend/src/modules/dine-in/dine-in.validation.js)) |
+| Số kg được nhập khi cân (0,05 đến 30 kg) | `weighItemSchema` trong [dine-in.validation.js](../backend/src/modules/dine-in/dine-in.validation.js#L39-L44) |
+| Câu báo khi khách đặt online món bán theo kg | `createOrder` trong [orders.service.js](../backend/src/modules/orders/orders.service.js#L55-L56) |
 
 ---
 
@@ -334,7 +339,7 @@ Kiểm tra: `npm run db:studio` → bảng `Dish` có cột `calories`.
 {dish.calories && <p className="mt-2 text-sm text-slate-500">🔥 {dish.calories} kcal</p>}
 ```
 
-**Bước 6 (tùy chọn).** Thêm `calories` cho các món mẫu trong [seed.js](../backend/prisma/seed.js), rồi cập nhật [06-api-reference.md](06-api-reference.md) để app Flutter biết có trường mới.
+**Bước 6 (tùy chọn).** Thêm `calories` cho các món mẫu trong [menu.js](../backend/prisma/menu.js) (mảng `MENU_DISHES` và hàm `applyMenu`), rồi cập nhật [06-api-reference.md](06-api-reference.md) để app Flutter biết có trường mới.
 
 Áp dụng cùng quy trình cho mọi trường mới (thêm `note` cho danh mục, `birthday` cho người dùng...).
 
@@ -380,14 +385,13 @@ File: [backend/prisma/seed.js](../backend/prisma/seed.js). Sửa xong chạy `np
 
 | Muốn đổi | Dòng |
 |---|---|
-| Danh mục mẫu | 20-29: mảng `categories` |
-| Món mẫu | 32-66: mảng `dishes`, mỗi dòng là `[tên, danh mục, giá, giá KM, đơn vị, mã ảnh Unsplash, nổi bật, mô tả]` |
-| Tài khoản admin | 91-99 |
-| Tài khoản khách | 108-120 (mật khẩu chung ở dòng 108) |
+| Thực đơn: danh mục và món (12 nhóm, 70 món) | Không nằm trong seed.js mà ở [menu.js](../backend/prisma/menu.js): `MENU_CATEGORIES` (dòng 56-69, thứ tự nhóm = thứ tự hiện trên web / app), `MENU_DISHES` (dòng 75-169, mỗi dòng `[tên, nhóm, giá, đơn vị, mã ảnh, best seller, mô tả]`; đơn vị `KG` = bán theo kg, giá là giá 1 kg), mã ảnh Unsplash dùng chung trong `IMG` (dòng 29-53). Sửa xong chạy `npm run db:seed-menu` (cập nhật thực đơn, **không xóa** đơn hàng, đánh giá). Xem [24](24-thuc-don-ban-theo-kg.md) |
+| Tài khoản admin | 49-57 |
+| Tài khoản khách | 58-70 (mật khẩu chung ở dòng 58) |
 | Tài khoản nhân viên (mỗi vai trò 1 tài khoản) | Không nằm trong seed.js mà ở mảng `DEMO_STAFF` trong [seed-staff.js](../backend/prisma/seed-staff.js#L20-L32). Thêm / sửa xong chạy `npm run db:seed-staff` (chỉ thêm tài khoản còn thiếu, **không xóa** dữ liệu) |
-| Mã giảm giá mẫu | 142-148 |
-| Số đơn mẫu (80) và khoảng thời gian (30 ngày) | khoảng dòng 152-154 |
-| Lịch đặt bàn mẫu | 235-242 |
+| Mã giảm giá mẫu | 83-89 |
+| Số đơn mẫu (80) và khoảng thời gian (30 ngày) | khoảng dòng 93-94 (đơn mẫu chỉ chọn món bán theo phần, dòng 79) |
+| Lịch đặt bàn mẫu | 178-185 |
 
 **Đổi email/mật khẩu demo** thì nhớ sửa cả:
 - các nút điền nhanh trên [Login.jsx](../frontend/src/pages/Login.jsx#L52-L82) dòng 52-82,
@@ -414,6 +418,8 @@ File: [backend/prisma/seed.js](../backend/prisma/seed.js). Sửa xong chạy `np
 | Mốc miễn phí ship "500.000đ" (chữ hiển thị) | `.env` ↔ Footer.jsx ↔ Home.jsx, xem [A2](#a2-đổi-phí-giao-hàng-và-mức-miễn-phí-giao-hàng) |
 | Giờ đặt muộn nhất (đóng cửa − 1 tiếng) | reservations.validation.js ↔ Reservation.jsx `timeSlots` |
 | Công thức phí ship | orders.service.js ↔ Checkout.jsx (ước tính) ↔ seed.js |
+| Món bán theo kg = đơn vị `kg` | `isSoldByWeight` ở [utils/helpers.js](../backend/src/utils/helpers.js) ↔ [lib/constants.js](../frontend/src/lib/constants.js) ↔ app `CartItem.soldByWeight`, `Dish.soldByWeight` (`mobile/lib/models/`) ↔ `seed.js` (lọc món theo phần cho đơn mẫu) |
+| Tiền 1 dòng món (theo kg = giá 1 kg × số kg) | `lineTotal` ([dine-in.service.js](../backend/src/modules/dine-in/dine-in.service.js)) ↔ `lineAmount` ([components/dine-in/bill.js](../frontend/src/components/dine-in/bill.js)) ↔ app `OrderItem.lineTotal` (`mobile/lib/models/order.dart`) |
 | Cổng backend 4000 | `backend/.env` `PORT` ↔ [vite.config.js](../frontend/vite.config.js#L11-L12) proxy |
 | Địa chỉ frontend 5173 | `backend/.env` `CORS_ORIGIN` ↔ cổng trong vite.config.js |
 
@@ -428,6 +434,7 @@ File: [backend/prisma/seed.js](../backend/prisma/seed.js). Sửa xong chạy `np
 | `backend/prisma/schema.prisma` | `npm run db:migrate` trong `backend/`, rồi khởi động lại backend |
 | `backend/prisma/seed.js` | `npm run db:seed` (⚠️ xóa hết dữ liệu cũ) |
 | `backend/prisma/seed-staff.js` | `npm run db:seed-staff` (chỉ thêm tài khoản còn thiếu, không xóa) |
+| `backend/prisma/menu.js` | `npm run db:seed-menu` (đổi thực đơn theo file, không xóa đơn hàng, đánh giá) |
 | File trong `frontend/src/` | Không cần làm gì. Vite tự cập nhật trình duyệt (Hot Module Replacement) |
 | `frontend/index.html` | Thường tự tải lại. Nếu không thấy thì F5 |
 | `frontend/vite.config.js` hoặc `frontend/.env` | Tắt frontend và chạy lại |

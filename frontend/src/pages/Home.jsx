@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Award, CalendarDays, ChefHat, Clock, Fish, MapPin, Ticket, Truck } from 'lucide-react';
+import { ArrowRight, Award, CalendarDays, ChefHat, Clock, Fish, Flame, MapPin, Ticket, Truck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DishCard from '../components/DishCard';
 import Button from '../components/ui/Button';
@@ -21,15 +21,17 @@ const FEATURES = [
 ];
 
 const TESTIMONIALS = [
-  { name: 'Minh Thư', text: 'Tôm hấp bia ngọt thịt, mâm hải sản nướng đáng tiền. Không gian view biển cực chill!', rating: 5 },
+  { name: 'Minh Thư', text: 'Tôm hùm nướng phô mai ngọt thịt, được tự chọn con tại hồ và cân trước mặt. Không gian view biển cực chill!', rating: 5 },
   { name: 'Anh Tuấn', text: 'Đặt bàn online tiện, đến nơi có bàn ngay. Nhân viên phục vụ chu đáo.', rating: 5 },
-  { name: 'Hồng Nhung', text: 'Sashimi cá hồi tươi, dày miếng. Lần sau sẽ dẫn cả gia đình đến.', rating: 5 },
+  { name: 'Hồng Nhung', text: 'Cua gạch hấp bia chắc thịt, hàu nướng mỡ hành béo ngậy. Lần sau sẽ dẫn cả gia đình đến.', rating: 5 },
 ];
 
 export default function Home() {
   useDocumentTitle();
   const { data: info } = useInfo();
-  const { data: categories } = useCategories();
+  const { data: allCategories } = useCategories();
+  const categories = allCategories?.filter((c) => c._count?.dishes > 0); // ẩn danh mục không còn món đang bán
+  // Best seller = món admin bật ô "Best seller" (cột isFeatured), món bán chạy nhất đứng trước
   const featured = useQuery({
     queryKey: ['dishes', { featured: 'true', limit: 8 }],
     queryFn: () => dishApi.list({ featured: 'true', limit: 8, sort: 'popular' }),
@@ -52,7 +54,7 @@ export default function Home() {
               <span className="text-coral-400">trên bàn ăn của bạn</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-ocean-100">
-              Hải sản tươi sống chọn lọc mỗi sáng, chế biến bởi đầu bếp giàu kinh nghiệm. Đặt món giao tận nơi hoặc đặt bàn chỉ với vài cú chạm.
+              Tôm hùm, cua, cá mú bơi tại hồ: bạn chọn con, nhân viên cân tại chỗ, đầu bếp chế biến theo ý bạn. Đặt bàn chỉ với vài cú chạm, hoặc đặt hàu, sò điệp, cơm, cháo giao tận nơi.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button as={Link} to="/menu" size="lg">
@@ -88,6 +90,31 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== BEST SELLER (nổi bật ngay dưới ảnh bìa) ===== */}
+      <section className="mt-16 bg-ocean-950 py-16">
+        <div className="container-page">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="inline-flex items-center gap-2 rounded-full bg-coral-500 px-3 py-1 text-sm font-bold text-white">
+                <Flame className="h-4 w-4" /> Best seller
+              </p>
+              <h2 className="heading-display mt-3 text-3xl text-white sm:text-4xl">Món khách gọi nhiều nhất tại FAB</h2>
+              <p className="mt-2 text-ocean-200">Hải sản sống chọn tại hồ, cân tại chỗ, chế biến theo ý bạn</p>
+            </div>
+            <Link to="/menu?best=1" className="flex items-center gap-1 font-medium text-coral-300 hover:text-coral-200">
+              Xem tất cả <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          {featured.isLoading ? (
+            <Spinner />
+          ) : (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {featured.data?.data.map((d) => <DishCard key={d.id} dish={d} />)}
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* ===== CATEGORIES ===== */}
       <section className="container-page mt-20">
         <div className="mb-8 text-center">
@@ -106,26 +133,6 @@ export default function Home() {
             </Link>
           ))}
         </div>
-      </section>
-
-      {/* ===== FEATURED DISHES ===== */}
-      <section className="container-page mt-20">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold tracking-widest text-coral-500 uppercase">Được yêu thích</p>
-            <h2 className="heading-display mt-2 text-3xl sm:text-4xl">Món đặc biệt của FAB</h2>
-          </div>
-          <Link to="/menu" className="flex items-center gap-1 font-medium text-ocean-700 hover:text-coral-600">
-            Xem tất cả <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        {featured.isLoading ? (
-          <Spinner />
-        ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {featured.data?.data.map((d) => <DishCard key={d.id} dish={d} />)}
-          </div>
-        )}
       </section>
 
       {/* ===== COUPONS ===== */}

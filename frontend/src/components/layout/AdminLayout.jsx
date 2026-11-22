@@ -5,12 +5,16 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { allowedMenu } from '../../lib/adminMenu';
 import { can } from '../../lib/permissions';
 import { useAuthStore } from '../../stores/auth';
+import { useDineInAlerts } from '../dine-in/useDineInAlerts';
+import ReportIssueButton from '../maintenance/ReportIssueButton';
 import Logo from './Logo';
 
 export default function AdminLayout() {
   const [open, setOpen] = useState(false);
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  // Bếp / thu ngân: số đếm trên menu + thông báo, chuông khi có món mới / bàn gửi thanh toán
+  const badges = useDineInAlerts(user);
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -18,7 +22,7 @@ export default function AdminLayout() {
         <Logo light to="/admin" />
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {allowedMenu(user, can).map(({ to, label, icon: Icon, end, group }, i, list) => [
+        {allowedMenu(user, can).map(({ to, label, icon: Icon, end, group, badge }, i, list) => [
           // Tên nhóm (vd "Vệ sinh") hiện 1 lần phía trên mục đầu tiên của nhóm
           group && group !== list[i - 1]?.group && (
             <p key={group} className="px-3 pt-4 pb-1 text-xs font-semibold tracking-wide text-ocean-300 uppercase">{group}</p>
@@ -35,6 +39,9 @@ export default function AdminLayout() {
             }
           >
             <Icon className="h-5 w-5" /> {label}
+            {badges[badge] > 0 && (
+              <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-coral-500 px-1.5 text-xs font-semibold text-white">{badges[badge]}</span>
+            )}
           </NavLink>,
         ])}
       </nav>
@@ -76,6 +83,8 @@ export default function AdminLayout() {
             <Menu className="h-5 w-5" />
           </button>
           <div className="ml-auto flex items-center gap-3">
+            {/* Nút Báo hỏng: ai có quyền Thêm ở "Thiết bị & bảo trì" (docs/22-ky-thuat-bao-tri.md) */}
+            {can(user, 'FACILITY', 'create') && <ReportIssueButton />}
             <div className="text-right">
               <p className="text-sm font-medium">{user?.name}</p>
               <p className="text-xs text-slate-500">{user?.role === 'ADMIN' ? 'Quản trị viên' : user?.staffRole?.name ?? user?.email}</p>

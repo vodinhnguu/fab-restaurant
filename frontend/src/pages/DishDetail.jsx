@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { ChevronRight, ShoppingBag, Star } from 'lucide-react';
+import { CalendarDays, ChevronRight, Flame, Scale, ShoppingBag, Star } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -9,6 +9,7 @@ import Button from '../components/ui/Button';
 import { EmptyState, ErrorState, Rating, Spinner } from '../components/ui/Feedback';
 import { Textarea } from '../components/ui/Form';
 import QuantityInput from '../components/ui/QuantityInput';
+import { isSoldByWeight } from '../lib/constants';
 import { formatPrice, fromNow, imageUrl } from '../lib/format';
 import { useDocumentTitle } from '../lib/hooks';
 import { reviewApi, dishApi } from '../services';
@@ -85,7 +86,14 @@ export default function DishDetail() {
         <img src={imageUrl(dish.image)} alt={dish.name} className="aspect-[4/3] w-full rounded-3xl object-cover shadow-lg" />
 
         <div>
-          <p className="text-sm font-semibold tracking-wide text-ocean-500 uppercase">{dish.category.name}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold tracking-wide text-ocean-500 uppercase">{dish.category.name}</p>
+            {dish.isFeatured && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-coral-500 px-2.5 py-0.5 text-xs font-bold text-white">
+                <Flame className="h-3.5 w-3.5" /> Best seller
+              </span>
+            )}
+          </div>
           <h1 className="heading-display mt-2 text-4xl">{dish.name}</h1>
           <div className="mt-3 flex items-center gap-3 text-sm">
             <Rating value={dish.ratingAvg} size="md" />
@@ -102,7 +110,21 @@ export default function DishDetail() {
 
           <p className="mt-6 leading-relaxed text-slate-600">{dish.description}</p>
 
-          {dish.isAvailable ? (
+          {dish.isAvailable && isSoldByWeight(dish) ? (
+            // Hải sản sống bán theo kg: không thêm vào giỏ, mời khách đặt bàn rồi chọn con tại hồ
+            <div className="mt-8 rounded-2xl bg-ocean-50 p-5">
+              <p className="flex items-center gap-2 font-semibold text-ocean-900">
+                <Scale className="h-5 w-5 text-coral-500" /> Hải sản sống, bán theo kg
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                Bạn chọn con tươi tại hồ, nhân viên cân trước mặt bạn rồi mới chế biến. Tiền = {formatPrice(dish.salePrice ?? dish.price)} × số kg thực tế.
+                Món này chỉ phục vụ tại quán, không giao hàng.
+              </p>
+              <Button as={Link} to="/reservation" size="lg" className="mt-4">
+                <CalendarDays className="h-5 w-5" /> Đặt bàn để thưởng thức
+              </Button>
+            </div>
+          ) : dish.isAvailable ? (
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <QuantityInput value={qty} onChange={setQty} />
               <Button size="lg" onClick={handleAdd} className="flex-1 sm:flex-none">

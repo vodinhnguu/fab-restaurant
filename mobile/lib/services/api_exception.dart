@@ -40,6 +40,16 @@ class ApiException implements Exception {
     return minutes < 1 ? 1 : minutes;
   }
 
+  /// Câu để hiện cho khách. Lỗi 429 thì ghép số phút phải chờ (mục C01, S02 docs/16):
+  ///   e.friendlyMessage()                                    → "Bạn thao tác quá nhanh, vui lòng thử lại sau 3 phút"
+  ///   e.friendlyMessage(tooMany: 'Bạn thử đăng nhập quá nhiều lần') → "Bạn thử đăng nhập quá nhiều lần, vui lòng thử lại sau 3 phút"
+  /// Lỗi khác: trả nguyên câu backend gửi.
+  String friendlyMessage({String tooMany = 'Bạn thao tác quá nhanh'}) {
+    if (!isRateLimited) return message;
+    final minutes = retryAfterMinutes;
+    return minutes == null ? '$tooMany, vui lòng thử lại sau' : '$tooMany, vui lòng thử lại sau $minutes phút';
+  }
+
   @override
   String toString() => message;
 }

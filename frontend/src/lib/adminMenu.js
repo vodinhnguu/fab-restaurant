@@ -1,4 +1,4 @@
-import { CalendarDays, ChartColumn, ClipboardList, FolderTree, History, LayoutDashboard, MapPinned, MessageSquare, Receipt, ShieldCheck, Ticket, Users, UtensilsCrossed } from 'lucide-react';
+import { CalendarDays, ChartColumn, ChefHat, ClipboardList, FileClock, FolderTree, Gauge, HandCoins, History, LayoutDashboard, MapPinned, MessageSquare, Receipt, Refrigerator, Scale, ShieldCheck, Ticket, Users, UtensilsCrossed, Wrench } from 'lucide-react';
 
 // module = chức năng trong ma trận phân quyền; nhân viên không có quyền Xem thì menu tự ẩn.
 // action (không bắt buộc, mặc định 'view'): quyền cần có để thấy mục đó.
@@ -21,6 +21,22 @@ export const ADMIN_MENU = [
   { to: '/admin/cleaning/tasks', label: 'Nhiệm vụ vệ sinh', icon: ClipboardList, module: 'CLEANING', action: 'edit', group: 'Vệ sinh' },
   { to: '/admin/cleaning/areas', label: 'Khu vực cần dọn', icon: MapPinned, module: 'CLEANING', group: 'Vệ sinh' },
   { to: '/admin/cleaning/history', label: 'Lịch sử công việc', icon: History, module: 'CLEANING', action: 'edit', group: 'Vệ sinh' },
+
+  // Kỹ thuật: thiết bị & sửa chữa (docs/22-ky-thuat-bao-tri.md). Tổng quan / Phiếu / Lịch sử cho người sửa
+  // (quyền Sửa: kỹ thuật, quản lý). Bếp, hồ hải sản, tổ trưởng (chỉ Xem) thấy trang Thiết bị.
+  // Báo hỏng không nằm ở menu mà là nút trên thanh tiêu đề (ReportIssueButton) cho ai có quyền Thêm.
+  { to: '/admin/maintenance', label: 'Tổng quan', icon: Gauge, end: true, module: 'FACILITY', action: 'edit', group: 'Kỹ thuật' },
+  { to: '/admin/maintenance/tickets', label: 'Phiếu sửa chữa', icon: Wrench, module: 'FACILITY', action: 'edit', group: 'Kỹ thuật' },
+  { to: '/admin/maintenance/equipment', label: 'Thiết bị & bảo trì', icon: Refrigerator, module: 'FACILITY', group: 'Kỹ thuật' },
+  { to: '/admin/maintenance/history', label: 'Lịch sử sửa chữa', icon: FileClock, module: 'FACILITY', action: 'edit', group: 'Kỹ thuật' },
+
+  // Ăn tại quán (docs/23-app-nhan-vien-phuc-vu.md): phục vụ ghi món bằng app, bếp + thu ngân làm trên web.
+  // Để cuối danh sách: vai trò chỉ Xem phiếu bếp (vd Kỹ thuật) vẫn vào trang chính của mình trước.
+  // badge: tên số đếm trong useDineInAlerts (hiện chấm đỏ trên menu)
+  // Cân hải sản: món bán theo kg chờ cân (docs/24). Chỉ hiện cho người cân được (hồ hải sản, bếp, quản lý)
+  { to: '/admin/weighing', label: 'Cân hải sản', icon: Scale, module: 'SEAFOOD_TANK', action: 'edit', group: 'Tại quán', badge: 'weighing' },
+  { to: '/admin/kitchen', label: 'Phiếu bếp', icon: ChefHat, module: 'KITCHEN', group: 'Tại quán', badge: 'kitchen' },
+  { to: '/admin/cashier', label: 'Thanh toán tại bàn', icon: HandCoins, module: 'PAYMENTS', group: 'Tại quán', badge: 'cashier' },
 ];
 
 // Các mục menu người này được thấy. can = hàm can(user, module, action) trong lib/permissions.js

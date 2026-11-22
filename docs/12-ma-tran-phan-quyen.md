@@ -16,7 +16,7 @@ Tài khoản demo (mật khẩu `123456`), mỗi vai trò 1 tài khoản: `chunh
 
 > Database tạo trước khi có ma trận phân quyền sẽ thiếu các tài khoản này. Chạy `npm --prefix backend run db:seed-staff` để thêm (không xóa dữ liệu).
 >
-> Vai trò chỉ có quyền ở chức năng **chưa có trang web** (Phiếu bếp, Hồ hải sản, Thiết bị & bảo trì), vd Kỹ thuật, vẫn đăng nhập được. Vào `/admin` sẽ thấy thông báo "Chưa có trang cho công việc của bạn" thay vì trang trắng (`AdminHome` trong [App.jsx](../frontend/src/App.jsx)).
+> Vai trò không có quyền nào ứng với một mục trên menu (vd vai trò tự tạo chỉ có quyền Xem "Hồ hải sản & nhập hàng", trong khi mục **Cân hải sản** cần quyền Sửa) vẫn đăng nhập được. Vào `/admin` sẽ thấy thông báo "Chưa có trang cho công việc của bạn" thay vì trang trắng (`AdminHome` trong [App.jsx](../frontend/src/App.jsx)).
 
 ## 2. Dùng trên giao diện
 
@@ -52,7 +52,7 @@ Gọi API ───────► requirePermission('ORDERS', 'edit') đọc qu
 - [backend/src/config/permissions.js](../backend/src/config/permissions.js): 12 chức năng (`MODULES`) và quyền mặc định của 12 vai trò.
 - [backend/src/modules/permissions/permissions.service.js](../backend/src/modules/permissions/permissions.service.js): `isFullAdmin(user)`, `userPermissions(user)` và `can(user, module, action)`.
 - [backend/src/middlewares/auth.js](../backend/src/middlewares/auth.js): `requirePermission(...)` và `requireAdmin` (chỉ người toàn quyền: ADMIN hoặc Chủ nhà hàng). Mỗi request đọc quyền mới nhất từ DB, nên admin đổi quyền thì nhân viên bị ảnh hưởng ngay ở lần gọi API tiếp theo.
-- [frontend/src/lib/permissions.js](../frontend/src/lib/permissions.js): `useCan()`, `canAccessAdmin()`, `isFullAdmin()`. Menu khai báo `module` trong [frontend/src/lib/adminMenu.js](../frontend/src/lib/adminMenu.js); thêm `action: 'edit'` nếu mục đó cần quyền khác Xem (vd 3 trang vệ sinh), `group` để gom mục vào 1 nhóm trên sidebar.
+- [frontend/src/lib/permissions.js](../frontend/src/lib/permissions.js): `useCan()`, `canAccessAdmin()`, `isFullAdmin()`. Menu khai báo `module` trong [frontend/src/lib/adminMenu.js](../frontend/src/lib/adminMenu.js); thêm `action: 'edit'` nếu mục đó cần quyền khác Xem (vd 3 trang vệ sinh, trang Cân hải sản), `group` để gom mục vào 1 nhóm trên sidebar (Vệ sinh, Kỹ thuật, Tại quán).
 
 Ví dụ ẩn nút trong một trang:
 
@@ -89,7 +89,10 @@ DB mới chưa có vai trò thì lần đầu mở trang Phân quyền, backend 
 | `PATCH /users/:id`, `POST /users/:id/reset-password` | Nhân sự · Sửa |
 | `GET /permissions` | Nhân sự · Xem |
 | `POST / PUT / DELETE /permissions/roles` | Chỉ ADMIN hoặc Chủ nhà hàng (`requireAdmin`) |
+| `/maintenance/*` (kỹ thuật) | Thiết bị & bảo trì · Xem (trang Thiết bị) / Thêm (nút Báo hỏng) / Sửa (nhận, hoàn thành, bảo trì) / Xóa (hủy phiếu, quản lý thiết bị). Chi tiết: [22-ky-thuat-bao-tri.md](22-ky-thuat-bao-tri.md) |
 | `/cleaning/*` (việc của tạp vụ) | Vệ sinh · Xem / Thêm (báo cần dọn) / Sửa (nhận, hoàn thành) / Xóa (hủy, quản lý khu vực). Chi tiết: [20-ve-sinh.md](20-ve-sinh.md) |
+| `/dine-in/*` (ăn tại quán) | Phục vụ trên app: Đơn hàng · Xem / Thêm (gửi bếp) / Sửa (check, hủy món, gửi thanh toán). Bếp: Phiếu bếp · Xem / Sửa (nhận làm). Thu ngân: Thu ngân & thanh toán · Xem (bill, in) / Sửa (thu tiền). Chi tiết: [23-app-nhan-vien-phuc-vu.md](23-app-nhan-vien-phuc-vu.md) |
+| `GET /dine-in/weighing`, `POST /dine-in/items/:id/weigh` (Cân hải sản) | Hồ hải sản & nhập hàng (`SEAFOOD_TANK`) · Xem (danh sách món chờ cân) / Sửa (nhập số kg, cân lại). Mục menu **Cân hải sản** (nhóm "Tại quán") chỉ hiện cho người có quyền Sửa; mặc định: Chủ, Admin, Quản lý, Bếp, Hồ hải sản. Tổ trưởng, Phục vụ, Kỹ thuật chỉ có Xem nên không thấy mục này. Chi tiết: [24-thuc-don-ban-theo-kg.md](24-thuc-don-ban-theo-kg.md) |
 
 API tra cứu / hủy bằng mã (`/orders/track/:code`, `/orders/:code/cancel`, và tương tự với đặt bàn) cũng xét quyền khi nhân viên dùng: có Xem thì tra cứu được đơn của người khác, phải có Sửa mới hủy được.
 
@@ -121,6 +124,6 @@ Chức năng không gửi lên = không có quyền.
 
 ## 7. Giới hạn hiện tại
 
-4 chức năng trong ma trận **chưa có trang riêng**: Phiếu bếp, Hồ hải sản & nhập hàng, Thu ngân & thanh toán, Thiết bị & bảo trì. (Vệ sinh đã tách thành chức năng riêng `CLEANING` và có trang: [20-ve-sinh.md](20-ve-sinh.md).) Quyền của chúng đã lưu sẵn; khi làm các trang này, chỉ cần dùng `requirePermission('KITCHEN', ...)` ở backend và thêm 1 dòng vào `ADMIN_MENU` ở frontend.
+Mọi chức năng trong ma trận đã có trang: Vệ sinh `CLEANING` ([20-ve-sinh.md](20-ve-sinh.md)), Thiết bị & bảo trì `FACILITY` ([22-ky-thuat-bao-tri.md](22-ky-thuat-bao-tri.md)), Phiếu bếp `KITCHEN` và Thu ngân & thanh toán `PAYMENTS` ([23-app-nhan-vien-phuc-vu.md](23-app-nhan-vien-phuc-vu.md)), Hồ hải sản & nhập hàng `SEAFOOD_TANK` (trang Cân hải sản, [24-thuc-don-ban-theo-kg.md](24-thuc-don-ban-theo-kg.md)). Riêng phần **nhập / xuất hồ, báo hải sản hết** của `SEAFOOD_TANK` chưa làm; khi làm, chỉ cần dùng `requirePermission('SEAFOOD_TANK', ...)` ở backend và thêm 1 dòng vào `ADMIN_MENU` ở frontend.
 
 Muốn thêm chức năng mới: thêm vào `MODULES` trong `config/permissions.js`. Các vai trò cũ sẽ chưa có quyền gì với chức năng đó cho tới khi admin tích chọn, hoặc viết thêm câu `INSERT INTO "RolePermission"` vào migration như cách làm với `CLEANING` (migration `them_ve_sinh`).

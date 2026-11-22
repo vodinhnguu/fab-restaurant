@@ -42,21 +42,29 @@ const CleaningOverview = lazy(() => import('./pages/admin/cleaning/Overview'));
 const CleaningTasks = lazy(() => import('./pages/admin/cleaning/Tasks'));
 const CleaningAreas = lazy(() => import('./pages/admin/cleaning/Areas'));
 const CleaningHistory = lazy(() => import('./pages/admin/cleaning/History'));
+const MaintenanceOverview = lazy(() => import('./pages/admin/maintenance/Overview'));
+const MaintenanceTickets = lazy(() => import('./pages/admin/maintenance/Tickets'));
+const MaintenanceEquipment = lazy(() => import('./pages/admin/maintenance/Equipment'));
+const MaintenanceHistory = lazy(() => import('./pages/admin/maintenance/History'));
+const Kitchen = lazy(() => import('./pages/admin/dine-in/Kitchen'));
+const Weighing = lazy(() => import('./pages/admin/dine-in/Weighing'));
+const Cashier = lazy(() => import('./pages/admin/dine-in/Cashier'));
+const BillPrint = lazy(() => import('./pages/admin/dine-in/BillPrint'));
 
 // /admin: có quyền xem Tổng quan thì vào Dashboard, không thì chuyển tới trang đầu tiên được phép
-// (vd Tạp vụ -> /admin/cleaning: tổng quan công việc vệ sinh)
+// (vd Tạp vụ -> /admin/cleaning, Kỹ thuật -> /admin/maintenance)
 function AdminHome() {
   const user = useAuthStore((s) => s.user);
   if (can(user, 'DASHBOARD')) return <Dashboard />;
   const first = allowedMenu(user, can)[0];
   if (first) return <Navigate to={first.to} replace />;
-  // Vai trò chỉ có quyền ở chức năng chưa có trang web (vd Kỹ thuật: Thiết bị & bảo trì)
+  // Vai trò chỉ có quyền ở chức năng chưa có trang web (Hồ hải sản), vd vai trò tự tạo
   // -> báo rõ cho nhân viên thay vì để trang trắng
   return (
     <EmptyState
       icon={Wrench}
       title="Chưa có trang cho công việc của bạn"
-      description={`Vai trò ${user?.staffRole?.name ?? 'của bạn'} chỉ có quyền ở các chức năng chưa có trang trên web (vd Thiết bị & bảo trì, Hồ hải sản, Phiếu bếp). Cần thêm quyền thì báo admin.`}
+      description={`Vai trò ${user?.staffRole?.name ?? 'của bạn'} chỉ có quyền ở các chức năng chưa có trang trên web (vd Hồ hải sản). Cần thêm quyền thì báo admin.`}
     />
   );
 }
@@ -125,6 +133,23 @@ export default function App() {
               <Route path="cleaning/tasks" element={<CleaningTasks />} />
               <Route path="cleaning/history" element={<CleaningHistory />} />
             </Route>
+            {/* Kỹ thuật (docs/22-ky-thuat-bao-tri.md): Thiết bị chỉ cần Xem, 3 trang còn lại cần Sửa */}
+            <Route element={<ProtectedRoute module="FACILITY" />}>
+              <Route path="maintenance/equipment" element={<MaintenanceEquipment />} />
+            </Route>
+            <Route element={<ProtectedRoute module="FACILITY" action="edit" />}>
+              <Route path="maintenance" element={<MaintenanceOverview />} />
+              <Route path="maintenance/tickets" element={<MaintenanceTickets />} />
+              <Route path="maintenance/history" element={<MaintenanceHistory />} />
+            </Route>
+            {/* Ăn tại quán (docs/23-app-nhan-vien-phuc-vu.md): phục vụ ghi món bằng app, bếp + thu ngân làm ở đây */}
+            <Route element={<ProtectedRoute module="KITCHEN" />}><Route path="kitchen" element={<Kitchen />} /></Route>
+            <Route element={<ProtectedRoute module="SEAFOOD_TANK" />}><Route path="weighing" element={<Weighing />} /></Route>
+            <Route element={<ProtectedRoute module="PAYMENTS" />}><Route path="cashier" element={<Cashier />} /></Route>
+          </Route>
+          {/* Trang in bill: không có sidebar, mở ở tab mới từ trang Thanh toán tại bàn */}
+          <Route element={<ProtectedRoute module="PAYMENTS" />}>
+            <Route path="admin/bill/:id/print" element={<BillPrint />} />
           </Route>
         </Route>
       </Routes>

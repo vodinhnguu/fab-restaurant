@@ -5,7 +5,8 @@ import { slugify } from '../../utils/helpers.js';
 export async function list(req, res) {
   const categories = await prisma.category.findMany({
     orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
-    include: { _count: { select: { dishes: true } } },
+    // Chỉ đếm món đang bán: web / app ẩn danh mục 0 món (vd "Ngừng bán (thực đơn cũ)")
+    include: { _count: { select: { dishes: { where: { isAvailable: true } } } } },
   });
   res.json({ success: true, data: categories });
 }

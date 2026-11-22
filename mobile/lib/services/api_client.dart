@@ -78,6 +78,9 @@ class ApiClient {
   Future<ApiResponse> patch(String path, {Object? body}) =>
       _send(() => _dio.patch(path, data: body, options: _options()), false);
 
+  Future<ApiResponse> delete(String path, {Object? body}) =>
+      _send(() => _dio.delete(path, data: body, options: _options()), false);
+
   // ---------- Bên trong ----------
 
   Options _options() => Options(headers: {if (_token != null) 'Authorization': 'Bearer $_token'});

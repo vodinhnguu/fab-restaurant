@@ -4,11 +4,16 @@ import { useCartStore } from '../stores/cart';
 import { Textarea } from './ui/Form';
 
 // Gợi ý bấm nhanh theo danh mục món (tên danh mục trong DB). Không có trong bảng thì dùng DEFAULT.
+// Theo tên danh mục (thực đơn ở backend/prisma/menu.js). Món theo kg (tôm hùm, cua...) không đặt online nên không cần ở đây.
+const SHELLFISH = ['Ít cay', 'Không hành', 'Không đậu phộng', 'Nướng kỹ'];
 const SUGGESTIONS = {
-  Tôm: ['Ít cay', 'Không hành', 'Hấp', 'Nướng', 'Bóc vỏ sẵn'],
-  'Mâm hải sản': ['Ít cay', 'Không hành', 'Hấp', 'Nướng', 'Bóc vỏ sẵn'],
-  Cá: ['Ít xương', 'Chiên giòn', 'Hấp xì dầu', 'Không hành'],
-  'Đồ uống': ['Ít đá', 'Không đá', 'Ít đường'],
+  Hàu: SHELLFISH,
+  'Sò điệp': SHELLFISH,
+  Nghêu: ['Ít cay', 'Không hành', 'Nhiều sả', 'Kèm bánh mì'],
+  Cháo: ['Ít tiêu', 'Không hành', 'Không rau răm', 'Nhiều gừng'],
+  Cơm: ['Ít dầu', 'Không hành', 'Thêm trứng'],
+  Rau: ['Ít dầu', 'Ít tỏi', 'Không bột ngọt'],
+  'Nước uống': ['Ướp lạnh', 'Kèm ly đá', 'Không lấy đá'],
 };
 const DEFAULT = ['Ít cay', 'Không hành', 'Không rau thơm'];
 

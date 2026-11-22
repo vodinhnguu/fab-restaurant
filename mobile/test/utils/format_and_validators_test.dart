@@ -2,7 +2,6 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:fab_seafood/models/restaurant_info.dart';
 import 'package:fab_seafood/utils/format.dart';
 import 'package:fab_seafood/utils/validators.dart';
 
@@ -43,18 +42,6 @@ void main() {
       expect(imageUrl('https://images.unsplash.com/x'), 'https://images.unsplash.com/x');
       expect(imageUrl(''), isNull);
       expect(imageUrl(null), isNull);
-    });
-
-    test('Phí ship: giao tận nơi dưới 500.000đ mới tính 20.000đ', () {
-      final info = RestaurantInfo.fromJson({
-        'shippingFee': 20000,
-        'freeShippingMin': 500000,
-        'openingHours': {'open': '10:00', 'close': '22:00'},
-      });
-      expect(info.shippingFor(subtotal: 300000, delivery: true), 20000);
-      expect(info.shippingFor(subtotal: 500000, delivery: true), 0);
-      expect(info.shippingFor(subtotal: 300000, delivery: false), 0); // đến lấy
-      expect(info.lastReservationTime, '21:00');
     });
   });
 

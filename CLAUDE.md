@@ -15,7 +15,7 @@ File này được Claude Code tự đọc khi mở dự án. Người dùng là
 
 - `backend/`: Express 5 + Prisma + PostgreSQL, JavaScript (không TypeScript), API `/api/v1`, JWT Bearer.
 - `frontend/`: React + Vite + Tailwind v4, React Query, Zustand.
-- `mobile/`: app Flutter cho khách hàng (go_router + Riverpod 2 viết tay, không codegen), dùng chung API nên giữ API dễ dùng cho Flutter. Đặc tả màn hình: `docs/16-dac-ta-app-mobile-stitch.md`; cấu trúc, quy ước, tiến độ: `docs/19-app-mobile.md`. Mỗi màn 1 file `lib/screens/**/sXX_*.dart`. Kiểm tra: `cd mobile && flutter analyze && flutter test`.
+- `mobile/`: app Flutter (go_router + Riverpod 2 viết tay, không codegen), dùng chung API nên giữ API dễ dùng cho Flutter. **App chỉ dành cho nhân viên phục vụ** (từ 20/11/2026): đăng nhập tài khoản nhân viên, chọn bàn, ghi món, gửi bếp; khách không dùng app. Luồng nghiệp vụ: `docs/23-app-nhan-vien-phuc-vu.md`. Giao diện cũ của app khách: Đặc tả màn hình: `docs/16-dac-ta-app-mobile-stitch.md`; cấu trúc, quy ước, tiến độ: `docs/19-app-mobile.md`. Mỗi màn 1 file `lib/screens/**/sXX_*.dart`. Kiểm tra: `cd mobile && flutter analyze && flutter test`.
 - Bản đồ mã nguồn: `docs/08-ban-do-ma-nguon.md`. Muốn sửa gì ở đâu: `docs/09-muon-sua-gi-thi-sua-o-dau.md`.
 
 ## Chạy trên máy mới (vừa clone / pull về)
@@ -30,8 +30,8 @@ npm run dev             # backend :4000, frontend :5173
 ```
 
 - Postgres cài sẵn trên máy (không dùng Docker): `createdb fab_restaurant`, sửa `DATABASE_URL` trong `backend/.env` cho đúng user của máy.
-- Đã có dữ liệu, chỉ cần cập nhật bảng sau khi pull: `npm --prefix backend run db:deploy` (không xóa dữ liệu). Đừng chạy `npm run setup` khi người dùng có dữ liệu thật, hãy hỏi trước.
-- Thiếu tài khoản nhân viên demo (đăng nhập `bep@fab.vn`... báo sai mật khẩu, thường do database tạo trước khi có ma trận phân quyền): `npm --prefix backend run db:seed-staff`. Chỉ thêm tài khoản còn thiếu, không xóa gì.
+- Đã có dữ liệu, chỉ cần cập nhật bảng sau khi pull: `npm run dev` tự làm (bước `predev` của backend chạy `backend/scripts/check-db.js`: tự `prisma migrate deploy` + `prisma generate` khi cần, không xóa dữ liệu; database tắt / trống / sai mật khẩu thì in `[db] ✖` kèm cách sửa và không bật backend). Chạy tay: `npm --prefix backend run db:check` hoặc `db:deploy`. Đừng chạy `npm run setup` khi người dùng có dữ liệu thật, hãy hỏi trước.- Thiếu tài khoản nhân viên demo (đăng nhập `bep@fab.vn`... báo sai mật khẩu, thường do database tạo trước khi có ma trận phân quyền): `npm --prefix backend run db:seed-staff`. Chỉ thêm tài khoản còn thiếu, không xóa gì.
+- Thực đơn còn món cũ (Khai vị, Món Nhật, Tráng miệng...) hoặc thiếu nhóm hải sản (Tôm hùm, Cua, Cá mú...): `npm --prefix backend run db:seed-menu`. Đổi sang thực đơn mới 12 nhóm / 70 món ở `backend/prisma/menu.js` (`docs/24-thuc-don-ban-theo-kg.md`), không xóa đơn hàng, đánh giá; món cũ đã có trong đơn thì ẩn và gom vào nhóm "Ngừng bán (thực đơn cũ)".
 - `backend/.env` không có trên git. Thanh toán VNPay cần `VNP_TMN_CODE`, `VNP_HASH_SECRET`; bỏ trống thì web chỉ nhận tiền mặt. Người dùng tự chép khóa này giữa các máy.
 
 ## Tài khoản demo (dữ liệu mẫu, không phải tài khoản thật)
@@ -42,16 +42,16 @@ Tạo bởi `npm run setup` / `npm run db:seed`. Dùng để đăng nhập thử
 |---|---|---|---|
 | Admin | `admin@fab.vn` | `admin123` | Toàn bộ trang `/admin` |
 | Chủ nhà hàng | `chunha@fab.vn` | `123456` | Ngang Admin: mọi mục, sửa ma trận phân quyền, quản lý tài khoản Admin / Chủ (`isFullAdmin`) |
-| Quản lý | `quanly@fab.vn` | `123456` | Admin, chỉ xem nhân sự / phân quyền; vệ sinh: hủy việc, quản lý khu vực |
-| Tổ trưởng | `totruong@fab.vn` | `123456` | Tổng quan, đơn hàng, đặt bàn, món, đánh giá, xem nhân sự, 4 trang vệ sinh (giao việc) |
-| Phục vụ | `phucvu@fab.vn` | `123456` | Đơn hàng, đặt bàn (xem), món, khu vực cần dọn (báo cần dọn) |
-| Lễ tân | `letan@fab.vn` | `123456` | Đặt bàn: tab Hôm nay, xác nhận / hủy, chuyển bàn (`docs/21-le-tan-chuyen-ban.md`); xem đơn hàng, món, mã giảm giá, đánh giá, khu vực cần dọn (báo) |
+| Quản lý | `quanly@fab.vn` | `123456` | Admin, chỉ xem nhân sự / phân quyền; vệ sinh: hủy việc, quản lý khu vực; 4 trang kỹ thuật (giao phiếu) |
+| Tổ trưởng | `totruong@fab.vn` | `123456` | Tổng quan, đơn hàng, đặt bàn, món, đánh giá, xem nhân sự, 4 trang vệ sinh (giao việc), xem thiết bị, nút Báo hỏng |
+| Phục vụ | `phucvu@fab.vn` | `123456` | Đơn hàng, đặt bàn (xem), món, khu vực cần dọn (báo cần dọn), nút Báo hỏng |
+| Lễ tân | `letan@fab.vn` | `123456` | Đặt bàn: tab Hôm nay, xác nhận / hủy, chuyển bàn (`docs/21-le-tan-chuyen-ban.md`); xem đơn hàng, món, mã giảm giá, đánh giá, khu vực cần dọn (báo), nút Báo hỏng |
 | Thu ngân | `thungan@fab.vn` | `123456` | Tổng quan, đơn hàng, đặt bàn, món, mã giảm giá |
-| Kỹ thuật | `kythuat@fab.vn` | `123456` | Chỉ có quyền ở chức năng chưa có trang web, `/admin` hiện thông báo "Chưa có trang" |
-| Tạp vụ | `tapvu@fab.vn` | `123456` | Nhóm Vệ sinh: Tổng quan, Nhiệm vụ vệ sinh, Khu vực cần dọn, Lịch sử công việc (`docs/20-ve-sinh.md`). Không dọn bàn (việc của phục vụ) |
-| Bếp | `bep@fab.vn` | `123456` | Đơn hàng, món ăn, danh mục, khu vực cần dọn (báo) |
+| Kỹ thuật | `kythuat@fab.vn` | `123456` | Nhóm Kỹ thuật: Tổng quan, Phiếu sửa chữa, Thiết bị & bảo trì, Lịch sử sửa chữa (`docs/22-ky-thuat-bao-tri.md`) |
+| Tạp vụ | `tapvu@fab.vn` | `123456` | Nhóm Vệ sinh: Tổng quan, Nhiệm vụ vệ sinh, Khu vực cần dọn, Lịch sử công việc (`docs/20-ve-sinh.md`). Không dọn bàn (việc của phục vụ). Nút Báo hỏng trên thanh tiêu đề |
+| Bếp | `bep@fab.vn` | `123456` | Đơn hàng, món ăn, danh mục, Cân hải sản, khu vực cần dọn (báo), xem thiết bị, nút Báo hỏng |
 | Tiếp thực | `tiepthuc@fab.vn` | `123456` | Đơn hàng, đặt bàn (xem), món |
-| Hồ hải sản | `hohaisan@fab.vn` | `123456` | Đơn hàng, món |
+| Hồ hải sản | `hohaisan@fab.vn` | `123456` | Đơn hàng, món, Cân hải sản (nhập số kg món bán theo kg, `docs/24-thuc-don-ban-theo-kg.md`), xem thiết bị, nút Báo hỏng |
 | Khách hàng | `khach@fab.vn` | `123456` | Có sẵn đơn đã hoàn thành `FAB0000DEMO` để thử đánh giá |
 
 Danh sách nhân viên demo nằm ở `backend/prisma/seed-staff.js` (mỗi vai trò 1 tài khoản). Cột "Thấy gì" là quyền **mặc định** (`backend/src/config/permissions.js`). Quyền thật lấy theo ma trận trong DB, admin sửa được trên giao diện nên có thể khác bảng này.

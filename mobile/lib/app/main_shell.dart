@@ -1,11 +1,12 @@
-// Khung chính của app: 5 tab dưới (mục 1.3 docs/16).
+// Khung chính của app nhân viên: giữ 3 màn chính S03 Sơ đồ bàn · S10 Đơn hôm nay · S11 Tài khoản.
+// Chuyển giữa 3 màn bằng menu trái (nút ☰, file app_drawer.dart), giống app CukCuk; không còn thanh tab dưới.
 //
-// Mỗi tab giữ lịch sử riêng: đang ở Thực đơn, sang tab Đặt bàn rồi quay lại
-// thì Thực đơn vẫn giữ nguyên chỗ đang xem.
+// Mỗi màn giữ trạng thái riêng: đang lọc "Đã hủy" ở Đơn hôm nay, sang Sơ đồ bàn rồi quay lại vẫn còn.
+// S04, S05, S06, S08 mở trên cùng (che cả màn), xem router.dart.
 //
-// Thanh giỏ hàng nổi (FloatingCartBar) sẽ thêm vào đây ở Bước 3.
+// Nút quay lại của điện thoại: đang ở Đơn hôm nay / Tài khoản thì về Sơ đồ bàn; đang ở Sơ đồ bàn mới thoát app.
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 class MainShell extends StatelessWidget {
@@ -13,25 +14,18 @@ class MainShell extends StatelessWidget {
 
   final StatefulNavigationShell navigationShell;
 
+  /// Nhánh Sơ đồ bàn: nhánh đầu tiên trong router.dart (cùng thứ tự enum AppSection).
+  static const tablesBranch = 0;
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (index) => navigationShell.goBranch(
-          index,
-          // Bấm lại tab đang mở thì quay về màn đầu của tab đó.
-          initialLocation: index == navigationShell.currentIndex,
-        ),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_rounded), label: 'Trang chủ'),
-          NavigationDestination(icon: Icon(Icons.restaurant_menu_rounded), label: 'Thực đơn'),
-          NavigationDestination(icon: Icon(Icons.event_seat_rounded), label: 'Đặt bàn'),
-          NavigationDestination(icon: Icon(Icons.receipt_long_rounded), label: 'Hoạt động'),
-          NavigationDestination(icon: Icon(Icons.person_rounded), label: 'Tài khoản'),
-        ],
-      ),
+    final onTables = navigationShell.currentIndex == tablesBranch;
+    return PopScope(
+      canPop: onTables,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) navigationShell.goBranch(tablesBranch);
+      },
+      child: navigationShell,
     );
   }
 }

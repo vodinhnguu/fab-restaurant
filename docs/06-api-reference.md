@@ -56,7 +56,7 @@ Ký hiệu cột Quyền: 🌐 công khai · 👤 cần đăng nhập · 🔓 c�
 ## Danh mục
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
-| GET | `/categories` | 🌐 | Danh sách, kèm `_count.dishes` |
+| GET | `/categories` | 🌐 | Danh sách, kèm `_count.dishes` = số món **đang bán** (`isAvailable`). Web và app ẩn danh mục 0 món (vd nhóm "Ngừng bán (thực đơn cũ)") |
 | POST | `/categories` | 🛡️ | `{ name, description?, image?, sortOrder? }` |
 | PUT | `/categories/:id` | 🛡️ | Như trên |
 | DELETE | `/categories/:id` | 🛡️ | Lỗi 409 nếu danh mục còn món |
@@ -64,9 +64,9 @@ Ký hiệu cột Quyền: 🌐 công khai · 👤 cần đăng nhập · 🔓 c�
 ## Món ăn
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
-| GET | `/dishes` | 🌐 | Query: `search`, `category` (slug), `featured=true`, `sort` (`newest`/`price_asc`/`price_desc`/`popular`/`rating`), `page`, `limit`, `minPrice`, `maxPrice`, `available=all` (admin) |
+| GET | `/dishes` | 🌐 | Query: `search`, `category` (slug), `featured=true` (chỉ món Best seller), `sort` (`newest`/`price_asc`/`price_desc`/`popular`/`rating`), `page`, `limit`, `minPrice`, `maxPrice`, `available=all` (admin) |
 | GET | `/dishes/:idOrSlug` | 🌐 | Chi tiết + `reviews` (20 đánh giá mới nhất) + `related` (4 món cùng danh mục) |
-| POST | `/dishes` | 🛡️ | `{ name, price, categoryId, salePrice?, unit?, image?, description?, isAvailable?, isFeatured? }` |
+| POST | `/dishes` | 🛡️ | `{ name, price, categoryId, salePrice?, unit?, image?, description?, isAvailable?, isFeatured? }`. `unit: "kg"` = bán theo kg, `price` là giá 1 kg ([24](24-thuc-don-ban-theo-kg.md)); `isFeatured` = Best seller |
 | PUT | `/dishes/:id` | 🛡️ | Như trên |
 | PATCH | `/dishes/:id/toggle` | 🛡️ | Bật/tắt `isAvailable` |
 | DELETE | `/dishes/:id` | 🛡️ | Món đã có trong đơn sẽ chỉ bị ẩn, không xóa hẳn |
@@ -74,7 +74,7 @@ Ký hiệu cột Quyền: 🌐 công khai · 👤 cần đăng nhập · 🔓 c�
 ## Đơn hàng
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
-| POST | `/orders` | 🔓 | Tạo đơn (xem ví dụ bên dưới) |
+| POST | `/orders` | 🔓 | Tạo đơn (xem ví dụ bên dưới). Có món bán theo kg (`unit = "kg"`) thì báo 400 *"Món "…" bán theo kg, cần chọn và cân tại hồ. Vui lòng đặt bàn để thưởng thức tại quán"* |
 | GET | `/orders/my` | 👤 | Đơn của tôi, có phân trang |
 | GET | `/orders/track/:code?phone=` | 🔓 | Xem đơn: chủ đơn, admin, hoặc ai biết đúng SĐT đặt hàng |
 | POST | `/orders/:code/cancel` | 🔓 | Khách tự hủy (chỉ khi đơn còn `PENDING` và chưa thanh toán online) |
@@ -112,7 +112,7 @@ Kết quả trả về: đơn hàng đầy đủ gồm `code`, `subtotal`, `disc
 `items[].note` là ghi chú khẩu vị riêng của món (không bắt buộc, ≤ 200 ký tự), khác với `note` chung của cả đơn. Xem [15](15-ghi-chu-tung-mon.md).
 
 **Enum**
-- `type`: `DELIVERY` | `PICKUP`
+- `type`: `DELIVERY` | `PICKUP` | `DINE_IN` (ăn tại quán, nhân viên ghi món trên app: xem mục "Ăn tại quán" bên dưới). Đơn `DINE_IN` có thêm `tableId`, `table: { id, code, area }`, `staffId`
 - `paymentMethod`: `COD` | `ONLINE`
 - `status`: `PENDING` → `CONFIRMED` → `PREPARING` → `DELIVERING` → `COMPLETED`, hoặc `CANCELLED`
 - `paymentStatus`: `UNPAID` | `PAID` | `REFUNDED`
@@ -158,6 +158,53 @@ Cần đăng nhập, quyền theo chức năng `CLEANING`. Chi tiết luồng v�
 | PATCH | `/cleaning/tasks/:id/status` | 🛡️ Sửa | `{ status: IN_PROGRESS\|DONE\|CANCELLED, note? }`. Hủy cần quyền Xóa + bắt buộc `note` |
 | GET | `/cleaning/history?from=&to=&userId=&areaId=&status=DONE\|CANCELLED&page=` | 🛡️ Xem | Mặc định 7 ngày, `meta.byUser` |
 | GET | `/cleaning/staff` | 🛡️ Thêm/Sửa | Nhân viên giao việc được |
+
+## Kỹ thuật: thiết bị & sửa chữa
+Cần đăng nhập, quyền theo chức năng `FACILITY` (Thiết bị & bảo trì). Chi tiết: [22-ky-thuat-bao-tri.md](22-ky-thuat-bao-tri.md).
+
+| Method | Endpoint | Quyền | Mô tả |
+|---|---|---|---|
+| GET | `/maintenance/overview` | 🛡️ Xem | Số phiếu mở / gấp / chờ linh kiện, thiết bị có sự cố, đến hạn bảo trì, chi phí tháng |
+| GET | `/maintenance/equipment?all=` | 🛡️ Xem/Thêm | Thiết bị + `openTickets[]`, `hasIssue`, `nextDueAt`, `daysLeft`, `maintenance` |
+| POST / PUT | `/maintenance/equipment`, `/maintenance/equipment/:id` | 🛡️ Xóa | `{ name, category, location?, maintenanceDays?, note?, sortOrder?, isActive? }` |
+| POST | `/maintenance/equipment/:id/maintain` | 🛡️ Sửa | `{ note?, cost?, closeTickets? }` ghi bảo trì định kỳ (1 lần / ngày); `closeTickets: true` đóng luôn phiếu sửa chữa đang mở, khi đó bắt buộc `note` |
+| GET | `/maintenance/tickets?status=ACTIVE\|OPEN\|IN_PROGRESS\|WAITING_PARTS&mine=true&category=` | 🛡️ Xem | Phiếu chưa xong, phiếu gấp trước |
+| GET | `/maintenance/tickets/reported` | 🛡️ Thêm/Xem | 10 phiếu gần nhất tôi đã báo |
+| POST | `/maintenance/tickets` | 🛡️ Thêm | Báo hỏng `{ equipmentId, title, description?, priority?: NORMAL\|URGENT, assigneeId? }` |
+| PUT | `/maintenance/tickets/:id` | 🛡️ Sửa | Sửa / giao phiếu (chỉ phiếu chưa xong) |
+| PATCH | `/maintenance/tickets/:id/status` | 🛡️ Sửa | `{ status: IN_PROGRESS\|WAITING_PARTS\|DONE\|CANCELLED, note?, cost? }`. `note` bắt buộc trừ `IN_PROGRESS`; hủy cần quyền Xóa |
+| GET | `/maintenance/history?from=&to=&type=&status=&userId=&equipmentId=&page=` | 🛡️ Xem | Mặc định 30 ngày, `meta.totalCost`, `meta.byUser` |
+| GET | `/maintenance/staff` | 🛡️ Thêm/Sửa | Nhân viên nhận sửa được |
+
+## Ăn tại quán: phục vụ ghi món (app), bếp + thu ngân (web)
+Phục vụ dùng app mobile: chọn khu → chọn bàn → ghi món → gửi bếp → check món / hủy món / gọi thêm → gửi thanh toán. Bếp nhận làm ở web `/admin/kitchen`, thu ngân in bill + thu tiền ở web `/admin/cashier`. Chi tiết luồng, quy tắc: [23-app-nhan-vien-phuc-vu.md](23-app-nhan-vien-phuc-vu.md).
+
+Quyền: phục vụ = chức năng `ORDERS`, bếp = `KITCHEN`, thu ngân = `PAYMENTS`, hồ hải sản (cân món bán theo kg) = `SEAFOOD_TANK`. Các API phục vụ (trừ 2 API GET danh sách) trả về bàn sau khi làm, giống `GET /dine-in/tables/:id`.
+
+**Trạng thái từng món** (`items[].status`): `WEIGHING` chờ cân (chỉ món bán theo kg, xem [24](24-thuc-don-ban-theo-kg.md)) → `PENDING` chờ bếp → `COOKING` bếp đang làm → `SERVED` đã mang ra bàn, hoặc `CANCELLED` đã hủy.
+
+**Món bán theo kg** (`unit = "kg"`): `price` là giá 1 kg. Gửi bếp kèm số kg phục vụ ghi trên app (`items[].weight`, mặc định 1 kg): món ở `WEIGHING` có `weight` = số kg tạm, **cộng tiền tạm**, bếp chưa thấy. Hồ hải sản cân (`POST /dine-in/items/:id/weigh`) thì `weight` thành số kg thật, có `weighedAt`, món sang `PENDING`, tiền đơn đổi theo chênh lệch với tiền tạm. Tiền 1 dòng món: có `weight` (hoặc đang `WEIGHING`) → `price × weight` làm tròn đồng (chưa có số kg = 0); còn lại → `price × quantity`. Mọi API trả món đều có thêm `weight`, `weighedAt`. **Trạng thái đơn** tự suy ra từ món: còn món chờ bếp = `CONFIRMED` "Đã gửi bếp", còn món đang làm = `PREPARING`, lên hết = `DELIVERING` "Đã lên món", hủy hết món = `CANCELLED` (bàn trống).
+
+| Method | Endpoint | Quyền | Mô tả |
+|---|---|---|---|
+| GET | `/dine-in/tables` | 🛡️ `ORDERS` Xem | Bàn theo khu `[{ name, tables: [{ id, code, seats, x, y, order \| null }] }]`. `order`: `total`, `itemCount` (không tính món hủy), `waitingCount` (phần chưa lên), `weighingCount` (phần bán theo kg còn chờ cân), `billRequestedAt` |
+| GET | `/dine-in/tables/:id` | 🛡️ `ORDERS` Xem | `{ table, order \| null }`. `order.items[]` gồm cả món đã hủy: `id, name, price, quantity, note, status, servedAt, cancelReason, createdAt, weight, weighedAt`; `order.billRequestedAt`, `billPrintedAt` |
+| GET | `/dine-in/orders` | 🛡️ `ORDERS` Xem | Đơn tại bàn hôm nay (mới nhất trước), kèm `itemCount` |
+| POST | `/dine-in/orders` | 🛡️ `ORDERS` Thêm | **Gửi bếp** `{ tableId, items: [{ dishId, quantity, weight?, note? }], note? }`: bàn chưa có đơn → tạo đơn `DINE_IN`, có rồi → thêm món (món mới `PENDING`, món bán theo kg `WEIGHING`, 1 dòng `quantity` = 1, `weight` = số kg phục vụ ghi 0,05 – 30, không gửi thì coi mỗi phần là 1 kg; cộng tiền tạm). Gọi thêm sau khi đã gửi thanh toán thì yêu cầu thanh toán tự rút lại |
+| POST | `/dine-in/items/serve` | 🛡️ `ORDERS` Sửa | **Check món** `{ itemIds: [..], served?: true }`: tick món đã mang ra bàn (`served: false` = bỏ tick, món về `COOKING`). Các món phải cùng 1 đơn đang mở; món đã hủy = 400; món chờ cân không đổi (chưa nấu) |
+| POST | `/dine-in/items/:id/cancel` | 🛡️ `ORDERS` Sửa | **Hủy món** `{ quantity?, reason? }`. Bỏ trống `quantity` = hủy cả dòng, ít hơn = hủy bớt (tách thành dòng mới). Món `WEIGHING` / `PENDING` hủy luôn; `COOKING` / `SERVED` thiếu `reason` = 400. Món bán theo kg chỉ hủy cả dòng (hủy bớt = 400). Tổng tiền tự trừ |
+| POST | `/dine-in/orders/:id/bill-request` | 🛡️ `ORDERS` Sửa | **Gửi thanh toán**: thu ngân nhận thông báo. Bàn không còn món = 400; còn món chờ cân = 400 *"Còn món chưa cân: …. Nhờ hồ hải sản cân trước khi gửi thanh toán"* |
+| DELETE | `/dine-in/orders/:id/bill-request` | 🛡️ `ORDERS` Sửa | Rút yêu cầu thanh toán (bấm nhầm) |
+| GET | `/dine-in/kitchen` | 🛡️ `KITCHEN` Xem | Phiếu bếp: bàn còn món `PENDING` / `COOKING` (món chờ cân chưa hiện), phiếu chờ lâu nhất trước |
+| POST | `/dine-in/kitchen/start` | 🛡️ `KITCHEN` Sửa | **Nhận làm** `{ itemIds: [..] }`: `PENDING` → `COOKING`. Trả `{ updated }` |
+| GET | `/dine-in/bills` | 🛡️ `PAYMENTS` Xem | Bàn đang mở kèm món, bàn đã gửi thanh toán xếp trước (gửi sớm trước) |
+| GET | `/dine-in/bills/:id` | 🛡️ `PAYMENTS` Xem | 1 bill để in (cả đơn đã thu tiền, để in lại) |
+| POST | `/dine-in/bills/:id/printed` | 🛡️ `PAYMENTS` Xem | Ghi nhận đã in (`billPrintedAt`) |
+| POST | `/dine-in/bills/:id/pay` | 🛡️ `PAYMENTS` Sửa | **Đã thu tiền**: đơn `COMPLETED` + `PAID`, bàn trống lại. Đơn đã đóng = 400; còn món chờ cân = 400 *"Còn món chưa cân: …. Nhờ hồ hải sản cân trước khi thu tiền"* |
+| GET | `/dine-in/weighing` | 🛡️ `SEAFOOD_TANK` Xem | Trang **Cân hải sản**: `{ waiting: [món chờ cân, gọi sớm trước], weighed: [món đã cân hôm nay, 30 món mới nhất] }`. Mỗi món: `id, name, price` (giá 1 kg), `quantity, note, status, weight, weighedAt, createdAt` kèm `order.table`, `order.staff` |
+| POST | `/dine-in/items/:id/weigh` | 🛡️ `SEAFOOD_TANK` Sửa | **Cân** `{ "weight": 1.25 }` (số kg, 0,05 đến 30, làm tròn tới gam). Tiền dòng = giá 1 kg × số kg, cộng vào đơn, món sang `PENDING` (bếp thấy). **Cân lại** được khi bếp chưa "Nhận làm" (tiền đơn đổi theo chênh lệch, yêu cầu thanh toán cũ bị rút); bếp đã nhận làm / món đã hủy = 400; không phải món theo kg = 404. Trả món vừa cân, `message` "Đã cân Tôm hùm nướng phô mai: 1,25 kg" |
+
+`PATCH /orders/:id/status` vẫn dùng được với đơn tại bàn (trang Đơn hàng trên web, hủy cả đơn trên app): `PREPARING` → món chờ bếp thành đang làm, `DELIVERING` → tick hết món, `CANCELLED` + `reason` → hủy mọi món còn lại.
 
 ## Người dùng, thống kê, upload (Admin / nhân viên có quyền)
 | Method | Endpoint | Mô tả |

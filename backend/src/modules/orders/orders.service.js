@@ -2,7 +2,7 @@ import { env, isVnpayEnabled } from '../../config/env.js';
 import { prisma } from '../../lib/prisma.js';
 import { can } from '../permissions/permissions.service.js';
 import { ApiError } from '../../utils/ApiError.js';
-import { withUniqueCode } from '../../utils/helpers.js';
+import { isSoldByWeight, withUniqueCode } from '../../utils/helpers.js';
 import { applyCoupon } from '../coupons/coupons.service.js';
 
 // Các bước chuyển trạng thái hợp lệ (state machine)
@@ -15,7 +15,21 @@ export const STATUS_FLOW = {
   CANCELLED: [],
 };
 
-const orderInclude = { items: { include: { dish: { select: { image: true, slug: true } } } } };
+// Đơn ăn tại quán (DINE_IN, docs/23-app-nhan-vien-phuc-vu.md): tạo ra là CONFIRMED; DELIVERING nghĩa là "Đã lên món";
+// thu tiền (COMPLETED) được ở mọi bước vì khách có thể trả tiền trước khi bếp làm xong món cuối
+export const DINE_IN_FLOW = {
+  PENDING: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['PREPARING', 'DELIVERING', 'COMPLETED', 'CANCELLED'],
+  PREPARING: ['DELIVERING', 'COMPLETED', 'CANCELLED'],
+  DELIVERING: ['COMPLETED', 'CANCELLED'],
+  COMPLETED: [],
+  CANCELLED: [],
+};
+
+export const orderInclude = {
+  items: { orderBy: { id: 'asc' }, include: { dish: { select: { image: true, slug: true } } } },
+  table: { select: { id: true, code: true, area: true } },
+};
 
 export async function createOrder(input, user) {
   if (input.paymentMethod === 'ONLINE' && !isVnpayEnabled()) {
@@ -38,6 +52,9 @@ export async function createOrder(input, user) {
 
     const items = dishes.map((d) => {
       if (!d.isAvailable) throw ApiError.badRequest(`Món "${d.name}" hiện đã hết`);
+      if (isSoldByWeight(d)) {
+        throw ApiError.badRequest(`Món "${d.name}" bán theo kg, cần chọn và cân tại hồ. Vui lòng đặt bàn để thưởng thức tại quán`);
+      }
       return { dishId: d.id, name: d.name, price: d.salePrice ?? d.price, quantity: qtyByDish.get(d.id), note: noteByDish.get(d.id) ?? null };
     });
 
@@ -110,7 +127,8 @@ export async function findAccessibleOrder(code, user, phone, action = 'view') {
 
 // cancelReason: lý do khi NHÀ HÀNG hủy (khách tự hủy thì không truyền -> để trống)
 export async function changeStatus(order, nextStatus, cancelReason = null) {
-  if (!STATUS_FLOW[order.status].includes(nextStatus)) {
+  const flow = order.type === 'DINE_IN' ? DINE_IN_FLOW : STATUS_FLOW;
+  if (!flow[order.status].includes(nextStatus)) {
     throw ApiError.badRequest(`Không thể chuyển đơn từ ${order.status} sang ${nextStatus}`);
   }
 
@@ -123,8 +141,8 @@ export async function changeStatus(order, nextStatus, cancelReason = null) {
 
   return prisma.$transaction(async (tx) => {
     if (nextStatus === 'CANCELLED') {
-      // Trả lại số lượng đã bán và lượt dùng mã giảm giá
-      const items = await tx.orderItem.findMany({ where: { orderId: order.id } });
+      // Trả lại số lượng đã bán và lượt dùng mã giảm giá (món đã hủy lẻ trước đó thì đã trả rồi, bỏ qua)
+      const items = await tx.orderItem.findMany({ where: { orderId: order.id, status: { not: 'CANCELLED' } } });
       for (const i of items) {
         await tx.dish.update({ where: { id: i.dishId }, data: { soldCount: { decrement: i.quantity } } });
       }
@@ -132,6 +150,23 @@ export async function changeStatus(order, nextStatus, cancelReason = null) {
         await tx.coupon.updateMany({ where: { code: order.couponCode }, data: { usedCount: { decrement: 1 } } });
       }
     }
+    if (order.type === 'DINE_IN') await syncDineInItems(tx, order.id, nextStatus, cancelReason);
     return tx.order.update({ where: { id: order.id }, data, include: orderInclude });
   });
+}
+
+// Đơn tại quán bị đổi trạng thái cả đơn trên web (trang Đơn hàng) -> đổi trạng thái các món cho khớp
+// (bình thường trạng thái đơn tự suy ra từ món, xem syncOrderStatus trong dine-in.service.js)
+async function syncDineInItems(tx, orderId, nextStatus, cancelReason) {
+  const where = (from) => ({ orderId, status: { in: from } });
+  if (nextStatus === 'PREPARING') {
+    await tx.orderItem.updateMany({ where: where(['PENDING']), data: { status: 'COOKING' } });
+  } else if (nextStatus === 'DELIVERING') {
+    await tx.orderItem.updateMany({ where: where(['PENDING', 'COOKING']), data: { status: 'SERVED', servedAt: new Date() } });
+  } else if (nextStatus === 'CANCELLED') {
+    await tx.orderItem.updateMany({
+      where: where(['PENDING', 'COOKING', 'SERVED']),
+      data: { status: 'CANCELLED', cancelReason: cancelReason || 'Hủy cả đơn', cancelledAt: new Date() },
+    });
+  }
 }

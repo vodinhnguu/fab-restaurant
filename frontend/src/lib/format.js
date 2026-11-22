@@ -18,6 +18,8 @@ export const imageUrl = (src) => {
 };
 
 export const effectivePrice = (dish) => dish.salePrice ?? dish.price;
+// Số kg kiểu Việt: 1.25 -> "1,25 kg" (món hải sản bán theo kg, docs/24)
+export const formatKg = (kg) => `${Number(kg).toLocaleString('vi-VN', { maximumFractionDigits: 3 })} kg`;
 
 // Rút gọn số tiền lớn: 98993000 -> "99 triệu"
 export const formatCompactPrice = (n) => {

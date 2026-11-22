@@ -7,6 +7,8 @@ Tài liệu này mô tả **từng màn hình** của app mobile FAB Seafood dà
 
 > **Stitch chỉ vẽ giao diện**, không viết logic. Phần "Quy tắc" và "API" bên dưới là để bạn (và Flutter) làm cho đúng, không cần dán vào Stitch.
 
+> **Đổi từ 20/11/2026:** app mobile **chỉ dành cho nhân viên phục vụ** (chọn bàn, ghi món, gửi bếp), khách không dùng app. Tài liệu này là đặc tả **app khách cũ**, giữ để tham khảo giao diện: S01, S05 (thành "Chọn món"), S06, S07, S08 (thành "Phiếu gọi món") vẫn dùng; các màn còn lại đã bỏ. Cấu trúc và tiến độ app hiện tại: [19-app-mobile.md](19-app-mobile.md).
+
 ---
 
 ## 0. Cách dùng tài liệu này với Stitch

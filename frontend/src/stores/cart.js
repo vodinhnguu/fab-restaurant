@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { isSoldByWeight } from '../lib/constants';
 import { effectivePrice } from '../lib/format';
 
 // Giỏ hàng lưu ở trình duyệt. Giá chỉ để hiển thị - backend sẽ tính lại khi đặt hàng.
@@ -14,6 +15,7 @@ export const useCartStore = create(
 
       add: (dish, quantity = 1) =>
         set((state) => {
+          if (isSoldByWeight(dish)) return state; // món theo kg phải chọn và cân tại hồ, không đặt online
           const existing = state.items.find((i) => i.dishId === dish.id);
           if (existing) {
             return {

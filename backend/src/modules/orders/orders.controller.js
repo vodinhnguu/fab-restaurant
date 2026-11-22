@@ -18,7 +18,7 @@ export async function myOrders(req, res) {
       orderBy: { createdAt: 'desc' },
       skip,
       take,
-      include: { items: { include: { dish: { select: { image: true, slug: true } } } } },
+      include: orderService.orderInclude, // kèm số bàn với đơn ăn tại quán
     }),
     prisma.order.count({ where }),
   ]);
@@ -74,8 +74,11 @@ export async function detail(req, res) {
   const order = await prisma.order.findUnique({
     where: { id: Number(req.params.id) },
     include: {
-      items: { include: { dish: { select: { image: true, slug: true } } } },
+      items: { orderBy: { id: 'asc' }, include: { dish: { select: { image: true, slug: true } } } },
       user: { select: { id: true, name: true, email: true } },
+      // Đơn ăn tại quán: bàn + nhân viên mở đơn (docs/23-app-nhan-vien-phuc-vu.md)
+      table: { select: { id: true, code: true, area: true } },
+      staff: { select: { id: true, name: true } },
       // Lịch sử các lần thanh toán online - để đối soát với VNPay (bỏ rawData cho gọn)
       payments: {
         orderBy: { createdAt: 'desc' },

@@ -1,89 +1,97 @@
 // Test GỌI BACKEND THẬT (không phải server giả). Mặc định bị bỏ qua.
-// Chỉ đọc / đăng nhập, không tạo đơn, không tạo tài khoản.
+// Kiểm tra app đọc đúng dữ liệu thật của backend: sơ đồ bàn, đơn của bàn, trạng thái món...
+//
+// CÓ TẠO DỮ LIỆU: gửi bếp 1 đơn ở 1 bàn trống, check món, hủy món, gửi / rút thanh toán,
+// cuối cùng "Hủy cả đơn" (lý do "Test tự động") để bàn trống lại. Đơn đã hủy vẫn còn trong
+// "Đơn hôm nay"; id đơn được in ra để xóa nếu cần.
 //
 // Chạy: bật backend (`npm run dev` ở thư mục gốc) rồi trong thư mục mobile:
 //   flutter test test/live_api_test.dart --dart-define=LIVE_API=true --dart-define=API_URL=http://localhost:4000/api/v1
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:fab_seafood/models/cart_item.dart';
+import 'package:fab_seafood/models/status.dart';
 import 'package:fab_seafood/services/api_client.dart';
 import 'package:fab_seafood/services/api_exception.dart';
 import 'package:fab_seafood/services/auth_service.dart';
-import 'package:fab_seafood/services/info_service.dart';
+import 'package:fab_seafood/services/dine_in_service.dart';
+import 'package:fab_seafood/services/dish_service.dart';
 import 'package:fab_seafood/services/token_store.dart';
-import 'package:fab_seafood/state/app_providers.dart';
-import 'package:fab_seafood/state/auth_state.dart';
 
 const live = bool.fromEnvironment('LIVE_API');
 
 void main() {
   final skip = live ? null : 'Cần backend đang chạy, xem cách chạy ở đầu file';
 
-  test('GET /info đọc được thành RestaurantInfo', () async {
-    final info = await InfoService(ApiClient(tokenStore: MemoryTokenStore())).fetch();
-    expect(info.name, 'FAB Seafood');
-    expect(info.reservationAreas, contains('Phòng VIP'));
-    expect(info.shippingFee, greaterThan(0));
-    expect(info.lastReservationTime, '21:00');
+  test('Tài khoản khách đăng nhập được backend nhưng không có quyền dùng app', () async {
+    final result = await AuthService(ApiClient(tokenStore: MemoryTokenStore())).login(email: 'khach@fab.vn', password: '123456');
+    expect(result.user.canUseApp, isFalse);
   }, skip: skip);
 
-  test('Sai mật khẩu → 401 câu tiếng Việt, không bị coi là hết phiên', () async {
-    var expired = 0;
-    final api = ApiClient(tokenStore: MemoryTokenStore(), onSessionExpired: () => expired++);
-    try {
-      await AuthService(api).login(email: 'khach@fab.vn', password: 'sai-mat-khau');
-      fail('Đáng lẽ phải lỗi');
-    } on ApiException catch (e) {
-      expect(e.statusCode, 401);
-      expect(e.message, 'Email hoặc mật khẩu không đúng');
-    }
-    expect(expired, 0);
-  }, skip: skip);
-
-  test('Đăng nhập khach@fab.vn qua authProvider, mở lại app vẫn còn đăng nhập', () async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    final store = MemoryTokenStore();
-
-    ProviderContainer open() {
-      final c = ProviderContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-        tokenStoreProvider.overrideWithValue(store),
-      ]);
-      addTearDown(c.dispose);
-      return c;
-    }
-
-    final first = open();
-    expect(await first.read(authProvider.future), isNull);
-    final user = await first.read(authProvider.notifier).login(email: 'khach@fab.vn', password: '123456');
-    expect(user.email, 'khach@fab.vn');
-
-    // "Mở lại app": container mới, cùng kho token → GET /auth/me
-    final second = open();
-    expect((await second.read(authProvider.future))?.email, 'khach@fab.vn');
-  }, skip: skip);
-
-  test('Token giả → 401 → xóa token, báo hết phiên', () async {
-    final store = MemoryTokenStore('token-gia');
-    var expired = 0;
-    final api = ApiClient(tokenStore: store, onSessionExpired: () => expired++);
-    await api.loadToken();
-    await expectLater(api.get('/orders/my'), throwsA(isA<ApiException>()));
-    expect(expired, 1);
-    expect(await store.read(), isNull);
-  }, skip: skip);
-
-  test('Dữ liệu sai → lỗi theo từng ô (errors[].field)', () async {
+  test('Phục vụ: sơ đồ → gửi bếp → check món → hủy món → gửi / rút thanh toán → hủy cả đơn', () async {
     final api = ApiClient(tokenStore: MemoryTokenStore());
+    final login = await AuthService(api).login(email: 'phucvu@fab.vn', password: '123456');
+    expect(login.user.canTakeOrder, isTrue);
+    expect(login.user.roleLabel, 'Nhân viên phục vụ');
+    await api.setToken(login.token);
+    final service = DineInService(api);
+
+    // Sơ đồ: 3 khu, bàn có vị trí
+    final floor = await service.floor();
+    expect(floor.map((a) => a.name), containsAll(['Trong nhà', 'Ngoài trời - view biển', 'Phòng VIP']));
+    final table = floor.expand((a) => a.tables).firstWhere((t) => !t.isBusy);
+    expect(table.x, greaterThan(0));
+
+    // Gửi bếp 2 món
+    final dishes = (await DishService(api).dishes(limit: 2)).items;
+    final sent = await service.sendToKitchen(tableId: table.id, items: [
+      CartItem(dishId: dishes[0].id, name: dishes[0].name, slug: dishes[0].slug, price: 0, quantity: 2, note: 'Test tự động'),
+      CartItem(dishId: dishes[1].id, name: dishes[1].name, slug: dishes[1].slug, price: 0),
+    ]);
+    final order = sent.order!;
+    // ignore: avoid_print
+    print('Đơn thử: id ${order.id}, ${order.code}, bàn ${table.code}');
     try {
-      await api.post('/orders', body: {'customerName': 'An', 'phone': '123', 'items': []});
-      fail('Đáng lẽ phải lỗi');
-    } on ApiException catch (e) {
-      expect(e.statusCode, 400);
-      expect(e.fieldErrors['phone'], 'Số điện thoại không hợp lệ');
+      expect(order.status, OrderStatus.confirmed);
+      expect(order.items.map((i) => i.status), everyElement(OrderItemStatus.pending));
+      expect(order.itemCount, 3);
+      expect(order.waitingCount, 3);
+      expect(order.items.first.note, 'Test tự động');
+
+      // Check món
+      final first = order.items.first;
+      final served = await service.serveItems([first.id]);
+      expect(served.order!.items.firstWhere((i) => i.id == first.id).status, OrderItemStatus.served);
+      expect(served.order!.waitingCount, 1);
+
+      // Hủy món chờ bếp: không cần lý do
+      final second = order.items[1];
+      final cancelled = await service.cancelItem(second.id);
+      expect(cancelled.order!.items.firstWhere((i) => i.id == second.id).isCancelled, isTrue);
+      expect(cancelled.order!.status, OrderStatus.delivering); // món còn lại đã ra bàn
+
+      // Hủy món đã ra bàn mà thiếu lý do: backend chặn
+      await expectLater(
+        service.cancelItem(first.id, quantity: 1),
+        throwsA(isA<ApiException>().having((e) => e.message, 'message', contains('lý do'))),
+      );
+
+      // Gửi thanh toán / rút lại
+      final billed = await service.requestBill(order.id);
+      expect(billed.order!.billRequested, isTrue);
+      final floorBilled = await service.floor();
+      expect(floorBilled.expand((a) => a.tables).firstWhere((t) => t.id == table.id).order!.billRequested, isTrue);
+      final withdrawn = await service.cancelBillRequest(order.id);
+      expect(withdrawn.order!.billRequested, isFalse);
+
+      // Đơn hôm nay đọc được
+      final today = await service.todayOrders();
+      expect(today.firstWhere((o) => o.id == order.id).tableCode, table.code);
+    } finally {
+      // Dọn: hủy cả đơn để bàn trống lại
+      await service.cancelOrder(order.id, 'Test tự động');
     }
+    expect((await service.table(table.id)).order, isNull);
   }, skip: skip);
 }

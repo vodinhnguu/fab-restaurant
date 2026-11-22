@@ -16,7 +16,9 @@ class AppTheme {
     final base = ThemeData(useMaterial3: true, brightness: Brightness.light);
 
     // Chữ thường: Be Vietnam Pro, màu Slate 800.
-    final textTheme = GoogleFonts.beVietnamProTextTheme(base.textTheme).apply(
+    // Bỏ khoảng giãn giữa các chữ cái mặc định của Material 3: tiếng Việt có dấu nhìn
+    // tự nhiên hơn, và chữ trên nút / chip không bị xuống dòng trên máy rộng 360.
+    final textTheme = _noLetterSpacing(GoogleFonts.beVietnamProTextTheme(base.textTheme)).apply(
       bodyColor: AppColors.slate800,
       displayColor: AppColors.ocean900,
     );
@@ -136,27 +138,39 @@ class AppTheme {
         showCheckmark: false,
       ),
 
-      // Thanh tab dưới: tab đang chọn màu Ocean 900, nền đánh dấu Coral 50.
-      navigationBarTheme: NavigationBarThemeData(
+      // Menu trái (lib/app/app_drawer.dart): nền trắng, không ám màu.
+      drawerTheme: const DrawerThemeData(
         backgroundColor: AppColors.white,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: AppColors.coral50,
-        height: 68,
-        labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => textTheme.labelSmall?.copyWith(
-            fontWeight: states.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
-            color: states.contains(WidgetState.selected) ? AppColors.ocean900 : AppColors.slate500,
-          ),
-        ),
-        iconTheme: WidgetStateProperty.resolveWith(
-          (states) => IconThemeData(
-            color: states.contains(WidgetState.selected) ? AppColors.coral500 : AppColors.slate500,
-          ),
-        ),
+        width: 300,
       ),
 
       snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
       dividerTheme: const DividerThemeData(color: AppColors.slate200, space: 1),
+    );
+  }
+
+  /// Đặt letterSpacing = 0 cho mọi kiểu chữ.
+  /// (Không dùng apply(letterSpacingFactor: 0) vì kiểu chữ nào chưa có letterSpacing sẽ báo lỗi
+  /// ở bản debug.)
+  static TextTheme _noLetterSpacing(TextTheme t) {
+    TextStyle? zero(TextStyle? s) => s?.copyWith(letterSpacing: 0);
+    return t.copyWith(
+      displayLarge: zero(t.displayLarge),
+      displayMedium: zero(t.displayMedium),
+      displaySmall: zero(t.displaySmall),
+      headlineLarge: zero(t.headlineLarge),
+      headlineMedium: zero(t.headlineMedium),
+      headlineSmall: zero(t.headlineSmall),
+      titleLarge: zero(t.titleLarge),
+      titleMedium: zero(t.titleMedium),
+      titleSmall: zero(t.titleSmall),
+      bodyLarge: zero(t.bodyLarge),
+      bodyMedium: zero(t.bodyMedium),
+      bodySmall: zero(t.bodySmall),
+      labelLarge: zero(t.labelLarge),
+      labelMedium: zero(t.labelMedium),
+      labelSmall: zero(t.labelSmall),
     );
   }
 }

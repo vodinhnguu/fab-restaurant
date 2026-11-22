@@ -266,7 +266,7 @@ Mở http://localhost:5173. Khi `pull` code mới về, nhớ chạy lại `npm 
 
 Trang đăng nhập có sẵn 2 nút **"Tài khoản demo"** để điền nhanh.
 
-**Dữ liệu khác:** 8 danh mục, 26 món (7 món nổi bật), khoảng 80 đơn hàng rải trong 30 ngày qua (để biểu đồ có số liệu), 4 lịch đặt bàn (`RSV0000001` đến `RSV0000004`), và 3 mã giảm giá:
+**Dữ liệu khác:** thực đơn 12 nhóm, 70 món (8 món Best seller; 28 món hải sản sống bán theo kg; danh sách ở `prisma/menu.js`, xem [24](24-thuc-don-ban-theo-kg.md)), khoảng 80 đơn hàng rải trong 30 ngày qua (để biểu đồ có số liệu), 4 lịch đặt bàn (`RSV0000001` đến `RSV0000004`), và 3 mã giảm giá:
 
 | Mã | Giảm | Điều kiện |
 |---|---|---|
@@ -1079,7 +1079,7 @@ Luôn là **số nguyên VNĐ** (`Int`). Không dùng số thực để tránh s
 | Loại ảnh | Nguồn | Có trong git? | Khi người khác `pull` về |
 |---|---|---|---|
 | Logo, favicon | `frontend/public/favicon.svg` | ✅ | Có ngay |
-| Ảnh món, danh mục **mẫu** | Link Unsplash ghi vào DB khi chạy seed (`img()` trong `seed.js`) | Không cần (là link) | Chạy `npm run setup` là có, **cần Internet** |
+| Ảnh món, danh mục **mẫu** | Link Unsplash ghi vào DB khi chạy seed (`unsplashImg()` trong `prisma/menu.js`; rau, nước ngọt chưa có ảnh) | Không cần (là link) | Chạy `npm run setup` là có, **cần Internet** |
 | Ảnh trang chủ, trang đặt bàn | Link Unsplash viết cứng (`HERO`, `ABOUT_1`, `ABOUT_2`, `IMG`) | Không cần | **Cần Internet** |
 | Món chưa có ảnh | Ảnh giữ chỗ `placehold.co` (`imageUrl()` trong `format.js`) | | |
 | Ảnh admin **tự upload** | `backend/uploads/` | ❌ (bị `.gitignore` bỏ qua) | Không có. Mỗi người có database riêng nên ảnh upload ở máy này vốn không dùng được ở máy khác |

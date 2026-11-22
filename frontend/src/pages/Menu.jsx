@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { Search, UtensilsCrossed } from 'lucide-react';
+import { Flame, Search, UtensilsCrossed } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import DishCard from '../components/DishCard';
@@ -12,21 +12,30 @@ import { dishApi } from '../services';
 
 export default function Menu() {
   useDocumentTitle('Thực đơn');
-  // Bộ lọc lưu trên URL (?category=tom&sort=popular&page=2) -> chia sẻ link được, F5 không mất
+  // Bộ lọc lưu trên URL (?category=tom&sort=popular&page=2, ?best=1 = chỉ món Best seller) -> chia sẻ link được, F5 không mất
   const [params, setParams] = useSearchParams();
   const category = params.get('category') || '';
+  const best = params.get('best') === '1';
   const sort = params.get('sort') || 'popular';
   const page = Number(params.get('page')) || 1;
   const search = params.get('search') || '';
   const [keyword, setKeyword] = useState(search);
 
-  const { data: categories } = useCategories();
+  const { data: allCategories } = useCategories();
+  const categories = allCategories?.filter((c) => c._count?.dishes > 0); // ẩn danh mục không còn món đang bán
 
   const updateParam = (key, value) => {
     const next = new URLSearchParams(params);
     if (value) next.set(key, value);
     else next.delete(key);
     if (key !== 'page') next.delete('page');
+    setParams(next);
+  };
+
+  // "Tất cả": bỏ lọc danh mục và Best seller, giữ cách sắp xếp + từ khóa
+  const showAll = () => {
+    const next = new URLSearchParams(params);
+    ['category', 'best', 'page'].forEach((k) => next.delete(k));
     setParams(next);
   };
 
@@ -37,7 +46,7 @@ export default function Menu() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyword]);
 
-  const query = { category, sort, page, search, limit: 12 };
+  const query = { category, sort, page, search, limit: 12, ...(best && { featured: 'true' }) };
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ['dishes', query],
     queryFn: () => dishApi.list(query),
@@ -60,8 +69,14 @@ export default function Menu() {
       <div className="sticky top-16 z-20 -mx-4 mb-6 bg-sand-50/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:px-0">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="no-scrollbar flex gap-2 overflow-x-auto">
-            <button className={chip(!category)} onClick={() => updateParam('category', '')}>
+            <button className={chip(!category && !best)} onClick={showAll}>
               Tất cả
+            </button>
+            <button
+              className={clsx(chip(best), 'inline-flex items-center gap-1', !best && 'text-coral-600')}
+              onClick={() => updateParam('best', best ? '' : '1')}
+            >
+              <Flame className="h-4 w-4" /> Best seller
             </button>
             {categories?.map((c) => (
               <button key={c.id} className={chip(category === c.slug)} onClick={() => updateParam('category', c.slug)}>

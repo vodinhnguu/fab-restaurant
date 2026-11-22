@@ -3,72 +3,16 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { seedDefaultAreas } from '../src/config/cleaning.js';
+import { seedDefaultEquipment } from '../src/config/equipment.js';
 import { seedDefaultTables } from '../src/config/tables.js';
 import { seedDefaultRoles } from '../src/modules/permissions/permissions.service.js';
 import { addDays, startOfVnDay } from '../src/utils/helpers.js';
+import { applyMenu } from './menu.js';
 import { DEMO_STAFF, seedDemoStaff } from './seed-staff.js';
 
 const prisma = new PrismaClient();
 
-const img = (id) => `https://images.unsplash.com/photo-${id}?w=800&q=80&auto=format&fit=crop`;
-
-const slugify = (s) =>
-  s
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-const categories = [
-  { name: 'Khai vị', description: 'Món nhẹ mở đầu bữa tiệc', image: img('1547592180-85f173990554') },
-  { name: 'Tôm', description: 'Tôm sú, tôm hùm đất tươi sống', image: img('1565680018434-b513d5e5fd47') },
-  { name: 'Cá', description: 'Cá hồi, cá vược, cá biển trong ngày', image: img('1519708227418-c8fd9a32b7a2') },
-  { name: 'Mâm hải sản', description: 'Combo nướng & hấp cho nhóm bạn', image: img('1615141982883-c7ad0e69fd62') },
-  { name: 'Món Nhật', description: 'Sushi, sashimi chuẩn vị Nhật', image: img('1617196034796-73dfa7b1fd56') },
-  { name: 'Cơm & Mì', description: 'Món chính no bụng', image: img('1563379926898-05f4575a45d8') },
-  { name: 'Tráng miệng', description: 'Ngọt ngào kết thúc bữa ăn', image: img('1534766555764-ce878a5e3a2b') },
-  { name: 'Đồ uống', description: 'Cocktail, nước ép, rượu vang', image: img('1513558161293-cdaf765ed2fd') },
-];
-
-// [tên, danh mục, giá, giá KM, đơn vị, ảnh, nổi bật, mô tả]
-const dishes = [
-  ['Salad hải sản sốt chanh dây', 'Khai vị', 129000, null, 'đĩa', '1547592180-85f173990554', false, 'Tôm, mực, rau xanh trộn sốt chanh dây chua ngọt thanh mát.'],
-  ['Tacos cá chiên giòn', 'Khai vị', 99000, 89000, 'phần', '1551504734-5ee1c4a1479b', false, '3 bánh tacos nhân cá chiên giòn, xốt bơ và rau thơm.'],
-  ['Sashimi cá hồi Na Uy', 'Khai vị', 189000, null, 'phần', '1599084993091-1cb5c0721cc6', true, 'Cá hồi Na Uy nhập khẩu, cắt lát dày ăn kèm mù tạt và gừng hồng.'],
-
-  ['Tôm sú hấp bia', 'Tôm', 289000, null, 'đĩa', '1565680018434-b513d5e5fd47', true, 'Tôm sú tươi hấp bia và sả, giữ trọn vị ngọt tự nhiên.'],
-  ['Tôm sú nướng muối ớt', 'Tôm', 299000, 269000, 'đĩa', '1559737558-2f5a35f4523b', false, 'Tôm sú nướng than hồng tẩm muối ớt cay nồng.'],
-  ['Tôm xào bơ tỏi', 'Tôm', 259000, null, 'chảo', '1625943553852-781c6dd46faa', true, 'Tôm bóc nõn xào bơ tỏi thơm lừng, ăn kèm bánh mì nướng.'],
-  ['Cà ri tôm kiểu Thái', 'Tôm', 199000, null, 'tô', '1559847844-5315695dadae', false, 'Cà ri nước cốt dừa cay nhẹ với tôm và rau củ.'],
-
-  ['Cá hồi áp chảo sốt chanh', 'Cá', 279000, null, 'phần', '1519708227418-c8fd9a32b7a2', true, 'Phi lê cá hồi áp chảo da giòn, sốt chanh bơ.'],
-  ['Cá vược nướng rau củ', 'Cá', 249000, null, 'phần', '1611599537845-1c7aca0091c0', false, 'Phi lê cá vược nướng, ăn kèm cà chua bi và salad.'],
-  ['Cá hồi bỏ lò sốt kem', 'Cá', 289000, 259000, 'chảo', '1485921325833-c519f76c4927', false, 'Cá hồi bỏ lò cùng rau bina và sốt kem phô mai.'],
-  ['Steak cá hồi sốt cà chua', 'Cá', 299000, null, 'phần', '1580959375944-abd7e991f971', false, 'Miếng cá hồi dày nướng chín vừa, sốt cà chua thảo mộc.'],
-  ['Cá nướng nguyên con', 'Cá', 359000, null, 'con', '1510130387422-82bed34b37e9', false, 'Cá biển trong ngày nướng nguyên con, chấm muối tiêu chanh.'],
-
-  ['Mâm hải sản nướng FAB', 'Mâm hải sản', 899000, 799000, 'mâm', '1606850780554-b55ea4dd0b70', true, 'Bạch tuộc, tôm, mực, cá nướng cho 3-4 người.'],
-  ['Mâm hải sản tươi sống', 'Mâm hải sản', 1290000, null, 'mâm', '1615141982883-c7ad0e69fd62', false, 'Chọn hải sản tươi trên đá, chế biến theo yêu cầu cho 4-6 người.'],
-
-  ['Sushi set Omakase', 'Món Nhật', 459000, null, 'set', '1617196034796-73dfa7b1fd56', true, '12 miếng sushi tuyển chọn bởi đầu bếp.'],
-  ['Nigiri cá hồi', 'Món Nhật', 119000, null, '2 miếng', '1615361200141-f45040f367be', false, 'Cơm nắm nigiri phủ cá hồi tươi béo ngậy.'],
-
-  ['Mì Ý hải sản sốt cà', 'Cơm & Mì', 189000, null, 'đĩa', '1563379926898-05f4575a45d8', true, 'Spaghetti với tôm, mực, nghêu sốt cà chua tươi.'],
-  ['Cơm chiên hải sản', 'Cơm & Mì', 139000, null, 'đĩa', '1512058564366-18510be2db19', false, 'Cơm chiên tơi hạt cùng tôm, mực, trứng.'],
-  ['Mì Ý sốt kem tôm', 'Cơm & Mì', 179000, 159000, 'đĩa', '1579631542720-3a87824fff86', false, 'Tagliatelle sốt kem phô mai Parmesan và tôm.'],
-
-  ['Tiramisu', 'Tráng miệng', 69000, null, 'phần', '1534766555764-ce878a5e3a2b', false, 'Bánh tiramisu cà phê Ý chuẩn vị.'],
-  ['Panna cotta dâu', 'Tráng miệng', 59000, null, 'ly', '1488477181946-6428a0291777', false, 'Panna cotta mềm mịn với sốt dâu tây tươi.'],
-  ['Kem tươi', 'Tráng miệng', 45000, null, 'cốc', '1497034825429-c343d7c6a68f', false, 'Kem tươi dâu mát lạnh.'],
-
-  ['Mojito chanh bạc hà', 'Đồ uống', 79000, null, 'ly', '1513558161293-cdaf765ed2fd', false, 'Chanh, bạc hà, soda mát lạnh (có tùy chọn không cồn).'],
-  ['Trà chanh sả', 'Đồ uống', 45000, null, 'ly', '1556679343-c7306c1976bc', false, 'Trà đen pha chanh và sả thơm.'],
-  ['Cocktail Old Fashioned', 'Đồ uống', 129000, null, 'ly', '1514362545857-3bc16c4c7d1b', false, 'Whisky, bitters, vỏ cam.'],
-  ['Rượu vang trắng', 'Đồ uống', 149000, null, 'ly', '1437418747212-8d9709afab22', false, 'Vang trắng Chardonnay hợp với hải sản.'],
-];
+// Thực đơn (12 nhóm, 70 món, món hải sản sống bán theo kg): xem prisma/menu.js
 
 const reviewComments = [
   'Rất tươi và ngon, sẽ quay lại!',
@@ -84,6 +28,8 @@ const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 async function main() {
   console.log('🧹 Xóa dữ liệu cũ...');
   await prisma.cleaningTask.deleteMany();
+  await prisma.repairTicket.deleteMany();
+  await prisma.equipment.deleteMany();
   await prisma.cleaningArea.deleteMany();
   await prisma.review.deleteMany();
   await prisma.orderItem.deleteMany();
@@ -127,30 +73,10 @@ async function main() {
   await seedDemoStaff(prisma);
 
   console.log('📂 Tạo danh mục & món ăn...');
-  const catMap = {};
-  for (const [i, c] of categories.entries()) {
-    const cat = await prisma.category.create({ data: { ...c, slug: slugify(c.name), sortOrder: i } });
-    catMap[c.name] = cat.id;
-  }
-
-  const createdDishes = [];
-  for (const [name, cat, price, salePrice, unit, imageId, isFeatured, description] of dishes) {
-    createdDishes.push(
-      await prisma.dish.create({
-        data: {
-          name,
-          slug: slugify(name),
-          categoryId: catMap[cat],
-          price,
-          salePrice,
-          unit,
-          image: img(imageId),
-          isFeatured,
-          description,
-        },
-      }),
-    );
-  }
+  await applyMenu(prisma);
+  const createdDishes = await prisma.dish.findMany({ orderBy: { id: 'asc' } });
+  // Đơn online (giao hàng / mang về) chỉ có món bán theo phần: món theo kg phải chọn và cân tại hồ ở quán
+  const portionDishes = createdDishes.filter((d) => d.unit !== 'kg');
 
   console.log('🎟️  Tạo mã giảm giá...');
   const in60Days = new Date(Date.now() + 60 * 24 * 3600 * 1000);
@@ -167,7 +93,7 @@ async function main() {
   for (let i = 0; i < 80; i++) {
     const daysAgo = randInt(0, 29);
     const createdAt = new Date(Date.now() - daysAgo * 24 * 3600 * 1000 - randInt(0, 10) * 3600 * 1000);
-    const picked = [...createdDishes].sort(() => Math.random() - 0.5).slice(0, randInt(1, 4));
+    const picked = [...portionDishes].sort(() => Math.random() - 0.5).slice(0, randInt(1, 4));
     const items = picked.map((d) => ({ dishId: d.id, name: d.name, price: d.salePrice ?? d.price, quantity: randInt(1, 3) }));
     const subtotal = items.reduce((s, it) => s + it.price * it.quantity, 0);
     const type = Math.random() < 0.7 ? 'DELIVERY' : 'PICKUP';
@@ -205,7 +131,7 @@ async function main() {
 
   // Đảm bảo tài khoản demo khach@fab.vn có 1 đơn hoàn thành để thử chức năng đánh giá
   const demo = customers[0];
-  const demoDishes = createdDishes.filter((d) => d.isFeatured).slice(0, 3);
+  const demoDishes = portionDishes.filter((d) => d.isFeatured).slice(0, 3);
   const demoSubtotal = demoDishes.reduce((s, d) => s + (d.salePrice ?? d.price), 0);
   await prisma.order.create({
     data: {
@@ -260,6 +186,9 @@ async function main() {
 
   console.log('🧽 Tạo khu vực & việc vệ sinh mẫu...');
   await seedCleaning();
+
+  console.log('🔧 Tạo thiết bị & phiếu sửa chữa mẫu...');
+  await seedMaintenance();
 
   console.log('✅ Seed xong!');
   console.log('   Admin:     admin@fab.vn / admin123');
@@ -328,6 +257,68 @@ async function seedCleaning() {
     const last = done.filter((t) => t.areaId === id).at(-1);
     if (last) await prisma.cleaningArea.update({ where: { id }, data: { lastCleanedAt: last.completedAt } });
   }
+}
+
+// Thiết bị + phiếu sửa chữa mẫu cho kỹ thuật (docs/22-ky-thuat-bao-tri.md)
+async function seedMaintenance() {
+  await seedDefaultEquipment(prisma);
+  const eq = Object.fromEntries((await prisma.equipment.findMany()).map((e) => [e.name, e]));
+  const user = Object.fromEntries(
+    (await prisma.user.findMany({ where: { email: { in: ['kythuat@fab.vn', 'bep@fab.vn', 'letan@fab.vn', 'hohaisan@fab.vn', 'phucvu@fab.vn', 'tapvu@fab.vn', 'quanly@fab.vn'] } } })).map((u) => [u.email.split('@')[0], u.id]),
+  );
+  const DAY = 24 * 3600 * 1000;
+  const ago = (days, hours = 0) => new Date(Date.now() - days * DAY - hours * 3600 * 1000);
+
+  // Lần bảo trì gần nhất: vài máy quá hạn / sắp đến hạn để trang Tổng quan có dữ liệu
+  const lastMaintained = {
+    'Máy sục khí hồ tôm hùm': 33, // chu kỳ 30 ngày -> quá hạn 3 ngày
+    'Máy hút khói bếp': 26, // chu kỳ 30 -> còn 4 ngày
+    'Hệ thống lọc nước hồ hải sản': 12,
+    'Bếp gas công nghiệp': 20,
+    'Tủ đông hải sản': 40,
+    'Máy lạnh phòng ăn trong nhà 1': 45,
+    'Máy lạnh phòng ăn trong nhà 2': 45,
+    'Máy lạnh phòng VIP': 85, // chu kỳ 90 -> còn 5 ngày
+    'Máy phát điện dự phòng': 60,
+    'Bình chữa cháy': 150,
+  };
+  const maintenanceLogs = [];
+  for (const [name, days] of Object.entries(lastMaintained)) {
+    await prisma.equipment.update({ where: { id: eq[name].id }, data: { lastMaintainedAt: ago(days) } });
+    maintenanceLogs.push({
+      type: 'MAINTENANCE', title: 'Bảo trì định kỳ', equipmentId: eq[name].id, status: 'DONE',
+      reportedById: user.kythuat, assigneeId: user.kythuat, resolution: 'Bảo trì định kỳ: vệ sinh, kiểm tra hoạt động',
+      cost: name.startsWith('Máy lạnh') ? 250000 : null, startedAt: ago(days), completedAt: ago(days), createdAt: ago(days),
+    });
+  }
+  await prisma.repairTicket.createMany({ data: maintenanceLogs.filter((l) => l.completedAt > ago(30)) });
+
+  // Phiếu đang mở
+  await prisma.repairTicket.createMany({
+    data: [
+      { title: 'Tủ đông hải sản không đủ lạnh', description: 'Nhiệt độ lên -8 độ, đá tan ở ngăn dưới', equipmentId: eq['Tủ đông hải sản'].id, priority: 'URGENT', reportedById: user.bep, createdAt: ago(0, 1) },
+      { title: 'Máy lạnh phòng VIP chảy nước', description: 'Nước nhỏ giọt xuống bàn VIP2', equipmentId: eq['Máy lạnh phòng VIP'].id, reportedById: user.letan, createdAt: ago(0, 3) },
+      { title: 'Đèn sân ngoài trời gần bàn B05 không sáng', equipmentId: eq['Đèn chiếu sáng sân ngoài trời'].id, status: 'IN_PROGRESS', reportedById: user.phucvu, assigneeId: user.kythuat, startedAt: ago(0, 2), createdAt: ago(1) },
+      { title: 'Máy sục khí hồ tôm hùm kêu to', description: 'Tiếng rè liên tục, bọt khí yếu', equipmentId: eq['Máy sục khí hồ tôm hùm'].id, priority: 'URGENT', status: 'WAITING_PARTS', waitingNote: 'Đã đặt màng bơm mới, 2 ngày nữa giao', reportedById: user.hohaisan, assigneeId: user.kythuat, startedAt: ago(1, 5), createdAt: ago(1, 6) },
+      { title: 'Vòi nước nhà vệ sinh nữ rò rỉ', equipmentId: eq['Khác / chưa rõ thiết bị'].id, reportedById: user.tapvu, createdAt: ago(0, 5) },
+    ],
+  });
+
+  // Lịch sử sửa chữa 30 ngày (có chi phí)
+  const done = [
+    ['Bếp gas công nghiệp', 'Bếp số 2 lửa yếu', 'Vệ sinh béc đốt, thay van điều áp', 350000, 25, user.bep],
+    ['Máy bơm nước', 'Nước yếu ở khu rửa chén', 'Thay rơ-le áp suất', 180000, 18, user.tapvu],
+    ['Camera an ninh', 'Camera cửa sau mất hình', 'Bấm lại đầu dây mạng', null, 12, user.quanly],
+    ['Tủ mát đồ uống', 'Tủ mát không lạnh', 'Thay quạt dàn lạnh (thợ hãng)', 1200000, 8, user.phucvu],
+    ['Máy làm lạnh nước hồ (chiller)', 'Nước hồ lên 22 độ', 'Vệ sinh dàn nóng, nạp gas', 800000, 4, user.hohaisan],
+    ['Máy lạnh phòng ăn trong nhà 1', 'Máy lạnh có mùi hôi', 'Vệ sinh lưới lọc, xịt khử khuẩn', null, 1, user.letan],
+  ];
+  await prisma.repairTicket.createMany({
+    data: done.map(([name, title, resolution, cost, days, reporter]) => ({
+      title, equipmentId: eq[name].id, status: 'DONE', reportedById: reporter, assigneeId: user.kythuat,
+      createdAt: ago(days, 6), startedAt: ago(days, 4), completedAt: ago(days, 2), resolution, cost,
+    })),
+  });
 }
 
 main()

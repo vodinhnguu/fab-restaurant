@@ -114,6 +114,41 @@ export const cleaningApi = {
   staff: () => api.get('/cleaning/staff').then((r) => r.data),
 };
 
+// Kỹ thuật: thiết bị, phiếu sửa chữa, bảo trì định kỳ. Tài liệu: docs/22-ky-thuat-bao-tri.md
+export const maintenanceApi = {
+  overview: () => api.get('/maintenance/overview').then((r) => r.data),
+  // Thiết bị + openTickets + hạn bảo trì. { all: true } = kèm máy đã ngưng dùng (kỹ thuật)
+  equipment: (params) => api.get('/maintenance/equipment', { params }).then((r) => r.data),
+  createEquipment: (body) => api.post('/maintenance/equipment', body),
+  updateEquipment: (id, body) => api.put(`/maintenance/equipment/${id}`, body),
+  // "Đã bảo trì": trả { data, message }
+  maintain: (id, body) => api.post(`/maintenance/equipment/${id}/maintain`, body),
+  tickets: (params) => api.get('/maintenance/tickets', { params }).then((r) => r.data),
+  myReported: () => api.get('/maintenance/tickets/reported').then((r) => r.data),
+  // Báo hỏng / tạo phiếu: trả { data, message }
+  createTicket: (body) => api.post('/maintenance/tickets', body),
+  updateTicket: (id, body) => api.put(`/maintenance/tickets/${id}`, body),
+  // status: IN_PROGRESS | WAITING_PARTS (note = đang chờ gì) | DONE (note = cách xử lý, cost) | CANCELLED (note = lý do)
+  updateStatus: (id, body) => api.patch(`/maintenance/tickets/${id}/status`, body),
+  history: (params) => api.get('/maintenance/history', { params }), // trả { data, meta }
+  staff: () => api.get('/maintenance/staff').then((r) => r.data),
+};
+
+// Ăn tại quán: thu ngân + bếp trên web (phục vụ ghi món bằng app mobile). Tài liệu: docs/23-app-nhan-vien-phuc-vu.md
+export const dineInApi = {
+  // Thu ngân: các bàn đang mở, bàn đã "Gửi thanh toán" (billRequestedAt) xếp trước
+  bills: () => api.get('/dine-in/bills').then((r) => r.data),
+  bill: (id) => api.get(`/dine-in/bills/${id}`).then((r) => r.data),
+  markPrinted: (id) => api.post(`/dine-in/bills/${id}/printed`).then((r) => r.data),
+  pay: (id) => api.post(`/dine-in/bills/${id}/pay`), // trả { data, message }
+  // Bếp: phiếu các bàn còn món chờ làm / đang làm
+  kitchen: () => api.get('/dine-in/kitchen').then((r) => r.data),
+  startCooking: (itemIds) => api.post('/dine-in/kitchen/start', { itemIds }), // trả { data, message }
+  // Hồ hải sản: món bán theo kg chờ cân + món đã cân hôm nay; nhập số kg (docs/24-thuc-don-ban-theo-kg.md)
+  weighing: () => api.get('/dine-in/weighing').then((r) => r.data),
+  weigh: ({ id, weight }) => api.post(`/dine-in/items/${id}/weigh`, { weight }), // trả { data, message }
+};
+
 export const uploadApi = {
   image: (file) => {
     const form = new FormData();

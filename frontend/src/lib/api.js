@@ -18,7 +18,9 @@ api.interceptors.response.use(
   (res) => res.data, // backend trả { success, data, meta } -> lấy luôn body
   (error) => {
     const status = error.response?.status;
-    const message = error.response?.data?.message || 'Không thể kết nối máy chủ';
+    // Khi dev mà backend chưa bật / đang dừng vì lỗi database: Vite trả 500 không có nội dung -> nhắc xem terminal
+    const devHint = import.meta.env.DEV ? '. Backend (localhost:4000) có đang chạy không? Xem cửa sổ terminal "npm run dev"' : '';
+    const message = error.response?.data?.message || `Không thể kết nối máy chủ${devHint}`;
     if (status === 401 && useAuthStore.getState().token) useAuthStore.getState().logout();
     const err = new Error(message);
     err.status = status;

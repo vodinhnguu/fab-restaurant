@@ -14,6 +14,20 @@ final _money = NumberFormat.decimalPattern('vi'); // nhóm nghìn bằng dấu c
 /// 850000 → "850.000đ". null → "0đ".
 String formatMoney(num? amount) => '${_money.format(amount ?? 0)}đ';
 
+/// Số kg kiểu Việt: 1.25 → "1,25 kg", 2.0 → "2 kg" (món hải sản bán theo kg, docs/24).
+String formatKg(double kg) => '${formatDecimal(kg)} kg';
+
+/// Số lẻ kiểu Việt, tối đa 3 chữ số lẻ, bỏ số 0 thừa: 0.98 → "0,98", 2.0 → "2".
+String formatDecimal(double value) =>
+    value.toStringAsFixed(3).replaceFirst(RegExp(r'\.?0+$'), '').replaceAll('.', ',');
+
+/// Đọc số người dùng gõ: "0,98", "0.98", " 1 " → 0.98, 0.98, 1. Gõ sai (rỗng, chữ, "1,2,3") → null.
+double? parseDecimal(String text) {
+  final s = text.trim().replaceAll(',', '.');
+  if (!RegExp(r'^\d+(\.\d+)?$').hasMatch(s)) return null;
+  return double.tryParse(s);
+}
+
 // ---------- Ngày giờ ----------
 // API trả giờ UTC ("2026-10-27T12:05:00.000Z"). App luôn hiện giờ Việt Nam (UTC+7),
 // kể cả khi điện thoại đang để múi giờ khác.

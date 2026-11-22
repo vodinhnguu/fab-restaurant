@@ -84,8 +84,8 @@ function DishForm({ dish, onClose }) {
           <Field label="Giá khuyến mãi" error={errors.salePrice?.message}>
             <Input type="number" {...register('salePrice', { validate: (v) => !v || Number(v) < Number(watch('price')) || 'Phải nhỏ hơn giá gốc' })} />
           </Field>
-          <Field label="Đơn vị">
-            <Input {...register('unit')} placeholder="phần, đĩa, kg..." />
+          <Field label="Đơn vị (kg = hải sản sống, cân tại hồ)">
+            <Input {...register('unit')} placeholder="phần, lon, chai, kg..." />
           </Field>
         </div>
         <Field label="Mô tả">
@@ -93,7 +93,7 @@ function DishForm({ dish, onClose }) {
         </Field>
         <div className="flex gap-6">
           <Checkbox label="Đang bán" {...register('isAvailable')} />
-          <Checkbox label="Món nổi bật (hiện ở trang chủ)" {...register('isFeatured')} />
+          <Checkbox label="Best seller (nổi bật ở trang chủ, có nhãn trên thẻ món)" {...register('isFeatured')} />
         </div>
       </form>
     </Modal>
@@ -161,7 +161,7 @@ export default function Dishes() {
                       <img src={imageUrl(d.image)} alt="" className="h-12 w-12 rounded-lg object-cover" />
                       <div>
                         <p className="font-medium">{d.name}</p>
-                        {d.isFeatured && <Badge color="coral">Nổi bật</Badge>}
+                        {d.isFeatured && <Badge color="coral">Best seller</Badge>}
                       </div>
                     </div>
                   </Td>

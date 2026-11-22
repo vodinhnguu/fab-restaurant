@@ -1,6 +1,7 @@
-import { Flame, Plus } from 'lucide-react';
+import { Flame, Plus, Scale } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { isSoldByWeight } from '../lib/constants';
 import { formatPrice, imageUrl } from '../lib/format';
 import { useCartStore } from '../stores/cart';
 import { Rating } from './ui/Feedback';
@@ -8,6 +9,7 @@ import { Rating } from './ui/Feedback';
 export default function DishCard({ dish }) {
   const add = useCartStore((s) => s.add);
   const onSale = dish.salePrice && dish.salePrice < dish.price;
+  const byWeight = isSoldByWeight(dish); // hải sản sống: chọn và cân tại hồ, không thêm vào giỏ
 
   const handleAdd = (e) => {
     e.preventDefault();
@@ -34,8 +36,8 @@ export default function DishCard({ dish }) {
             </span>
           )}
           {dish.isFeatured && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ocean-900 backdrop-blur">
-              <Flame className="h-3 w-3 text-coral-500" /> Đặc biệt
+            <span className="inline-flex items-center gap-1 rounded-full bg-coral-500 px-2.5 py-1 text-xs font-bold text-white shadow-md">
+              <Flame className="h-3.5 w-3.5" /> Best seller
             </span>
           )}
         </div>
@@ -55,13 +57,19 @@ export default function DishCard({ dish }) {
             <span className="text-xs text-slate-400"> /{dish.unit}</span>
             {onSale && <div className="text-xs text-slate-400 line-through">{formatPrice(dish.price)}</div>}
           </div>
-          <button
-            onClick={handleAdd}
-            className="grid h-10 w-10 place-items-center rounded-full bg-ocean-900 text-white transition hover:bg-coral-500"
-            aria-label={`Thêm ${dish.name} vào giỏ`}
-          >
-            <Plus className="h-5 w-5" />
-          </button>
+          {byWeight ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-ocean-50 px-2.5 py-1.5 text-xs font-semibold text-ocean-700">
+              <Scale className="h-3.5 w-3.5" /> Cân tại hồ
+            </span>
+          ) : (
+            <button
+              onClick={handleAdd}
+              className="grid h-10 w-10 place-items-center rounded-full bg-ocean-900 text-white transition hover:bg-coral-500"
+              aria-label={`Thêm ${dish.name} vào giỏ`}
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
     </Link>

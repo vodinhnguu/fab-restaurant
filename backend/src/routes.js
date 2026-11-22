@@ -5,7 +5,9 @@ import authRoutes from './modules/auth/auth.routes.js';
 import categoryRoutes from './modules/categories/categories.routes.js';
 import cleaningRoutes from './modules/cleaning/cleaning.routes.js';
 import couponRoutes from './modules/coupons/coupons.routes.js';
+import dineInRoutes from './modules/dine-in/dine-in.routes.js';
 import dishRoutes from './modules/dishes/dishes.routes.js';
+import maintenanceRoutes from './modules/maintenance/maintenance.routes.js';
 import orderRoutes from './modules/orders/orders.routes.js';
 import paymentRoutes from './modules/payments/payments.routes.js';
 import permissionRoutes from './modules/permissions/permissions.routes.js';
@@ -33,5 +35,8 @@ router.use('/stats', statsRoutes);
 router.use('/permissions', permissionRoutes);
 router.use('/upload', uploadRoutes);
 router.use('/cleaning', cleaningRoutes);
+router.use('/maintenance', maintenanceRoutes);
+// Ăn tại quán: nhân viên phục vụ ghi món tại bàn bằng app mobile (docs/23-app-nhan-vien-phuc-vu.md)
+router.use('/dine-in', dineInRoutes);
 
 export default router;

@@ -14,7 +14,8 @@ Backend là REST API dùng chung cho cả web và app mobile Flutter (thư mục
 ## ✨ Chức năng
 
 ### Khách hàng
-- Trang chủ: banner, danh mục, món nổi bật, ưu đãi, giới thiệu, đánh giá, bản đồ
+- Trang chủ: banner, khối **Best seller** ngay dưới ảnh bìa, danh mục, ưu đãi, giới thiệu, đánh giá, bản đồ
+- Hải sản sống (tôm hùm, tôm sú, cua, cá mú, tôm tít) bán **theo kg**: web chỉ hiện giá / kg và nút "Đặt bàn để thưởng thức" (không đặt giao hàng được), tại quán phục vụ ghi số kg trên app (mặc định 1 kg, sửa được vd 0,98 kg) để tính tiền tạm, hồ hải sản cân thật rồi xác nhận / sửa
 - Thực đơn: lọc theo danh mục, tìm kiếm (debounce), sắp xếp, phân trang. Bộ lọc lưu trên URL
 - Chi tiết món: ảnh, giá khuyến mãi, đánh giá sao, bình luận, món liên quan
 - Giỏ hàng dạng ngăn kéo trượt, lưu ở trình duyệt (F5 không mất)
@@ -33,9 +34,11 @@ Backend là REST API dùng chung cho cả web và app mobile Flutter (thư mục
 - Quản lý đơn hàng: lọc theo trạng thái, tìm kiếm, xem chi tiết, chuyển trạng thái theo đúng quy trình
 - Quản lý đặt bàn: lọc theo ngày và trạng thái, xác nhận, hủy (bắt buộc ghi lý do cho khách xem), đánh dấu khách đã đến
 - Lễ tân: tab "Hôm nay" (khách sắp đến / trễ giờ), chuyển bàn / xếp bàn trên sơ đồ, lưu lịch sử chuyển bàn
+- Kỹ thuật: phiếu sửa chữa (nhận sửa, chờ linh kiện, hoàn thành kèm chi phí), danh sách thiết bị và bảo trì định kỳ, lịch sử sửa chữa; mọi bộ phận có nút "Báo hỏng"
 - CRUD món ăn (upload ảnh, bật/tắt còn món), danh mục, mã giảm giá
 - Kiểm duyệt đánh giá, quản lý người dùng (phân quyền, khóa tài khoản)
 - Vệ sinh cho tạp vụ: tổng quan, nhiệm vụ vệ sinh (nhận việc / hoàn thành), khu vực cần dọn, lịch sử công việc; phục vụ / lễ tân báo "cần dọn"
+- Cân hải sản (hồ hải sản, bếp): món bán theo kg phục vụ vừa gọi hiện "Chờ cân", ô số kg điền sẵn số phục vụ ghi, xác nhận / sửa thì tự tính lại tiền và chuyển xuống bếp; cân lại được khi bếp chưa nhận làm
 
 ---
 
@@ -65,6 +68,7 @@ Mở http://localhost:5173
 - Máy mới clone về: chạy đủ 4 bước trên.
 - Máy đã chạy rồi, chỉ pull code mới: `npm run install:all` rồi `npm --prefix backend run db:deploy` (cập nhật bảng, **không xóa** dữ liệu), sau đó `npm run dev`.
 - Không đăng nhập được tài khoản nhân viên (`bep@fab.vn`, `thungan@fab.vn`...)? Database được tạo trước khi có các tài khoản này. Chạy `npm --prefix backend run db:seed-staff` để thêm tài khoản còn thiếu (**không xóa** dữ liệu).
+- Thực đơn vẫn là món cũ (Khai vị, Món Nhật, Tráng miệng...)? Database được tạo trước khi đổi sang thực đơn hải sản mới (12 nhóm, 70 món). Chạy `npm --prefix backend run db:seed-menu` để đổi sang thực đơn mới (**không xóa** đơn hàng, đánh giá; món cũ đã có trong đơn thì ẩn đi). Xem [docs/24](docs/24-thuc-don-ban-theo-kg.md).
 - `backend/.env` không có trên git (chứa khóa bí mật). Muốn dùng VNPay trên máy mới thì tự chép `VNP_TMN_CODE`, `VNP_HASH_SECRET` sang.
 - Dùng Claude Code: file [CLAUDE.md](CLAUDE.md) ghi sẵn cách chạy và tài khoản demo, AI tự đọc khi mở dự án.
 
@@ -89,7 +93,8 @@ fab-restaurant/
 │   │   ├── schema.prisma    # Định nghĩa bảng dữ liệu
 │   │   ├── migrations/      # Lịch sử thay đổi DB
 │   │   ├── seed.js          # Dữ liệu mẫu (xóa hết rồi tạo lại)
-│   │   └── seed-staff.js    # Tài khoản nhân viên demo (chỉ thêm, không xóa)
+│   │   ├── seed-staff.js    # Tài khoản nhân viên demo (chỉ thêm, không xóa)
+│   │   └── menu.js          # Thực đơn 12 nhóm / 70 món (db:seed-menu: đổi thực đơn, không xóa đơn)
 │   └── src/
 │       ├── config/          # Biến môi trường, thông tin nhà hàng
 │       ├── middlewares/     # auth, validate, error, upload
@@ -105,7 +110,7 @@ fab-restaurant/
 │       ├── services/        # Hàm gọi API
 │       ├── stores/          # Zustand: auth, cart
 │       └── lib/             # axios, format, hằng số, hooks
-├── mobile/                  # App Flutter cho khách hàng (docs/19)
+├── mobile/                  # App Flutter "FAB Phục vụ" cho nhân viên: chọn bàn, ghi món, gửi bếp (docs/19, docs/23)
 │   ├── design/              # Ảnh Stitch, đặt tên theo mã màn (S04.png...)
 │   └── lib/
 │       ├── app/             # Cấu hình, đường đi (router), khung 5 tab
@@ -137,11 +142,14 @@ Nên đọc theo thứ tự:
 14. [Lý do hủy đặt bàn](docs/14-ly-do-huy-dat-ban.md): admin chọn / ghi lý do khi hủy, khách xem lý do và đặt lại ngày giờ khác
 15. [Ghi chú từng món](docs/15-ghi-chu-tung-mon.md): ô ghi chú khẩu vị riêng cho mỗi món, gợi ý theo loại món, bếp xem trong admin
 16. [Đặc tả app mobile cho Stitch AI](docs/16-dac-ta-app-mobile-stitch.md): 25 màn hình app khách hàng, bố cục, quy tắc, API từng màn và prompt dán vào Stitch
-17. [Tư liệu viết báo cáo](docs/17-tu-lieu-viet-bao-cao.md): toàn bộ thông tin để viết báo cáo đồ án theo từng chương: yêu cầu, use case, quy tắc nghiệp vụ, sơ đồ, từ điển dữ liệu, 54 API, ma trận quyền, ca kiểm thử, hạn chế, câu hỏi bảo vệ
+17. [Tư liệu viết báo cáo](docs/17-tu-lieu-viet-bao-cao.md): toàn bộ thông tin để viết báo cáo đồ án theo từng chương: yêu cầu, use case, quy tắc nghiệp vụ, sơ đồ, từ điển dữ liệu, 94 API, ma trận quyền, ca kiểm thử, hạn chế, câu hỏi bảo vệ
 18. [Lý do hủy đơn hàng](docs/18-ly-do-huy-don-hang.md): nhân viên chọn / ghi lý do khi hủy đơn, khách xem lý do ở trang chi tiết đơn và danh sách đơn của mình
 19. [App mobile Flutter](docs/19-app-mobile.md): cách chạy app, cấu trúc thư mục, màn nào ở file nào, quy ước viết màn hình, tiến độ từng bước
 20. [Vệ sinh & dọn dẹp](docs/20-ve-sinh.md): 4 trang của tạp vụ (tổng quan, nhiệm vụ, khu vực cần dọn, lịch sử), ai được làm gì, API `/cleaning`
 21. [Lễ tân: chuyển bàn](docs/21-le-tan-chuyen-ban.md): tab Hôm nay, chuyển / xếp bàn trên sơ đồ, lịch sử chuyển bàn, hủy bàn
+22. [Kỹ thuật: thiết bị & sửa chữa](docs/22-ky-thuat-bao-tri.md): 4 trang của kỹ thuật, nút Báo hỏng cho mọi bộ phận, bảo trì định kỳ, chi phí sửa chữa
+23. [App nhân viên phục vụ](docs/23-app-nhan-vien-phuc-vu.md): phục vụ chọn khu → bàn → món, gửi bếp, check món, hủy món, gửi thanh toán trên app; bếp nhận làm, thu ngân in bill và thu tiền trên web; đơn ăn tại quán `DINE_IN`, API `/dine-in`
+24. [Thực đơn bán theo kg](docs/24-thuc-don-ban-theo-kg.md): thực đơn hải sản 12 nhóm / 70 món (`prisma/menu.js`, lệnh `db:seed-menu`), hải sản sống bán theo kg, hồ hải sản cân tại quán (trang Cân hải sản), khối Best seller ở trang chủ
 
 👉 Mới bắt đầu? Đọc **10** trước để có bức tranh toàn cảnh. Khi đang code, mở sẵn **08** và **09** để tra cứu nhanh.
 

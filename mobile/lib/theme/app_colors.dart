@@ -33,6 +33,7 @@ class AppColors {
   static const slate500 = Color(0xFF64748B); // chữ phụ
   static const slate300 = Color(0xFFCBD5E1); // viền nút viền, ô nhập
   static const slate200 = Color(0xFFE2E8F0); // viền thẻ
+  static const star = Color(0xFFF59E0B); // ngôi sao đánh giá
   static const danger = Color(0xFFDC2626); // nút nguy hiểm (hủy, xóa)
   static const success = Color(0xFF15803D); // giảm giá, thành công
 
