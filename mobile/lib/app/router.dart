@@ -1,7 +1,7 @@
 // Bản đồ chuyển màn: đường đi nào mở màn hình nào (docs/23-app-nhan-vien-phuc-vu.md mục 2).
 //
 // - 3 màn trong StatefulShellRoute là 3 mục của menu trái (app_drawer.dart), chuyển bằng nút ☰.
-//   Thứ tự nhánh phải khớp enum AppSection: Sơ đồ bàn · Đơn hôm nay · Tài khoản.
+//   Thứ tự nhánh phải khớp enum AppSection: Sơ đồ bàn · Đơn hôm nay · Quản lý · Tài khoản.
 // - S04, S05, S06, S08 là "con" của Sơ đồ bàn nhưng mở trên navigator gốc (che cả màn, có nút ←):
 //   /tables/5 → /tables/5/menu → /tables/5/menu/dish/tom-hum, nút quay lại đi ngược từng bước.
 //   Gửi bếp xong: context.go(AppRoutes.table(5)) là về thẳng S04 (bỏ S05, S08 phía trên).
@@ -17,6 +17,10 @@ import '../screens/auth/s02_login_screen.dart';
 import '../screens/cart/s08_cart_screen.dart';
 import '../screens/menu/s05_menu_screen.dart';
 import '../screens/menu/s06_dish_detail_screen.dart';
+import '../screens/manager/manager_guard.dart';
+import '../screens/manager/s15_manager_screen.dart';
+import '../screens/manager/s16_cancelled_screen.dart';
+import '../screens/manager/s17_drink_check_screen.dart';
 import '../screens/orders/s10_today_orders_screen.dart';
 import '../screens/s01_splash_screen.dart';
 import '../screens/tables/s03_tables_screen.dart';
@@ -80,6 +84,28 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.splash}) {
           StatefulShellBranch(
             routes: [
               GoRoute(path: AppRoutes.orders, builder: (_, _) => const TodayOrdersScreen()), // S10
+            ],
+          ),
+          // Nhóm Quản lý (docs/28-app-quan-ly.md): chỉ tài khoản có quyền Xem "Tổng quan" vào được.
+          // Vào bằng đường dẫn khi không có quyền -> màn tự đẩy về Sơ đồ bàn (ManagerGuard).
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.manager, // S15
+                builder: (_, _) => const ManagerGuard(child: ManagerScreen()),
+                routes: [
+                  GoRoute(
+                    path: 'cancelled', // S16
+                    parentNavigatorKey: rootKey,
+                    builder: (_, _) => const ManagerGuard(child: CancelledScreen()),
+                  ),
+                  GoRoute(
+                    path: 'drinks', // S17
+                    parentNavigatorKey: rootKey,
+                    builder: (_, _) => const ManagerGuard(needDrinks: true, child: DrinkCheckScreen()),
+                  ),
+                ],
+              ),
             ],
           ),
           StatefulShellBranch(

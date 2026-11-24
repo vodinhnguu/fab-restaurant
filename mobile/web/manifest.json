@@ -1,11 +1,11 @@
 {
-    "name": "FAB Seafood",
-    "short_name": "FAB Seafood",
+    "name": "Ngưu Quán",
+    "short_name": "Ngưu Quán",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "App khách hàng FAB Seafood",
+    "description": "App nhân viên Ngưu Quán",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

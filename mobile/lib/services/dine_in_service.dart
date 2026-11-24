@@ -36,7 +36,7 @@ class DineInService {
           {
             'dishId': i.dishId,
             'quantity': i.quantity,
-            if (i.soldByWeight) 'weight': i.weight, // số kg phục vụ ghi (mặc định 1), hồ hải sản cân lại
+            if (i.soldByWeight) 'weight': i.weight, // số kg phục vụ ghi tạm (mặc định 1), cân tại hồ rồi nhập lại
             if (i.note.trim().isNotEmpty) 'note': i.note.trim(),
           },
       ],
@@ -71,6 +71,13 @@ class DineInService {
       if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
     });
     return TableDetail.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  /// POST /dine-in/items/:id/weigh { weight } (S14 "Nhập số kg"): phục vụ dẫn khách ra hồ, cân, nhập số kg thật.
+  /// Tiền dòng món = giá 1 kg × số kg, món chuyển từ "Chờ cân" sang "Chờ bếp". Sửa lại được khi bếp chưa nhận làm.
+  /// Lỗi hay gặp: "Bếp đã nhận làm món này, không cân lại được", "Món này đã hủy".
+  Future<void> weighItem(int itemId, double weight) async {
+    await _api.post('/dine-in/items/$itemId/weigh', body: {'weight': weight});
   }
 
   /// POST /dine-in/orders/:id/bill-request (S09 "Gửi thanh toán"): thu ngân trên web nhận thông báo, in bill, thu tiền.

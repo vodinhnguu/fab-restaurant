@@ -53,7 +53,7 @@ class _FabAppState extends ConsumerState<FabApp> {
     });
 
     return MaterialApp.router(
-      title: 'FAB Phục vụ',
+      title: 'Ngưu Quán',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       scaffoldMessengerKey: appMessengerKey,

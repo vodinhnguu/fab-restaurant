@@ -48,8 +48,9 @@ export async function list(req, res) {
   const q = req.validatedQuery;
   const { page, limit, skip, take } = getPagination(q, 15);
 
+  // where: mọi bộ lọc TRỪ trạng thái (dùng để đếm số đơn của từng tab trạng thái)
   const where = {};
-  if (q.status) where.status = q.status;
+  if (q.type) where.type = q.type;
   if (q.search) {
     where.OR = [
       { code: { contains: q.search, mode: 'insensitive' } },
@@ -58,11 +59,12 @@ export async function list(req, res) {
     ];
   }
   if (q.from || q.to) where.createdAt = { gte: q.from, lte: q.to };
+  const filtered = q.status ? { ...where, status: q.status } : where;
 
   const [items, total, counts] = await prisma.$transaction([
-    prisma.order.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take, include: { items: true } }),
-    prisma.order.count({ where }),
-    prisma.order.groupBy({ by: ['status'], _count: { _all: true }, orderBy: { status: 'asc' } }),
+    prisma.order.findMany({ where: filtered, orderBy: { createdAt: 'desc' }, skip, take, include: { items: true } }),
+    prisma.order.count({ where: filtered }),
+    prisma.order.groupBy({ by: ['status'], where, _count: { _all: true }, orderBy: { status: 'asc' } }),
   ]);
 
   // Số đơn theo từng trạng thái để hiển thị trên các tab
@@ -95,6 +97,6 @@ export async function updateStatus(req, res) {
   const order = await prisma.order.findUnique({ where: { id: Number(req.params.id) } });
   if (!order) throw ApiError.notFound('Không tìm thấy đơn hàng');
   const { status, reason } = req.body;
-  const updated = await orderService.changeStatus(order, status, reason);
+  const updated = await orderService.changeStatus(order, status, reason, req.user);
   res.json({ success: true, data: updated });
 }

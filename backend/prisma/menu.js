@@ -23,6 +23,8 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PrismaClient } from '@prisma/client';
+import { seedDrinkProducts } from '../src/config/drinks.js';
+import { seedTankItems } from '../src/config/tank.js';
 import { slugify } from '../src/utils/helpers.js';
 
 export const unsplashImg = (id) => (id ? `https://images.unsplash.com/photo-${id}?w=800&q=80&auto=format&fit=crop` : null);
@@ -149,7 +151,7 @@ const RETIRED_CATEGORY = { name: 'Ngừng bán (thực đơn cũ)', description:
 
 /**
  * Đưa database về đúng thực đơn ở trên (xem đầu file). Không xóa đơn hàng / đánh giá.
- * Trả về { created, updated, deleted, retired, removedCategories } (danh sách tên) để in ra màn hình.
+ * Trả về { created, updated, deleted, retired, removedCategories, tank } để in ra màn hình.
  */
 export async function applyMenu(db) {
   const report = { created: [], updated: [], deleted: [], retired: [], removedCategories: [] };
@@ -206,7 +208,13 @@ export async function applyMenu(db) {
     report.retired.push(...toRetire.map((d) => d.name));
   }
 
-  // 4. Danh mục cũ không còn món nào → xóa
+  // 4. Loại hải sản trong hồ + gắn món bán theo kg vào loại của nó (docs/27-ton-ho-hai-san.md)
+  report.tank = await seedTankItems(db);
+
+  // 4b. Danh sách kiểm bia nước: quy cách thùng cho món nhóm "Nước uống" (docs/29-kiem-bia-nuoc.md)
+  report.drinks = await seedDrinkProducts(db);
+
+  // 5. Danh mục cũ không còn món nào → xóa
   const empty = await db.category.findMany({ where: { dishes: { none: {} } }, select: { id: true, name: true } });
   if (empty.length) {
     await db.category.deleteMany({ where: { id: { in: empty.map((c) => c.id) } } });
@@ -225,6 +233,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     if (r.deleted.length) console.log(`   🗑️  Xóa ${r.deleted.length} món cũ chưa từng bán`);
     if (r.retired.length) console.log(`   📦 Ẩn ${r.retired.length} món cũ đã có trong đơn / đánh giá, gom vào "${RETIRED_CATEGORY.name}"`);
     if (r.removedCategories.length) console.log(`   🗂️  Xóa danh mục cũ: ${r.removedCategories.join(', ')}`);
+    console.log(`   🦞 Hồ hải sản: ${r.tank.items} loại, gắn ${r.tank.linked} món bán theo kg vào loại của nó (tồn kho giữ nguyên)`);
+    console.log(`   🍺 Kiểm bia nước: ${r.drinks.products} loại đồ uống, vừa thêm ${r.drinks.created} (quy cách thùng giữ nguyên)`);
   } catch (e) {
     console.error(e);
     process.exitCode = 1;

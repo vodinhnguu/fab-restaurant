@@ -17,6 +17,8 @@ import 'package:fab_seafood/services/api_exception.dart';
 import 'package:fab_seafood/services/auth_service.dart';
 import 'package:fab_seafood/services/dine_in_service.dart';
 import 'package:fab_seafood/services/dish_service.dart';
+import 'package:fab_seafood/services/drink_service.dart';
+import 'package:fab_seafood/services/manager_service.dart';
 import 'package:fab_seafood/services/token_store.dart';
 
 const live = bool.fromEnvironment('LIVE_API');
@@ -44,7 +46,10 @@ void main() {
     expect(table.x, greaterThan(0));
 
     // Gửi bếp 2 món
-    final dishes = (await DishService(api).dishes(limit: 2)).items;
+    // Thực đơn mới phần lớn là hải sản bán theo kg (vào "Chờ cân", phải nhập số kg mới xuống bếp).
+    // Test luồng bếp này cần món THEO PHẦN (cơm, rau, cháo...), xem docs/24 + docs/27.
+    final dishes = (await DishService(api).dishes(limit: 100)).items.where((d) => !d.soldByWeight).take(2).toList();
+    expect(dishes, hasLength(2), reason: 'thực đơn phải còn ít nhất 2 món bán theo phần');
     final sent = await service.sendToKitchen(tableId: table.id, items: [
       CartItem(dishId: dishes[0].id, name: dishes[0].name, slug: dishes[0].slug, price: 0, quantity: 2, note: 'Test tự động'),
       CartItem(dishId: dishes[1].id, name: dishes[1].name, slug: dishes[1].slug, price: 0),
@@ -93,5 +98,87 @@ void main() {
       await service.cancelOrder(order.id, 'Test tự động');
     }
     expect((await service.table(table.id)).order, isNull);
+  }, skip: skip);
+
+  test('Quản lý: đọc được doanh thu ngày / tháng, đơn đã hủy; phục vụ bị 403 (docs/28)', () async {
+    final api = ApiClient(tokenStore: MemoryTokenStore());
+    final auth = AuthService(api);
+    final login = await auth.login(email: 'quanly@fab.vn', password: '123456');
+    expect(login.user.canSeeManager, isTrue, reason: 'quản lý có quyền Xem Tổng quan');
+    await api.setToken(login.token);
+
+    final manager = ManagerService(api);
+    final stats = await manager.stats();
+    // Không kiểm số tiền cụ thể (dữ liệu thật đổi theo ngày), chỉ kiểm cấu trúc hợp lý
+    expect(stats.today.revenue, greaterThanOrEqualTo(0));
+    expect(stats.today.revenue, stats.today.dineInRevenue + stats.today.onlineRevenue);
+    expect(stats.month.revenue, greaterThanOrEqualTo(stats.today.revenue));
+    expect(stats.month.label, isNotEmpty);
+    expect(stats.tables.total, greaterThan(0));
+    expect(stats.tables.busy + stats.tables.free, stats.tables.total);
+    expect(stats.cancelledMonth.orders, greaterThanOrEqualTo(stats.cancelledToday.orders));
+    expect(stats.tank, isNotEmpty, reason: 'hồ có 6 loại hải sản (db:seed-tank)');
+
+    final cancelled = await manager.cancellations(range: 'month');
+    expect(cancelled.range, 'month');
+    expect(cancelled.totalOrders, stats.cancelledMonth.orders);
+    for (final o in cancelled.orders) {
+      expect(o.code, isNotEmpty);
+    }
+
+    // Phục vụ không xem được số liệu quản lý
+    final waiterApi = ApiClient(tokenStore: MemoryTokenStore());
+    final waiter = await AuthService(waiterApi).login(email: 'phucvu@fab.vn', password: '123456');
+    expect(waiter.user.canSeeManager, isFalse);
+    await waiterApi.setToken(waiter.token);
+    await expectLater(
+      ManagerService(waiterApi).stats(),
+      throwsA(isA<ApiException>().having((e) => e.statusCode, 'statusCode', 403)),
+    );
+  }, skip: skip);
+
+  test('Kiểm bia nước: xuất theo thùng, lệch âm là thiếu; phục vụ bị 403 (docs/29)', () async {
+    final api = ApiClient(tokenStore: MemoryTokenStore());
+    final login = await AuthService(api).login(email: 'thungan@fab.vn', password: '123456');
+    expect(login.user.canSeeDrinks, isTrue, reason: 'thu ngân xem được phiếu kiểm');
+    expect(login.user.canCheckDrinks, isTrue, reason: 'thu ngân ghi được số xuất / trả lại');
+    await api.setToken(login.token);
+
+    final service = DrinkService(api);
+    final day = await service.dayCheck();
+    expect(day.rows, isNotEmpty, reason: '10 loại đồ uống (db:seed-drinks)');
+    final tiger = day.rows.firstWhere((r) => r.name.contains('Tiger'));
+    expect(tiger.packSize, 24, reason: 'bia lon thùng 24');
+    expect(day.rows.firstWhere((r) => r.name.contains('Sài Gòn')).packSize, 20, reason: 'két bia chai 20');
+
+    try {
+      // Xuất 2 thùng = 48 lon, trả lại 30 -> lệch = bán + 30 - 48 (âm nếu bán ít)
+      await service.saveCheck(productId: tiger.productId, issuedPacks: 2, returnedUnits: 30, note: 'Live test');
+      final after = (await service.dayCheck()).rows.firstWhere((r) => r.productId == tiger.productId);
+      expect(after.issued, 48);
+      expect(after.returned, 30);
+      expect(after.diff, after.sold + 30 - 48);
+      expect(after.checked, isTrue);
+      if (after.diff < 0) expect(after.isMissing, isTrue, reason: 'lệch âm = thiếu hàng');
+
+      // Trả lại nhiều hơn số xuất -> backend chặn
+      await expectLater(
+        service.saveCheck(productId: tiger.productId, issuedPacks: 1, returnedUnits: 999),
+        throwsA(isA<ApiException>().having((e) => e.statusCode, 'statusCode', 400)),
+      );
+    } finally {
+      // Dọn: xóa phiếu thử bằng cách đưa về 0 (API không có xóa phiếu, đặt lại số 0 là coi như chưa xuất)
+      await service.saveCheck(productId: tiger.productId, issuedPacks: 0, returnedUnits: 0, note: '');
+    }
+
+    // Phục vụ không có quyền DRINKS
+    final waiterApi = ApiClient(tokenStore: MemoryTokenStore());
+    final waiter = await AuthService(waiterApi).login(email: 'phucvu@fab.vn', password: '123456');
+    expect(waiter.user.canSeeDrinks, isFalse);
+    await waiterApi.setToken(waiter.token);
+    await expectLater(
+      DrinkService(waiterApi).dayCheck(),
+      throwsA(isA<ApiException>().having((e) => e.statusCode, 'statusCode', 403)),
+    );
   }, skip: skip);
 }

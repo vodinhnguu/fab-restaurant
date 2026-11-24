@@ -35,6 +35,18 @@ class User {
   /// Đã lên món, thu tiền, hủy đơn (thêm Thu ngân, Tiếp thực).
   bool get canUpdateOrder => can('ORDERS', 'edit');
 
+  /// Xem được nhóm **Quản lý** trong app (doanh thu, đơn đã hủy): quyền Xem "Tổng quan" (DASHBOARD).
+  /// Mặc định: Chủ, Admin, Quản lý, Tổ trưởng, Thu ngân. Phục vụ, bếp, tiếp thực KHÔNG có.
+  /// Tài liệu: docs/28-app-quan-ly.md
+  bool get canSeeManager => can('DASHBOARD', 'view');
+
+  /// Mở được màn **Kiểm bia nước** (S17): quyền Xem "Bia nước & kiểm kho quầy" (DRINKS).
+  /// Mặc định: Chủ, Admin, Quản lý, Tổ trưởng, Thu ngân. Tài liệu: docs/29-kiem-bia-nuoc.md
+  bool get canSeeDrinks => can('DRINKS', 'view');
+
+  /// Ghi được số xuất / trả lại ở S17: quyền Sửa DRINKS (thu ngân, quản lý).
+  bool get canCheckDrinks => can('DRINKS', 'edit');
+
   /// Tên vai trò hiện ở Tài khoản.
   String get roleLabel => role == 'ADMIN' ? 'Quản trị viên' : (staffRoleName ?? 'Nhân viên');
 

@@ -48,6 +48,7 @@ const MaintenanceEquipment = lazy(() => import('./pages/admin/maintenance/Equipm
 const MaintenanceHistory = lazy(() => import('./pages/admin/maintenance/History'));
 const Kitchen = lazy(() => import('./pages/admin/dine-in/Kitchen'));
 const Weighing = lazy(() => import('./pages/admin/dine-in/Weighing'));
+const Tank = lazy(() => import('./pages/admin/dine-in/Tank'));
 const Cashier = lazy(() => import('./pages/admin/dine-in/Cashier'));
 const BillPrint = lazy(() => import('./pages/admin/dine-in/BillPrint'));
 
@@ -145,6 +146,7 @@ export default function App() {
             {/* Ăn tại quán (docs/23-app-nhan-vien-phuc-vu.md): phục vụ ghi món bằng app, bếp + thu ngân làm ở đây */}
             <Route element={<ProtectedRoute module="KITCHEN" />}><Route path="kitchen" element={<Kitchen />} /></Route>
             <Route element={<ProtectedRoute module="SEAFOOD_TANK" />}><Route path="weighing" element={<Weighing />} /></Route>
+            <Route element={<ProtectedRoute module="SEAFOOD_TANK" />}><Route path="tank" element={<Tank />} /></Route>
             <Route element={<ProtectedRoute module="PAYMENTS" />}><Route path="cashier" element={<Cashier />} /></Route>
           </Route>
           {/* Trang in bill: không có sidebar, mở ở tab mới từ trang Thanh toán tại bàn */}

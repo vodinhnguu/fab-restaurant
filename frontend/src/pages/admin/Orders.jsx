@@ -10,10 +10,10 @@ import PageHeader from '../../components/PageHeader';
 import Button from '../../components/ui/Button';
 import { StatusBadge } from '../../components/ui/Badge';
 import { EmptyState, Pagination, Spinner } from '../../components/ui/Feedback';
-import { Input } from '../../components/ui/Form';
+import { Input, Select } from '../../components/ui/Form';
 import Modal from '../../components/ui/Modal';
 import { Table, Td, Th } from '../../components/ui/Table';
-import { NEXT_STATUS, ORDER_STATUS, ORDER_TYPE, PAYMENT_METHOD, PAYMENT_STATUS, PAYMENT_TXN_STATUS, STATUS_ACTION_LABEL } from '../../lib/constants';
+import { ORDER_TYPE, PAYMENT_METHOD, PAYMENT_STATUS, PAYMENT_TXN_STATUS, nextStatusList, orderStatusMap, statusActionLabel } from '../../lib/constants';
 import { formatDateTime, formatKg, formatPrice } from '../../lib/format';
 import { useDocumentTitle } from '../../lib/hooks';
 import { useCan } from '../../lib/permissions';
@@ -70,13 +70,23 @@ function OrderModal({ id, onClose }) {
         <div className="space-y-5 text-sm">
           <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
             <p><span className="text-slate-500">Khách:</span> {order.customerName} {order.user && <span className="text-xs text-slate-400">({order.user.email})</span>}</p>
-            <p><span className="text-slate-500">SĐT:</span> <a href={`tel:${order.phone}`} className="text-ocean-600">{order.phone}</a></p>
+            {order.phone ? (
+              <p><span className="text-slate-500">SĐT:</span> <a href={`tel:${order.phone}`} className="text-ocean-600">{order.phone}</a></p>
+            ) : (
+              <span /> /* đơn ăn tại quán không có SĐT: giữ ô trống cho lưới 2 cột không bị lệch */
+            )}
             <p><span className="text-slate-500">Hình thức:</span> {ORDER_TYPE[order.type]}</p>
             <p><span className="text-slate-500">Thời gian:</span> {formatDateTime(order.createdAt)}</p>
             {order.address && <p className="sm:col-span-2"><span className="text-slate-500">Địa chỉ:</span> {order.address}</p>}
             {order.note && <p className="sm:col-span-2 rounded-lg bg-amber-50 p-2"><span className="text-slate-500">Ghi chú:</span> {order.note}</p>}
             <p className="flex items-center gap-2"><span className="text-slate-500">Thanh toán:</span> {PAYMENT_METHOD[order.paymentMethod]} <StatusBadge map={PAYMENT_STATUS} value={order.paymentStatus} /></p>
-            <p className="flex items-center gap-2"><span className="text-slate-500">Trạng thái:</span> <StatusBadge map={ORDER_STATUS} value={order.status} /></p>
+            <p className="flex items-center gap-2"><span className="text-slate-500">Trạng thái:</span> <StatusBadge map={orderStatusMap(order.type)} value={order.status} /></p>
+            {order.table && (
+              <p className="sm:col-span-2">
+                <span className="text-slate-500">Bàn:</span> {order.table.code} ({order.table.area})
+                {order.staff && <> · <span className="text-slate-500">Phục vụ:</span> {order.staff.name}</>}
+              </p>
+            )}
             {order.cancelReason && (
               <p className="sm:col-span-2 rounded-lg bg-red-50 p-2 text-red-700"><span className="text-slate-500">Lý do hủy (khách xem được):</span> {order.cancelReason}</p>
             )}
@@ -103,7 +113,9 @@ function OrderModal({ id, onClose }) {
           <dl className="ml-auto max-w-xs space-y-1">
             <div className="flex justify-between"><dt className="text-slate-500">Tạm tính</dt><dd>{formatPrice(order.subtotal)}</dd></div>
             {order.discount > 0 && <div className="flex justify-between text-green-600"><dt>Giảm ({order.couponCode})</dt><dd>-{formatPrice(order.discount)}</dd></div>}
-            <div className="flex justify-between"><dt className="text-slate-500">Phí giao</dt><dd>{formatPrice(order.shippingFee)}</dd></div>
+            {order.type !== 'DINE_IN' && (
+              <div className="flex justify-between"><dt className="text-slate-500">Phí giao</dt><dd>{formatPrice(order.shippingFee)}</dd></div>
+            )}
             <div className="flex justify-between text-base font-bold"><dt>Tổng</dt><dd className="text-coral-600">{formatPrice(order.total)}</dd></div>
           </dl>
 
@@ -127,11 +139,11 @@ function OrderModal({ id, onClose }) {
             </div>
           )}
 
-          {can('ORDERS', 'edit') && NEXT_STATUS[order.status].length > 0 && (
+          {can('ORDERS', 'edit') && nextStatusList(order.type, order.status).length > 0 && (
             <div className="border-t border-slate-100 pt-4">
               <p className="mb-2 font-medium">Chuyển trạng thái:</p>
               <div className="flex flex-wrap gap-2">
-                {NEXT_STATUS[order.status]
+                {nextStatusList(order.type, order.status)
                   .filter((s) => !(s === 'DELIVERING' && order.type === 'PICKUP'))
                   .map((s) => (
                     <Button
@@ -141,7 +153,7 @@ function OrderModal({ id, onClose }) {
                       loading={update.isPending && update.variables?.status === s}
                       onClick={() => (s === 'CANCELLED' ? setCancelling(true) : update.mutate({ status: s }))}
                     >
-                      {STATUS_ACTION_LABEL[s]}
+                      {statusActionLabel(order.type, s)}
                     </Button>
                   ))}
               </div>
@@ -157,12 +169,13 @@ export default function Orders() {
   useDocumentTitle('Quản trị - Đơn hàng');
   const [params, setParams] = useSearchParams();
   const status = params.get('status') || '';
+  const type = params.get('type') || ''; // '' = mọi hình thức, hoặc DELIVERY / PICKUP / DINE_IN
   const page = Number(params.get('page')) || 1;
   const [search, setSearch] = useState('');
   const [submitted, setSubmitted] = useState('');
   const [selected, setSelected] = useState(null);
 
-  const query = { status: status || undefined, page, search: submitted || undefined };
+  const query = { status: status || undefined, type: type || undefined, page, search: submitted || undefined };
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['admin-orders', query],
     queryFn: () => orderApi.list(query),
@@ -189,7 +202,7 @@ export default function Orders() {
       />
 
       <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto">
-        {[['', 'Tất cả', totalAll], ...Object.entries(ORDER_STATUS).map(([k, v]) => [k, v.label, counts[k] ?? 0])].map(([k, label, n]) => (
+        {[['', 'Tất cả', totalAll], ...Object.entries(orderStatusMap(type)).map(([k, v]) => [k, v.label, counts[k] ?? 0])].map(([k, label, n]) => (
           <button
             key={k}
             onClick={() => setParam('status', k)}
@@ -200,10 +213,19 @@ export default function Orders() {
         ))}
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); setSubmitted(search); setParam('page', ''); }} className="mb-4 flex max-w-md gap-2">
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm mã đơn, tên, SĐT..." />
-        <Button type="submit" variant="dark"><Search className="h-4 w-4" /></Button>
-      </form>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <form onSubmit={(e) => { e.preventDefault(); setSubmitted(search); setParam('page', ''); }} className="flex max-w-md flex-1 gap-2">
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm mã đơn, tên, SĐT..." />
+          <Button type="submit" variant="dark"><Search className="h-4 w-4" /></Button>
+        </form>
+        {/* Lọc theo hình thức: đơn online (giao / đến lấy) hay đơn ăn tại quán do phục vụ ghi trên app */}
+        <Select value={type} onChange={(e) => setParam('type', e.target.value)} className="w-48">
+          <option value="">Mọi hình thức</option>
+          {Object.entries(ORDER_TYPE).map(([k, label]) => (
+            <option key={k} value={k}>{label}</option>
+          ))}
+        </Select>
+      </div>
 
       {isLoading ? (
         <Spinner />
@@ -225,7 +247,7 @@ export default function Orders() {
                   <Td className="text-right font-semibold whitespace-nowrap">{formatPrice(o.total)}</Td>
                   <Td><StatusBadge map={PAYMENT_STATUS} value={o.paymentStatus} /></Td>
                   <Td>
-                    <StatusBadge map={ORDER_STATUS} value={o.status} />
+                    <StatusBadge map={orderStatusMap(o.type)} value={o.status} />
                     {o.cancelReason && <p className="mt-1 max-w-48 text-xs text-red-600" title={o.cancelReason}>Lý do: {o.cancelReason}</p>}
                   </Td>
                   <Td><Button size="sm" variant="ghost" onClick={() => setSelected(o.id)}><Eye className="h-4 w-4" /> Xem</Button></Td>

@@ -22,6 +22,9 @@ export const MODULES = [
   { key: 'KITCHEN', name: 'Phiếu bếp & chế biến', description: 'Nhận phiếu bếp, báo món đang làm / đã xong' },
   { key: 'SEAFOOD_TANK', name: 'Hồ hải sản & nhập hàng', description: 'Theo dõi hải sản sống, cân ký, nhập / xuất hồ' },
   { key: 'PAYMENTS', name: 'Thu ngân & thanh toán', description: 'Tính tiền, in hóa đơn, đối soát VNPay' },
+  // Trang: app Quản lý màn Kiểm bia nước (docs/29-kiem-bia-nuoc.md). Xem = xem phiếu kiểm,
+  // Sửa = ghi số xuất / trả lại, Thêm + Xóa = sửa quy cách thùng, tắt / bật loại
+  { key: 'DRINKS', name: 'Bia nước & kiểm kho quầy', description: 'Xuất bia nước ra quầy theo thùng, kiểm số trả lại cuối ngày' },
   { key: 'COUPONS', name: 'Khuyến mãi & mã giảm giá', description: 'Tạo và áp dụng mã giảm giá' },
   { key: 'REVIEWS', name: 'Đánh giá khách hàng', description: 'Xem, phản hồi, ẩn đánh giá' },
   { key: 'STAFF', name: 'Nhân sự & phân quyền', description: 'Tài khoản nhân viên, vai trò, ma trận quyền' },
@@ -44,13 +47,13 @@ export const DEFAULT_ROLES = [
     key: 'MANAGER',
     name: 'Quản lý',
     description: 'Điều hành ca, xử lý khiếu nại, duyệt thực đơn và khuyến mãi',
-    perms: { DASHBOARD: 'V', ORDERS: 'VCED', RESERVATIONS: 'VCED', MENU: 'VCED', KITCHEN: 'VCE', SEAFOOD_TANK: 'VCE', PAYMENTS: 'VE', COUPONS: 'VCED', REVIEWS: 'VD', STAFF: 'V', FACILITY: 'VCE', CLEANING: 'VCED' },
+    perms: { DASHBOARD: 'V', ORDERS: 'VCED', RESERVATIONS: 'VCED', MENU: 'VCED', KITCHEN: 'VCE', SEAFOOD_TANK: 'VCE', PAYMENTS: 'VE', DRINKS: 'VCED', COUPONS: 'VCED', REVIEWS: 'VD', STAFF: 'V', FACILITY: 'VCE', CLEANING: 'VCED' },
   },
   {
     key: 'TEAM_LEAD',
     name: 'Tổ trưởng',
     description: 'Phân công nhân viên trong ca, giám sát phục vụ tại khu vực',
-    perms: { DASHBOARD: 'V', ORDERS: 'VCE', RESERVATIONS: 'VCE', MENU: 'V', KITCHEN: 'V', SEAFOOD_TANK: 'V', PAYMENTS: 'V', REVIEWS: 'V', STAFF: 'V', FACILITY: 'VC', CLEANING: 'VCE' },
+    perms: { DASHBOARD: 'V', ORDERS: 'VCE', RESERVATIONS: 'VCE', MENU: 'V', KITCHEN: 'V', SEAFOOD_TANK: 'V', PAYMENTS: 'V', DRINKS: 'V', REVIEWS: 'V', STAFF: 'V', FACILITY: 'VC', CLEANING: 'VCE' },
   },
   {
     key: 'WAITER',
@@ -68,7 +71,7 @@ export const DEFAULT_ROLES = [
     key: 'CASHIER',
     name: 'Thu ngân',
     description: 'Tính tiền, áp mã giảm giá, in hóa đơn, chốt tiền cuối ca',
-    perms: { DASHBOARD: 'V', ORDERS: 'VE', RESERVATIONS: 'V', MENU: 'V', PAYMENTS: 'VCE', COUPONS: 'V' },
+    perms: { DASHBOARD: 'V', ORDERS: 'VE', RESERVATIONS: 'V', MENU: 'V', PAYMENTS: 'VCE', DRINKS: 'VE', COUPONS: 'V' },
   },
   {
     key: 'TECHNICIAN',

@@ -18,7 +18,7 @@ if (env.nodeEnv !== 'test') app.use(morgan('dev')); // Log request ra console
 app.use('/uploads', express.static('uploads', { maxAge: '7d' }));
 
 // --- API ---
-app.get('/', (req, res) => res.json({ name: 'FAB Seafood API', docs: '/api/v1/health' }));
+app.get('/', (req, res) => res.json({ name: 'Ngưu Quán API', docs: '/api/v1/health' }));
 app.use('/api/v1', routes);
 
 // --- Xử lý 404 và lỗi (luôn đặt CUỐI CÙNG) ---

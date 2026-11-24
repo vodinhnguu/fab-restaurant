@@ -29,7 +29,8 @@ export async function list(req, res) {
       orderBy: SORTS[q.sort],
       skip,
       take,
-      include: { category: { select: { id: true, name: true, slug: true } } },
+      // Món bán theo kg: kèm tồn hồ hải sản để phục vụ biết còn bao nhiêu kg mà tư vấn khách (docs/27)
+      include: { category: { select: { id: true, name: true, slug: true } }, tankItem: { select: { id: true, name: true, stockKg: true, lowStockKg: true, isActive: true } } },
     }),
     prisma.dish.count({ where }),
   ]);
@@ -46,6 +47,7 @@ export async function detail(req, res) {
     where,
     include: {
       category: { select: { id: true, name: true, slug: true } },
+      tankItem: { select: { id: true, name: true, stockKg: true, lowStockKg: true, isActive: true } },
       reviews: {
         orderBy: { createdAt: 'desc' },
         take: 20,

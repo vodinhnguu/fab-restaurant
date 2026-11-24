@@ -1,5 +1,5 @@
 name: fab_seafood
-description: "App khách hàng FAB Seafood (đặt món, đặt bàn). Đặc tả: docs/16-dac-ta-app-mobile-stitch.md"
+description: "App nhân viên phục vụ FAB Seafood (chọn bàn, ghi món, gửi bếp, gửi thanh toán). Luồng: docs/23-app-nhan-vien-phuc-vu.md"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

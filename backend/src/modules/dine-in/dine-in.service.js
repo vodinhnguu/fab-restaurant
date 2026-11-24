@@ -3,7 +3,8 @@
 //
 // Luồng:
 //   Phục vụ (app): chọn khu -> chọn bàn -> chọn món -> "Gửi bếp" (bàn chưa có đơn thì tạo đơn DINE_IN, có rồi thì gọi thêm)
-//   Hồ hải sản (web /admin/weighing): món bán theo kg "Chờ cân" -> nhập số kg -> tính tiền, sang bếp (docs/24)
+//   Món bán theo kg "Chờ cân": phục vụ dẫn khách ra hồ, cân, nhập số kg ngay trên app -> tính tiền, sang bếp (docs/24)
+//     Hồ hải sản / quản lý xem lại và cân lại trên web /admin/weighing
 //   Bếp (web /admin/kitchen): "Nhận làm" -> món Đang làm
 //   Phục vụ (app): "Check món" (tick món đã mang ra bàn) / "Hủy món" / "Order" (gọi thêm) / "Gửi thanh toán"
 //   Thu ngân (web /admin/cashier): nhận thông báo -> "In bill" -> "Đã thu tiền" (đơn COMPLETED + PAID, bàn trống lại)
@@ -17,6 +18,7 @@ import { seedDefaultTables } from '../../config/tables.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { isSoldByWeight, startOfVnDay, withUniqueCode } from '../../utils/helpers.js';
+import { recordDishWeight } from '../tank/tank.service.js';
 
 // Đơn tại bàn chưa thu tiền. Đơn tại bàn tạo ra là CONFIRMED luôn (nhân viên ghi trực tiếp, không cần chờ xác nhận)
 export const OPEN_ORDER = ['CONFIRMED', 'PREPARING', 'DELIVERING'];
@@ -146,7 +148,7 @@ export async function todayOrders() {
 
 // Nhân viên bấm "Gửi bếp": bàn chưa có đơn thì tạo đơn mới, có rồi thì gọi thêm (thêm dòng mới, cộng tiền).
 // Món bán theo kg: 1 dòng, số kg = số phục vụ ghi trên app (mặc định 1 kg), cộng TIỀN TẠM theo số kg đó.
-// Món vào "Chờ cân": hồ hải sản cân thật, xác nhận / sửa số kg (weighItem) thì tiền đổi theo, món mới sang bếp.
+// Món vào "Chờ cân": phục vụ cân tại hồ cùng khách rồi nhập số kg (weighItem) thì tiền đổi theo, món mới sang bếp.
 export async function addItems({ tableId, items: lines, note }, staff) {
   // Gộp các dòng trùng món trong 1 lần gửi (giống đặt online). Món theo kg cộng dồn số kg.
   const qtyByDish = new Map();
@@ -235,7 +237,7 @@ export async function serveItems({ itemIds, served }) {
 
 // "Hủy món": hủy cả dòng hoặc bớt vài phần (quantity). Chờ cân / bếp chưa làm hủy luôn; bếp đã làm phải có lý do.
 // Món theo kg chỉ hủy cả dòng (số kg cân chung cho cả dòng).
-export async function cancelItem(itemId, { quantity, reason }) {
+export async function cancelItem(itemId, { quantity, reason }, userId) {
   const tableId = await prisma.$transaction(async (tx) => {
     const item = await tx.orderItem.findUnique({ where: { id: itemId } });
     if (!item) throw ApiError.notFound('Không tìm thấy món');
@@ -258,6 +260,20 @@ export async function cancelItem(itemId, { quantity, reason }) {
       await tx.orderItem.update({ where: { id: item.id }, data: cancelled });
     }
 
+    // Món bán theo kg đã cân mà bếp CHƯA nhận làm: con hải sản còn sống, trả lại hồ (docs/27).
+    // Bếp đã làm (COOKING / SERVED) thì không trả lại - hàng đã mất.
+    if (byWeight(item) && item.weighedAt && item.status === 'PENDING' && item.weight) {
+      await recordDishWeight(tx, {
+        dishId: item.dishId,
+        kg: item.weight,
+        type: 'RETURN',
+        userId,
+        orderId: order.id,
+        orderItemId: item.id,
+        note: `Hủy món khi bếp chưa nhận làm${reason ? `: ${reason}` : ''}`,
+      });
+    }
+
     const amount = byWeight(item) ? lineTotal(item) : item.price * qty;
     await tx.order.update({ where: { id: order.id }, data: { subtotal: { decrement: amount }, total: { decrement: amount } } });
     await tx.dish.update({ where: { id: item.dishId }, data: { soldCount: { decrement: qty } } });
@@ -275,7 +291,7 @@ export async function requestBill(orderId, on = true) {
     if (live.length === 0) throw ApiError.badRequest('Bàn chưa có món nào');
     const unweighed = live.filter((i) => i.status === 'WEIGHING');
     if (unweighed.length) {
-      throw ApiError.badRequest(`Còn món chưa cân: ${unweighed.map((i) => i.name).join(', ')}. Nhờ hồ hải sản cân trước khi gửi thanh toán`);
+      throw ApiError.badRequest(`Còn món chưa cân: ${unweighed.map((i) => i.name).join(', ')}. Nhập số kg (cân tại hồ) trước khi gửi thanh toán`);
     }
   }
   await prisma.order.update({ where: { id: orderId }, data: { billRequestedAt: on ? new Date() : null } });
@@ -310,16 +326,70 @@ export async function markPrinted(orderId) {
 }
 
 // "Đã thu tiền": đơn Hoàn thành + Đã thanh toán, bàn trống lại. Còn món theo kg chưa cân thì chưa thu được.
-export async function pay(orderId) {
+export async function pay(orderId, { paymentMethod = 'COD' } = {}) {
   await getOpenOrder(prisma, orderId);
   const unweighed = await prisma.orderItem.findMany({ where: { orderId, status: 'WEIGHING' }, select: { name: true } });
   if (unweighed.length) {
-    throw ApiError.badRequest(`Còn món chưa cân: ${unweighed.map((i) => i.name).join(', ')}. Nhờ hồ hải sản cân trước khi thu tiền`);
+    throw ApiError.badRequest(`Còn món chưa cân: ${unweighed.map((i) => i.name).join(', ')}. Cần nhập số kg (cân tại hồ) trước khi thu tiền`);
   }
   return prisma.order.update({
     where: { id: orderId },
-    data: { status: 'COMPLETED', paymentStatus: 'PAID', paymentMethod: 'COD' },
+    data: { status: 'COMPLETED', paymentStatus: 'PAID', paymentMethod },
     include: billInclude,
+  });
+}
+
+// Thu ngân chỉnh số lượng món (khách gọi thêm bia / trả lại nước). Chỉ món bán theo phần, chưa hủy.
+export async function adjustBillItem(itemId, { quantity }, userId) {
+  return prisma.$transaction(async (tx) => {
+    const item = await tx.orderItem.findUnique({ where: { id: itemId } });
+    if (!item) throw ApiError.notFound('Không tìm thấy món');
+    if (item.status === 'CANCELLED') throw ApiError.badRequest('Món này đã hủy');
+    if (byWeight(item)) throw ApiError.badRequest('Món bán theo kg không chỉnh được số lượng, hãy cân lại');
+    const order = await getOpenOrder(tx, item.orderId);
+
+    const diff = quantity - item.quantity;
+    if (diff === 0) return bill(order.id);
+
+    if (quantity <= 0) {
+      // Xóa hết = hủy món
+      await tx.orderItem.update({ where: { id: item.id }, data: { status: 'CANCELLED', cancelReason: 'Thu ngân xóa khi thanh toán', cancelledAt: new Date() } });
+      const amount = item.price * item.quantity;
+      await tx.order.update({ where: { id: order.id }, data: { subtotal: { decrement: amount }, total: { decrement: amount } } });
+      await tx.dish.update({ where: { id: item.dishId }, data: { soldCount: { decrement: item.quantity } } });
+    } else {
+      await tx.orderItem.update({ where: { id: item.id }, data: { quantity } });
+      const amount = item.price * diff;
+      await tx.order.update({ where: { id: order.id }, data: { subtotal: { increment: amount }, total: { increment: amount } } });
+      if (diff !== 0) await tx.dish.update({ where: { id: item.dishId }, data: { soldCount: { increment: diff } } });
+    }
+    await syncOrderStatus(tx, order.id);
+    return tx.order.findUnique({ where: { id: order.id }, include: billInclude });
+  });
+}
+
+// Thu ngân thêm món mới vào bill (khách gọi thêm bia, nước khi chờ thanh toán)
+export async function addBillItems(orderId, items, userId) {
+  return prisma.$transaction(async (tx) => {
+    const order = await getOpenOrder(tx, orderId);
+    const dishes = await tx.dish.findMany({ where: { id: { in: items.map((i) => i.dishId) } } });
+    if (dishes.length !== new Set(items.map((i) => i.dishId)).size) throw ApiError.badRequest('Có món không tồn tại');
+
+    const newItems = items.map((line) => {
+      const d = dishes.find((x) => x.id === line.dishId);
+      if (!d.isAvailable) throw ApiError.badRequest(`Món "${d.name}" hiện đã hết`);
+      if (isSoldByWeight(d)) throw ApiError.badRequest(`Món "${d.name}" bán theo kg, chỉ gọi được qua phục vụ tại hồ`);
+      return { orderId, dishId: d.id, name: d.name, price: d.salePrice ?? d.price, quantity: line.quantity, status: 'PENDING' };
+    });
+
+    await tx.orderItem.createMany({ data: newItems });
+    const added = newItems.reduce((s, i) => s + i.price * i.quantity, 0);
+    await tx.order.update({ where: { id: orderId }, data: { subtotal: { increment: added }, total: { increment: added } } });
+    for (const i of newItems) {
+      await tx.dish.update({ where: { id: i.dishId }, data: { soldCount: { increment: i.quantity } } });
+    }
+    await syncOrderStatus(tx, orderId);
+    return tx.order.findUnique({ where: { id: orderId }, include: billInclude });
   });
 }
 
@@ -351,7 +421,20 @@ export async function startCooking(itemIds) {
   });
 }
 
-// ---------------- Hồ hải sản (web /admin/weighing): cân món bán theo kg ----------------
+// "Đã xong": bếp báo món nấu xong, sẵn sàng mang ra bàn. Phục vụ / tiếp thực thấy để mang ra.
+export async function finishCooking(itemIds) {
+  return prisma.$transaction(async (tx) => {
+    const items = await tx.orderItem.findMany({
+      where: { id: { in: itemIds }, status: 'COOKING', order: { type: 'DINE_IN', status: { in: OPEN_ORDER } } },
+      select: { id: true, orderId: true },
+    });
+    await tx.orderItem.updateMany({ where: { id: { in: items.map((i) => i.id) } }, data: { status: 'SERVED', servedAt: new Date() } });
+    for (const orderId of new Set(items.map((i) => i.orderId))) await syncOrderStatus(tx, orderId);
+    return { updated: items.length };
+  });
+}
+
+// ---------------- Món bán theo kg: nhập số kg (app phục vụ) / xem lại, cân lại (web hồ hải sản) ----------------
 
 const weighSelect = {
   id: true, name: true, price: true, quantity: true, note: true, status: true, weight: true, weighedAt: true, createdAt: true,
@@ -373,10 +456,10 @@ export async function weighingList() {
   return { waiting, weighed };
 }
 
-// Nhập số kg cân thật: tiền dòng món = giá 1 kg × số kg, món sang "Chờ bếp".
+// Nhập số kg cân thật (phục vụ trên app tại hồ, hoặc hồ hải sản / quản lý trên web): tiền dòng món = giá 1 kg × số kg, món sang "Chờ bếp".
 // Tiền đơn đổi theo CHÊNH LỆCH với tiền tạm (số kg phục vụ ghi lúc gửi bếp, vd ghi 1 kg cân ra 0,98 kg).
 // Cân lại (nhập nhầm) được khi bếp chưa nhận làm.
-export async function weighItem(itemId, weight) {
+export async function weighItem(itemId, weight, userId) {
   const kg = Math.round(weight * 1000) / 1000; // làm tròn tới gam
   return prisma.$transaction(async (tx) => {
     const item = await tx.orderItem.findUnique({ where: { id: itemId } });
@@ -388,6 +471,22 @@ export async function weighItem(itemId, weight) {
 
     const diff = lineTotal({ ...item, weight: kg }) - lineTotal(item);
     await tx.orderItem.update({ where: { id: item.id }, data: { weight: kg, weighedAt: new Date(), status: 'PENDING' } });
+
+    // Trừ hồ hải sản đúng số kg đã cân (docs/27-ton-ho-hai-san.md).
+    // Cân lại: chỉ ghi phần chênh lệch (sửa 1 → 0,98 thì trả lại hồ 0,02 kg).
+    const weighedBefore = item.weighedAt ? (item.weight ?? 0) : 0;
+    const kgDiff = Math.round((kg - weighedBefore) * 1000) / 1000;
+    if (kgDiff !== 0) {
+      await recordDishWeight(tx, {
+        dishId: item.dishId,
+        kg: Math.abs(kgDiff),
+        type: kgDiff > 0 ? 'SALE' : 'RETURN',
+        userId,
+        orderId: order.id,
+        orderItemId: item.id,
+        note: weighedBefore ? `Cân lại: ${String(weighedBefore).replace('.', ',')} → ${String(kg).replace('.', ',')} kg` : null,
+      });
+    }
     const data = { subtotal: { increment: diff }, total: { increment: diff } };
     if (diff !== 0 && item.weight != null) data.billRequestedAt = null; // cân lại làm đổi tiền -> bill cũ không còn đúng
     await tx.order.update({ where: { id: order.id }, data });

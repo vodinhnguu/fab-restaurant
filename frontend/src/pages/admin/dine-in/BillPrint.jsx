@@ -50,7 +50,7 @@ export default function BillPrint() {
 
       <div className="mx-auto w-[80mm] bg-white p-4 font-mono text-[12px] leading-snug text-black shadow print:w-full print:p-0 print:shadow-none">
         <div className="text-center">
-          <p className="text-base font-bold uppercase">{info?.name ?? 'FAB Seafood'}</p>
+          <p className="text-base font-bold uppercase">{info?.name ?? 'Ngưu Quán'}</p>
           {info?.address && <p>{info.address}</p>}
           {info?.phone && <p>ĐT: {info.phone}</p>}
         </div>

@@ -1,13 +1,7 @@
 // Ăn tại quán: nhân viên phục vụ ghi món tại bàn (app mobile), bếp và thu ngân (web).
 // Tài liệu: docs/23-app-nhan-vien-phuc-vu.md
-import { ApiError } from '../../utils/ApiError.js';
+import { toId } from '../../utils/helpers.js';
 import * as service from './dine-in.service.js';
-
-const toId = (value) => {
-  const id = Number(value);
-  if (!Number.isInteger(id) || id <= 0) throw ApiError.notFound();
-  return id;
-};
 
 // ---- Phục vụ (app) ----
 
@@ -40,7 +34,7 @@ export async function serveItems(req, res) {
 
 // POST /dine-in/items/:id/cancel
 export async function cancelItem(req, res) {
-  const data = await service.cancelItem(toId(req.params.id), req.body);
+  const data = await service.cancelItem(toId(req.params.id), req.body, req.user.id);
   res.json({ success: true, data, message: 'Đã hủy món' });
 }
 
@@ -75,8 +69,20 @@ export async function markPrinted(req, res) {
 
 // POST /dine-in/bills/:id/pay
 export async function pay(req, res) {
-  const data = await service.pay(toId(req.params.id));
+  const data = await service.pay(toId(req.params.id), req.body);
   res.json({ success: true, data, message: `Đã thu tiền bàn ${data.table?.code ?? ''}`.trim() });
+}
+
+// PATCH /dine-in/bills/:billId/items/:itemId — thu ngân chỉnh số lượng
+export async function adjustBillItem(req, res) {
+  const data = await service.adjustBillItem(toId(req.params.itemId), req.body, req.user.id);
+  res.json({ success: true, data, message: 'Đã cập nhật' });
+}
+
+// POST /dine-in/bills/:id/items — thu ngân thêm món
+export async function addBillItems(req, res) {
+  const data = await service.addBillItems(toId(req.params.id), req.body.items, req.user.id);
+  res.status(201).json({ success: true, data, message: 'Đã thêm món' });
 }
 
 // ---- Bếp (web) ----
@@ -92,6 +98,12 @@ export async function startCooking(req, res) {
   res.json({ success: true, data, message: 'Đã nhận làm' });
 }
 
+// POST /dine-in/kitchen/finish
+export async function finishCooking(req, res) {
+  const data = await service.finishCooking(req.body.itemIds);
+  res.json({ success: true, data, message: 'Đã xong, phục vụ mang ra bàn' });
+}
+
 // ---- Hồ hải sản ----
 
 // GET /dine-in/weighing: { waiting: món chờ cân, weighed: món đã cân hôm nay }
@@ -101,6 +113,6 @@ export async function weighingList(req, res) {
 
 // POST /dine-in/items/:id/weigh { weight }: nhập số kg thực tế
 export async function weighItem(req, res) {
-  const data = await service.weighItem(toId(req.params.id), req.body.weight);
+  const data = await service.weighItem(toId(req.params.id), req.body.weight, req.user.id);
   res.json({ success: true, data, message: `Đã cân ${data.name}: ${String(data.weight).replace('.', ',')} kg` });
 }

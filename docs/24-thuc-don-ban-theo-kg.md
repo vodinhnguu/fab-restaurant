@@ -1,12 +1,13 @@
 # 24. Thực đơn hải sản, bán theo kg, cân tại hồ, Best seller
 
-Từ 22/11/2026 thực đơn FAB Seafood chỉ còn **món hải sản và món ăn kèm** (cơm, rau, cháo, nước đóng chai). Hải sản sống ở hồ (tôm hùm, tôm sú, cua, cá mú, tôm tít) **bán theo kg**: khách chọn con, nhân viên hồ hải sản cân, tiền = giá 1 kg × số kg thực tế. Trang chủ web làm nổi bật các món **Best seller**.
+Từ 22/11/2026 thực đơn FAB Seafood chỉ còn **món hải sản và món ăn kèm** (cơm, rau, cháo, nước đóng chai). Hải sản sống ở hồ (tôm hùm, tôm sú, cua, cá mú, tôm tít) **bán theo kg**: phục vụ dẫn khách ra hồ, khách chọn con, cân tại hồ, **phục vụ nhập số kg ngay trên app** (từ 23/11/2026; trước đó nhân viên hồ hải sản nhập trên web), tiền = giá 1 kg × số kg thực tế. Trang chủ web làm nổi bật các món **Best seller**.
 
 | Ai | Làm gì | Ở đâu |
 |---|---|---|
 | Khách (web) | Xem Best seller ở trang chủ, lọc "Best seller" ở Thực đơn. Món theo kg chỉ xem giá / kg, bấm **Đặt bàn** (không đặt giao hàng được) | `/`, `/menu`, `/menu/:slug` |
 | Phục vụ (app) | Gọi món: **mặc định 1 phần / 1 kg**, sửa được (bấm −/+ hoặc bấm vào số để gõ, vd 1 kg → 0,98 kg). Món theo kg tính **tiền tạm** theo số kg ghi, vào trạng thái **Chờ cân** | S05 → S06 / S08 → S04 |
-| Hồ hải sản (web) | Trang **Cân hải sản**: ô số kg **điền sẵn số phục vụ ghi**, cân đúng thì xác nhận, khác thì sửa; món sang "Chờ bếp" | `/admin/weighing` |
+| Phục vụ (app) | **Nhập số kg**: dẫn khách ra hồ, khách chỉ con, cân, nhập số kg thật ngay tại hồ → món sang "Chờ bếp", tiền tính lại | S04 khung xanh "Nhập số kg" → S14 |
+| Hồ hải sản (web) | Trang **Cân hải sản**: theo dõi món còn chờ cân, đối chiếu "Đã cân hôm nay", **Cân lại** khi phục vụ nhập nhầm / khách thắc mắc | `/admin/weighing` |
 | Bếp (web) | Chỉ thấy món theo kg **sau khi đã cân**, kèm số kg | `/admin/kitchen` |
 | Thu ngân (web) | Bill in "1,25 kg x 1.890.000/kg". Còn món chưa cân thì chưa thu tiền được | `/admin/cashier` |
 
@@ -76,19 +77,24 @@ Hàm kiểm tra dùng chung: `isSoldByWeight(dish)` (đơn vị = `kg`) ở [bac
 ## 3. Cân tại hồ (ăn tại quán)
 
 ```
- PHỤC VỤ (app)                    HỒ HẢI SẢN (web)                    BẾP (web)          THU NGÂN (web)
+ PHỤC VỤ (app)                              HỒ HẢI SẢN (web)      BẾP (web)        THU NGÂN (web)
  Gọi "Tôm hùm nướng phô mai"
- mặc định 1 kg (khách muốn con
- to hơn thì sửa, vd 1,3 kg)
- → Gửi bếp ─────────────────────► món "Chờ cân" (chuông, số đỏ),
-   tiền TẠM 1 kg = 1.890.000đ       ô số kg điền sẵn "1"
-   (bếp chưa thấy)                  bắt con khách chọn, cân ra 0,98 kg
-                                    sửa 1 → 0,98, "Xác nhận cân"
-                                    tiền = 1.890.000 × 0,98 ─────────► món "Chờ bếp"
-                                    = 1.852.200đ (đơn trừ 37.800đ)     "Nhận làm" ...
- S04 thấy "Đã cân 0,98 kg"
- "Gửi thanh toán" ───────────────────────────────────────────────────────────────────► bill:
-                                                                                         0,98 kg x 1.890.000/kg
+ mặc định 1 kg (khách muốn con to
+ hơn thì sửa ngay, vd 1,3 kg)
+ → Gửi bếp: món "Chờ cân" ────────────────► thẻ món chờ cân
+   tiền TẠM 1 kg = 1.890.000đ               (chuông, số đỏ: biết
+   (bếp chưa thấy món)                       có khách ra hồ)
+ Dẫn khách ra hồ, khách chỉ con,
+ cân trên cân điện tử: 0,98 kg
+ S04 khung xanh "1 món chờ cân"
+ → "Nhập số kg" (S14): sửa 1 → 0,98
+   "Lưu số kg" ──────────────────────────────────────────────────► món "Chờ bếp"
+   tiền = 1.890.000 × 0,98 = 1.852.200đ                            "Nhận làm" ...
+   (đơn trừ 37.800đ)
+ S04 thấy "Đã cân 0,98 kg"                 nhập nhầm / khách
+                                           thắc mắc: "Cân lại"
+ "Gửi thanh toán" ─────────────────────────────────────────────────────────────────► bill:
+                                                                                      0,98 kg x 1.890.000/kg
 ```
 
 Trạng thái món (`OrderItemStatus`): **`WEIGHING` Chờ cân** → `PENDING` Chờ bếp → `COOKING` Bếp đang làm → `SERVED` Đã ra bàn | `CANCELLED`. Chỉ món theo kg đi qua `WEIGHING`.
@@ -103,14 +109,14 @@ Trạng thái món (`OrderItemStatus`): **`WEIGHING` Chờ cân** → `PENDING` 
 | 4 | Còn món chờ cân thì **không gửi thanh toán** và **không thu tiền** được (báo tên món) | `requestBill`, `pay` |
 | 5 | Món theo kg chỉ **hủy cả dòng** (số kg cân chung). Chờ cân / chờ bếp hủy không cần lý do | `cancelItem` |
 | 6 | Món chờ cân không "Check món" được (chưa nấu) | `serveItems` |
-| 7 | Quyền: xem trang = **Xem** "Hồ hải sản & nhập hàng" (`SEAFOOD_TANK`); cân = **Sửa**. Mặc định Sửa được: Chủ, Admin, Quản lý, Bếp, Hồ hải sản. Menu "Cân hải sản" chỉ hiện cho người cân được | `dine-in.routes.js`, `adminMenu.js` |
+| 7 | Quyền nhập / sửa số kg: **Sửa "Đơn hàng & gọi món"** (`ORDERS`, phục vụ nhập trên app) **hoặc** **Sửa "Hồ hải sản & nhập hàng"** (`SEAFOOD_TANK`, cân lại trên web). Xem trang web `/admin/weighing` = **Xem** `SEAFOOD_TANK`; menu "Cân hải sản" chỉ hiện cho người cân được | `dine-in.routes.js`, `adminMenu.js` |
 
 ### API
 
 | Method | Đường dẫn | Quyền | Làm gì |
 |---|---|---|---|
 | GET | `/dine-in/weighing` | SEAFOOD_TANK xem | `{ waiting: [món chờ cân, gọi sớm trước], weighed: [món đã cân hôm nay, 30 món mới nhất] }`, mỗi món kèm `order.table`, `order.staff` |
-| POST | `/dine-in/items/:id/weigh` | SEAFOOD_TANK sửa | Body `{ "weight": 1.25 }`. Trả món vừa cân, `message` "Đã cân Tôm hùm nướng phô mai: 1,25 kg" |
+| POST | `/dine-in/items/:id/weigh` | ORDERS sửa **hoặc** SEAFOOD_TANK sửa | Body `{ "weight": 1.25 }`. Trả món vừa cân, `message` "Đã cân Tôm hùm nướng phô mai: 1,25 kg" |
 
 Thay đổi API cũ: `POST /dine-in/orders` mỗi món nhận thêm `weight` (số kg, chỉ dùng cho món theo kg), vd `{ "dishId": 9, "quantity": 1, "weight": 0.98 }`; `GET /dine-in/tables` thêm `order.weighingCount` (số phần chờ cân); các API trả món có thêm `weight`, `weighedAt`; `POST /dine-in/orders/:id/bill-request` và `POST /dine-in/bills/:id/pay` báo 400 khi còn món chờ cân.
 
@@ -122,7 +128,7 @@ Migration `20261122011700_can_hai_san_theo_kg`:
 |---|---|
 | Enum `OrderItemStatus` thêm `WEIGHING` | Chờ cân |
 | `OrderItem.weight Float?` | Số kg. Đang `WEIGHING`: số kg phục vụ ghi (tạm); đã cân: số kg thật. `null` = món theo phần (hoặc đơn cũ chưa có số kg) |
-| `OrderItem.weighedAt DateTime?` | Lúc cân (null = hồ hải sản chưa cân) |
+| `OrderItem.weighedAt DateTime?` | Lúc nhập số kg (null = chưa cân) |
 
 `OrderItem.price` của món theo kg là **giá 1 kg**. Tiền dòng món: có `weight` (hoặc đang `WEIGHING`) → `price × weight` (chưa có số kg = 0); còn lại → `price × quantity`. Công thức này viết giống nhau ở backend (`lineTotal` trong `dine-in.service.js`), web (`lineAmount` trong `components/dine-in/bill.js`) và app (`OrderItem.lineTotal`).
 
@@ -130,7 +136,7 @@ Migration `20261122011700_can_hai_san_theo_kg`:
 
 | Trang | Thay đổi | File |
 |---|---|---|
-| **Cân hải sản** (mới) | Thẻ món chờ cân (bàn, khu, phục vụ, giờ gọi, ghi chú, giá / kg, "Phục vụ ghi 1 kg (tạm tính ...)"); ô nhập kg **điền sẵn số phục vụ ghi** (gõ "1,25" hay "1.25" đều được) xem trước thành tiền, Enter để cân. Bảng "Đã cân hôm nay" có nút **Cân lại**. Tự tải lại 10 giây, chuông + thông báo khi có món mới chờ cân, số đỏ trên menu | [Weighing.jsx](../frontend/src/pages/admin/dine-in/Weighing.jsx), [useDineInAlerts.js](../frontend/src/components/dine-in/useDineInAlerts.js) |
+| **Cân hải sản** | Trang theo dõi + cân lại của hồ hải sản / quản lý (người nhập số kg chính là phục vụ, trên app). Thẻ món chờ cân (bàn, khu, phục vụ, giờ gọi, ghi chú, giá / kg, "Phục vụ ghi 1 kg (tạm tính ...)"); ô nhập kg **điền sẵn số phục vụ ghi** (gõ "1,25" hay "1.25" đều được) xem trước thành tiền, Enter để cân. Bảng "Đã cân hôm nay" có nút **Cân lại**. Tự tải lại 10 giây, chuông + thông báo khi có món mới chờ cân, số đỏ trên menu | [Weighing.jsx](../frontend/src/pages/admin/dine-in/Weighing.jsx), [useDineInAlerts.js](../frontend/src/components/dine-in/useDineInAlerts.js) |
 | Phiếu bếp | Dòng "Đã cân 1,3 kg" dưới tên món | [Kitchen.jsx](../frontend/src/pages/admin/dine-in/Kitchen.jsx) |
 | Thanh toán tại bàn | "1,1 kg Cua gạch hấp bia"; món chưa cân: "1 kg ... (tạm, chờ cân)" + tiền tạm (đơn cũ chưa có số kg: "Chờ cân" và "—"); nhãn "Còn 1 món chờ cân" | [Cashier.jsx](../frontend/src/pages/admin/dine-in/Cashier.jsx), [bill.js](../frontend/src/components/dine-in/bill.js) |
 | In bill | Dòng "1,25 kg x 1.890.000/kg" (chưa cân thì thêm "(tạm, chưa cân)") | [BillPrint.jsx](../frontend/src/pages/admin/dine-in/BillPrint.jsx) |
@@ -141,10 +147,11 @@ Migration `20261122011700_can_hai_san_theo_kg`:
 | Màn | Thay đổi |
 |---|---|
 | S03 Sơ đồ bàn | Ô bàn ghi "1 chờ cân" khi còn món chưa cân |
-| S04 Đơn của bàn | Nhãn xanh **Chờ cân**, dòng "Ghi 1 kg × 1.890.000đ/kg · chờ hồ hải sản cân" + tiền tạm; cân rồi: "Đã cân 0,98 kg × 1.890.000đ/kg" + thành tiền. (Đơn cũ chưa có số kg: "hồ hải sản đang cân", chỗ tiền ghi "Chờ cân") |
+| S04 Đơn của bàn | Khung xanh "**1 món bán theo kg chờ cân**" + nút **Nhập số kg** (quyền ORDERS Sửa; chỉ xem thì chỉ nhắc). Nhãn xanh **Chờ cân**, dòng "Ghi tạm 1 kg × 1.890.000đ/kg · chờ cân tại hồ" + tiền tạm; cân rồi: "Đã cân 0,98 kg × 1.890.000đ/kg" + thành tiền. (Đơn cũ chưa có số kg: "chờ cân tại hồ", chỗ tiền ghi "Chờ cân") |
+| **S14 Nhập số kg** (sheet, mới) | Mở từ khung xanh S04. Mỗi món chờ cân: tên, giá 1 kg, ghi chú, `[ − ] 1 kg [ + ]` (bấm số để gõ, vd 0,98; 0,05 – 30 kg), tiền xem trước = giá 1 kg × số kg; nhiều món thì có dòng "Tiền hải sản tạm tính". Nút **Lưu số kg (N món)** gọi API lần lượt từng món (lỗi giữa đường thì món đã lưu vẫn giữ, hiện dấu ✓). Lưu xong về S04, bàn tải lại | [s14_weigh_sheet.dart](../mobile/lib/screens/tables/s14_weigh_sheet.dart) |
 | S05 | Giá hiện "/kg" (theo đơn vị món). Nút "+" thêm **1 phần / 1 kg**, món kg báo "Đã thêm 1 kg ..., sửa số kg ở phiếu" |
 | S06 Chi tiết món | Món theo phần: `[ − ] 1 [ + ]`; món theo kg: `[ − ] 1 kg [ + ]` (−/+ đổi 0,1 kg). Nút "Thêm vào phiếu · 1.890.000đ" (tiền tạm theo số kg) |
-| S08 Phiếu gọi món | Món theo kg: "1.890.000đ / kg · hồ hải sản cân lại", `[ − ] 1 kg [ + ]` + tiền tạm; tạm tính ghi "(N món, món kg tính tạm)". Gửi bếp gửi kèm số kg |
+| S08 Phiếu gọi món | Món theo kg: "1.890.000đ / kg · cân tại hồ", `[ − ] 1 kg [ + ]` + tiền tạm; tạm tính ghi "(N món, món kg tính tạm)". Gửi bếp gửi kèm số kg |
 | Mọi bộ chọn số lượng | **Bấm vào con số để gõ**: món theo kg gõ số lẻ ("0,98" hay "0.98"), 0,05 – 30 kg; món theo phần gõ số nguyên 1 – 50. Gõ sai thì báo ngay trong hộp. Code: `QuantityStepper`, `WeightStepper`, `showAmountDialog` ở [quantity_stepper.dart](../mobile/lib/widgets/quantity_stepper.dart); số kg lưu ở `CartItem.weight`, `CartNotifier.setWeight` ([cart_state.dart](../mobile/lib/state/cart_state.dart)) |
 | S09 Gửi thanh toán | Khung xanh "Còn 1 món bán theo kg chưa cân…", nút **Gửi thanh toán** bị khóa |
 | S13 Hủy món | Món theo kg không có ô chọn số phần (hủy cả dòng); chờ cân hủy không cần lý do |
@@ -153,9 +160,9 @@ Migration `20261122011700_can_hai_san_theo_kg`:
 
 ## 4. Thử nhanh
 
-1. `npm run dev`, đăng nhập app bằng `phucvu@fab.vn`, chọn bàn trống, gọi **Tôm hùm nướng phô mai** + **Cơm chiên hải sản**. Ở phiếu (S08) tôm hùm hiện `1 kg`: bấm vào số, gõ `1,2` → tiền tạm 2.268.000đ. Gửi bếp. S04 thấy "Ghi 1,2 kg ... · chờ hồ hải sản cân", tổng đã gồm tiền tạm.
-2. Web: đăng nhập `hohaisan@fab.vn` / `123456` → menu **Cân hải sản** (số đỏ 1). Ô số kg điền sẵn `1,2`; sửa thành `1,25` → Xác nhận cân.
-3. App S04 (tự tải lại 15 giây): "Đã cân 1,25 kg", tổng tăng thêm 94.500đ (0,05 kg). Gửi thanh toán.
+1. `npm run dev`, đăng nhập app bằng `phucvu@fab.vn`, chọn bàn trống, gọi **Tôm hùm nướng phô mai** + **Cơm chiên hải sản**. Ở phiếu (S08) tôm hùm hiện `1 kg`: bấm vào số, gõ `1,2` → tiền tạm 2.268.000đ. Gửi bếp. S04 thấy "Ghi tạm 1,2 kg ... · chờ cân tại hồ", tổng đã gồm tiền tạm.
+2. Vẫn trên app, S04 có khung xanh "1 món bán theo kg chờ cân" → **Nhập số kg**, sửa `1,2` thành `1,25` → **Lưu số kg (1 món)**. S04 thấy "Đã cân 1,25 kg", tổng tăng thêm 94.500đ (0,05 kg).
+3. Web: đăng nhập `hohaisan@fab.vn` / `123456` → menu **Cân hải sản**: món không còn ở "Chờ cân", nằm ở bảng "Đã cân hôm nay" (có nút **Cân lại** khi bếp chưa nhận làm). Về app gửi thanh toán.
 4. Web `thungan@fab.vn`: In bill thấy dòng số kg, Đã thu tiền.
 5. Web khách `/`: khối Best seller; bấm 1 món tôm hùm: nút "Đặt bàn để thưởng thức", không có "Thêm vào giỏ".
 

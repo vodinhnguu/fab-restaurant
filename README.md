@@ -38,7 +38,8 @@ Backend là REST API dùng chung cho cả web và app mobile Flutter (thư mục
 - CRUD món ăn (upload ảnh, bật/tắt còn món), danh mục, mã giảm giá
 - Kiểm duyệt đánh giá, quản lý người dùng (phân quyền, khóa tài khoản)
 - Vệ sinh cho tạp vụ: tổng quan, nhiệm vụ vệ sinh (nhận việc / hoàn thành), khu vực cần dọn, lịch sử công việc; phục vụ / lễ tân báo "cần dọn"
-- Cân hải sản (hồ hải sản, bếp): món bán theo kg phục vụ vừa gọi hiện "Chờ cân", ô số kg điền sẵn số phục vụ ghi, xác nhận / sửa thì tự tính lại tiền và chuyển xuống bếp; cân lại được khi bếp chưa nhận làm
+- Tồn hồ hải sản (hồ hải sản, bếp, quản lý): 6 loại hải sản sống trong hồ, mỗi loại biết **nhập bao nhiêu – bán bao nhiêu – còn lại bao nhiêu**; nhập hàng (kèm giá nhập), kiểm hồ, ghi hao hụt; sổ nhập - xuất ghi rõ ai làm, bàn nào. Phục vụ cân món là hệ thống tự trừ hồ, hủy món khi bếp chưa làm thì tự trả lại ([docs/27](docs/27-ton-ho-hai-san.md))
+- Cân hải sản (hồ hải sản, bếp): trang theo dõi + cân lại — số kg do **phục vụ nhập ngay tại hồ trên app** (dẫn khách ra hồ chọn con, cân, nhập); trang web xem món còn "Chờ cân", đối chiếu "Đã cân hôm nay" và cân lại khi nhập nhầm (bếp chưa nhận làm)
 
 ---
 
@@ -149,7 +150,12 @@ Nên đọc theo thứ tự:
 21. [Lễ tân: chuyển bàn](docs/21-le-tan-chuyen-ban.md): tab Hôm nay, chuyển / xếp bàn trên sơ đồ, lịch sử chuyển bàn, hủy bàn
 22. [Kỹ thuật: thiết bị & sửa chữa](docs/22-ky-thuat-bao-tri.md): 4 trang của kỹ thuật, nút Báo hỏng cho mọi bộ phận, bảo trì định kỳ, chi phí sửa chữa
 23. [App nhân viên phục vụ](docs/23-app-nhan-vien-phuc-vu.md): phục vụ chọn khu → bàn → món, gửi bếp, check món, hủy món, gửi thanh toán trên app; bếp nhận làm, thu ngân in bill và thu tiền trên web; đơn ăn tại quán `DINE_IN`, API `/dine-in`
-24. [Thực đơn bán theo kg](docs/24-thuc-don-ban-theo-kg.md): thực đơn hải sản 12 nhóm / 70 món (`prisma/menu.js`, lệnh `db:seed-menu`), hải sản sống bán theo kg, hồ hải sản cân tại quán (trang Cân hải sản), khối Best seller ở trang chủ
+24. [Thực đơn bán theo kg](docs/24-thuc-don-ban-theo-kg.md): thực đơn hải sản 12 nhóm / 70 món (`prisma/menu.js`, lệnh `db:seed-menu`), hải sản sống bán theo kg, phục vụ cân tại hồ cùng khách và nhập số kg trên app (hồ hải sản theo dõi / cân lại ở trang Cân hải sản), khối Best seller ở trang chủ
+25. [Giao diện trang khách](docs/25-giao-dien-trang-khach.md): thanh thông tin trên cùng, nút Gọi / Đặt bàn luôn thấy (thanh đáy trên điện thoại), ảnh bìa mới có thẻ món đinh, khu "Chọn con nào, cân con đó", hiệu ứng hiện dần khi cuộn
+26. [Mỗi lần chạy app](docs/26-chay-app-moi-lan.md): quy trình bật backend + web + app Flutter trên máy Windows, cách xử lý lỗi hay gặp
+27. [Tồn hồ hải sản](docs/27-ton-ho-hai-san.md): 6 loại hải sản sống trong hồ, nhập hàng / kiểm hồ / hao hụt, sổ nhập - xuất, tự trừ hồ khi phục vụ cân món, app hiện "Hồ còn 3,2 kg" (lệnh `db:seed-tank`)
+28. [App Quản lý](docs/28-app-quan-ly.md): quản lý / chủ mở app thấy doanh thu hôm nay và tháng này (tách tại quán / online), đơn đã hủy kèm lý do, bàn đang phục vụ, bia & nước bán hôm nay, tồn hồ hải sản
+29. [Kiểm bia nước](docs/29-kiem-bia-nuoc.md): xuất bia nước ra quầy theo thùng, kiểm số trả lại cuối ngày, lệch âm = thiếu hàng / dương = thừa (lệnh `db:seed-drinks`)
 
 👉 Mới bắt đầu? Đọc **10** trước để có bức tranh toàn cảnh. Khi đang code, mở sẵn **08** và **09** để tra cứu nhanh.
 

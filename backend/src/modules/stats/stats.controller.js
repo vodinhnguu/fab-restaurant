@@ -15,9 +15,11 @@ export async function overview(req, res) {
   // Doanh thu chỉ tính đơn đã hoàn thành
   const revenueWhere = { status: 'COMPLETED', createdAt: { gte: since } };
 
-  const [revenue, orderCount, customerCount, pendingOrders, todayReservations, byStatus, topDishes, recentOrders] =
+  const [revenue, byType, orderCount, customerCount, pendingOrders, todayReservations, byStatus, topDishes, recentOrders] =
     await Promise.all([
       prisma.order.aggregate({ where: revenueWhere, _sum: { total: true }, _count: true }),
+      // Doanh thu theo kênh bán: giao tận nơi / đến lấy (đặt online) và ăn tại quán (phục vụ ghi trên app)
+      prisma.order.groupBy({ by: ['type'], where: revenueWhere, _sum: { total: true }, _count: { _all: true } }),
       prisma.order.count({ where: { createdAt: { gte: since } } }),
       prisma.user.count({ where: { role: 'CUSTOMER' } }),
       prisma.order.count({ where: { status: 'PENDING' } }),
@@ -61,6 +63,10 @@ export async function overview(req, res) {
       days,
       totalRevenue: revenue._sum.total ?? 0,
       completedOrders: revenue._count,
+      revenueByType: ['DELIVERY', 'PICKUP', 'DINE_IN'].map((type) => {
+        const row = byType.find((t) => t.type === type);
+        return { type, revenue: row?._sum.total ?? 0, orders: row?._count._all ?? 0 };
+      }),
       orderCount,
       customerCount,
       pendingOrders,

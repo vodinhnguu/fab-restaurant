@@ -33,7 +33,7 @@ class OrderItem {
   final String? image; // lấy từ món hiện tại (dish.image)
   final String? slug; // để mở lại S06
   final DateTime? createdAt; // lúc gửi bếp (mỗi lần gọi thêm là các dòng mới)
-  final double? weight; // món bán theo kg: số kg hồ hải sản đã cân (null = món theo phần / chưa cân)
+  final double? weight; // món bán theo kg: số kg đã cân tại hồ (null = món theo phần / chưa cân)
 
   /// Món bán theo kg (price là giá 1 kg): đang chờ cân hoặc đã cân.
   bool get isByWeight => status == OrderItemStatus.weighing || weight != null;
@@ -107,7 +107,7 @@ class Order {
   /// Số phần chưa mang ra bàn (chờ cân + chờ bếp + bếp đang làm).
   int get waitingCount => liveItems.where((i) => !i.isServed).fold(0, (sum, i) => sum + i.quantity);
 
-  /// Số món bán theo kg còn chờ hồ hải sản cân: chưa gửi thanh toán được.
+  /// Số món bán theo kg còn chờ cân tại hồ (phục vụ nhập số kg): chưa gửi thanh toán được.
   int get weighingCount => liveItems.where((i) => i.isWeighing).length;
 
   bool get billRequested => billRequestedAt != null;

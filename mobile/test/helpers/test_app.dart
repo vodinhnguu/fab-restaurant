@@ -41,6 +41,20 @@ final phucVuJson = {
   'permissions': _perms('VCE'),
 };
 
+/// Quản lý: như phục vụ + quyền Xem "Tổng quan" (DASHBOARD) → thấy nhóm Quản lý trong app (docs/28).
+final quanLyJson = {
+  ...phucVuJson,
+  'id': 2,
+  'name': 'Phạm Quản Lý',
+  'email': 'quanly@fab.vn',
+  'staffRole': {'id': 4, 'key': 'MANAGER', 'name': 'Quản lý'},
+  'permissions': {
+    ..._perms('VCE'),
+    'DASHBOARD': {'view': true, 'create': false, 'edit': false, 'delete': false},
+    'DRINKS': {'view': true, 'create': true, 'edit': true, 'delete': true},
+  },
+};
+
 /// Thu ngân: Xem, Sửa (thu tiền) nhưng không ghi món.
 final thuNganJson = {
   ...phucVuJson,
@@ -119,6 +133,23 @@ const dishesJson = [
     'ratingAvg': 4.9,
     'ratingCount': 185,
     'category': {'id': 5, 'name': 'Món Nhật', 'slug': 'mon-nhat'},
+  },
+  // Món bán theo kg kèm tồn hồ hải sản (docs/27-ton-ho-hai-san.md)
+  {
+    'id': 9,
+    'name': 'Tôm hùm nướng phô mai',
+    'slug': 'tom-hum-nuong-pho-mai',
+    'price': 1890000,
+    'salePrice': null,
+    'unit': 'kg',
+    'image': null,
+    'isAvailable': true,
+    'isFeatured': false,
+    'soldCount': 12,
+    'ratingAvg': 5,
+    'ratingCount': 8,
+    'category': {'id': 1, 'name': 'Tôm hùm', 'slug': 'tom-hum'},
+    'tankItem': {'id': 1, 'name': 'Tôm hùm', 'stockKg': 3.2, 'lowStockKg': 3, 'isActive': true},
   },
 ];
 
@@ -295,9 +326,146 @@ Future<ResponseBody>? defaultReply(RequestOptions request, {Map<String, Object?>
         'data': dishesJson,
         'meta': {'page': 1, 'totalPages': 1, 'total': dishesJson.length},
       }),
+    // App Quản lý (docs/28-app-quan-ly.md)
+    '/stats/manager' => ok(managerStatsJson),
+    '/stats/cancellations' => ok(cancellationsJson),
+    // Kiểm bia nước (docs/29-kiem-bia-nuoc.md)
+    '/drinks/check' when request.method == 'GET' => ok(drinkCheckJson),
+    '/drinks/check' => ok(drinkCheckJson['rows']),
     _ => null,
   };
 }
+
+/// Số liệu màn Quản lý (S15): doanh thu hôm nay 12,5 triệu, tháng 240 triệu, 1 đơn hủy hôm nay.
+const managerStatsJson = {
+  'today': {
+    'revenue': 12500000,
+    'orders': 8,
+    'avgPerOrder': 1562500,
+    'dineIn': {'revenue': 10000000, 'orders': 5},
+    'online': {'revenue': 2500000, 'orders': 3},
+  },
+  'month': {
+    'revenue': 240000000,
+    'orders': 150,
+    'avgPerOrder': 1600000,
+    'dineIn': {'revenue': 200000000, 'orders': 120},
+    'online': {'revenue': 40000000, 'orders': 30},
+    'label': '11/2026',
+    'fromDay': 1,
+  },
+  'cancelled': {
+    'today': {'orders': 1, 'amount': 250000},
+    'month': {'orders': 6, 'amount': 3400000},
+  },
+  'tables': {'total': 23, 'busy': 5, 'free': 18, 'billRequested': 2, 'servingAmount': 4200000},
+  'drinks': {
+    'items': [
+      {'dishId': 70, 'name': 'Bia Saigon lon', 'unit': 'lon', 'quantity': 24, 'revenue': 600000},
+      {'dishId': 71, 'name': 'Nước suối', 'unit': 'chai', 'quantity': 10, 'revenue': 150000},
+    ],
+    'quantity': 34,
+    'revenue': 750000,
+  },
+  'tank': [
+    {'id': 1, 'name': 'Tôm hùm', 'stockKg': 8.5, 'lowStockKg': 3, 'isLow': false, 'isEmpty': false},
+    {'id': 3, 'name': 'Cua gạch', 'stockKg': 1.2, 'lowStockKg': 3, 'isLow': true, 'isEmpty': false},
+    {'id': 5, 'name': 'Cá mú', 'stockKg': 0, 'lowStockKg': 5, 'isLow': true, 'isEmpty': true},
+  ],
+  'topDishes': [
+    {'name': 'Tôm hùm nướng phô mai', 'quantity': 4},
+    {'name': 'Cơm chiên hải sản', 'quantity': 3},
+  ],
+};
+
+/// Phiếu kiểm bia nước hôm nay (S17): Bia Tiger thiếu 8 lon, Coca khớp, Heineken chưa kiểm.
+const drinkCheckJson = {
+  'date': '2026-11-24T17:00:00.000Z',
+  'rows': [
+    {
+      'productId': 8,
+      'dishId': 68,
+      'name': 'Bia Tiger',
+      'unit': 'lon',
+      'packSize': 24,
+      'issuedPacks': 2,
+      'issuedUnits': 0,
+      'issued': 48,
+      'sold': 10,
+      'returned': 30,
+      'diff': -8,
+      'checked': true,
+      'note': '2 lon bị móp',
+      'by': 'Đỗ Thu Ngân',
+    },
+    {
+      'productId': 1,
+      'dishId': 61,
+      'name': 'Coca-Cola',
+      'unit': 'lon',
+      'packSize': 24,
+      'issuedPacks': 1,
+      'issuedUnits': 0,
+      'issued': 24,
+      'sold': 6,
+      'returned': 18,
+      'diff': 0,
+      'checked': true,
+      'note': null,
+      'by': 'Đỗ Thu Ngân',
+    },
+    {
+      'productId': 9,
+      'dishId': 69,
+      'name': 'Bia Heineken',
+      'unit': 'lon',
+      'packSize': 24,
+      'issuedPacks': 0,
+      'issuedUnits': 0,
+      'issued': 0,
+      'sold': 4,
+      'returned': 0,
+      'diff': 0,
+      'checked': false,
+      'note': null,
+      'by': null,
+    },
+  ],
+  'summary': {'issued': 72, 'sold': 20, 'returned': 48, 'diff': -8, 'checked': 2, 'total': 3, 'mismatched': 1},
+};
+
+/// Đơn đã hủy (S16): 1 đơn tại quán hủy cả đơn + 1 món hủy lẻ.
+const cancellationsJson = {
+  'range': 'today',
+  'orders': [
+    {
+      'id': 48,
+      'code': 'FAB261120000048',
+      'type': 'DINE_IN',
+      'total': 250000,
+      'cancelReason': 'Ghi nhầm bàn',
+      'customerName': 'Khách tại bàn',
+      'createdAt': '2026-11-20T10:00:00.000Z',
+      'updatedAt': '2026-11-20T10:30:00.000Z',
+      'table': {'code': 'T01', 'area': 'Trong nhà'},
+      'staff': {'id': 3, 'name': 'Lý Phục Vụ'},
+      '_count': {'items': 1},
+    },
+  ],
+  'items': [
+    {
+      'id': 99,
+      'name': 'Tôm sú hấp bia',
+      'quantity': 2,
+      'price': 690000,
+      'weight': null,
+      'cancelReason': 'Khách không chờ được',
+      'cancelledAt': '2026-11-20T12:30:00.000Z',
+      'order': {'id': 50, 'code': 'FAB261120000050', 'type': 'DINE_IN', 'table': {'code': 'T02'}},
+    },
+  ],
+  'summary': {'orders': 1, 'amount': 250000, 'items': 1},
+};
 
 /// Trả lời thành công { success: true, data }.
 Future<ResponseBody> ok(Object? data) => FakeServer.json(200, {'success': true, 'data': data});

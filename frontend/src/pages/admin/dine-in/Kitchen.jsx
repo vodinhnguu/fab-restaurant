@@ -33,6 +33,12 @@ export default function Kitchen() {
     onError: (e) => toast.error(e.message),
   });
 
+  const finish = useMutation({
+    mutationFn: dineInApi.finishCooking,
+    onSuccess: (res) => { toast.success(res.message); qc.invalidateQueries({ queryKey: ['dine-in'] }); },
+    onError: (e) => toast.error(e.message),
+  });
+
   if (isLoading) return <Spinner />;
   if (error) return <ErrorState error={error} onRetry={refetch} />;
 
@@ -50,7 +56,7 @@ export default function Kitchen() {
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {data.map((o) => (
-            <TicketCard key={o.id} order={o} canStart={can('KITCHEN', 'edit')} start={start} />
+            <TicketCard key={o.id} order={o} canStart={can('KITCHEN', 'edit')} start={start} finish={finish} />
           ))}
         </div>
       )}
@@ -58,11 +64,13 @@ export default function Kitchen() {
   );
 }
 
-function TicketCard({ order, canStart, start }) {
+function TicketCard({ order, canStart, start, finish }) {
   const pendingIds = order.items.filter((i) => i.status === 'PENDING').map((i) => i.id);
+  const cookingIds = order.items.filter((i) => i.status === 'COOKING').map((i) => i.id);
   const oldest = order.items.reduce((min, i) => (i.createdAt < min ? i.createdAt : min), order.items[0].createdAt);
   const waitMinutes = dayjs().diff(oldest, 'minute');
-  const busy = (ids) => start.isPending && ids.some((id) => start.variables?.includes(id));
+  const busy = (ids) => (start.isPending && ids.some((id) => start.variables?.includes(id)))
+    || (finish.isPending && ids.some((id) => finish.variables?.includes(id)));
 
   return (
     <div className={clsx('card flex flex-col p-4', pendingIds.length && 'ring-2 ring-amber-300')}>
@@ -89,6 +97,8 @@ function TicketCard({ order, canStart, start }) {
             </div>
             {i.status === 'PENDING' && canStart ? (
               <Button size="sm" variant="outline" loading={busy([i.id])} onClick={() => start.mutate([i.id])}>Nhận làm</Button>
+            ) : i.status === 'COOKING' && canStart ? (
+              <Button size="sm" variant="primary" loading={busy([i.id])} onClick={() => finish.mutate([i.id])}>Đã xong</Button>
             ) : (
               <Badge color={DINE_IN_ITEM_STATUS[i.status].color}>{DINE_IN_ITEM_STATUS[i.status].label}</Badge>
             )}
@@ -99,6 +109,11 @@ function TicketCard({ order, canStart, start }) {
       {canStart && pendingIds.length > 1 && (
         <Button className="mt-3 w-full" variant="dark" loading={busy(pendingIds)} onClick={() => start.mutate(pendingIds)}>
           <Flame className="h-4 w-4" /> Nhận làm cả bàn ({pendingIds.length} món)
+        </Button>
+      )}
+      {canStart && cookingIds.length > 1 && (
+        <Button className="mt-3 w-full" variant="primary" loading={busy(cookingIds)} onClick={() => finish.mutate(cookingIds)}>
+          <ChefHat className="h-4 w-4" /> Đã xong cả bàn ({cookingIds.length} món)
         </Button>
       )}
     </div>

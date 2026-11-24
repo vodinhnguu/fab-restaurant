@@ -83,7 +83,7 @@ class FabLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final mark = vertical ? FabLogoBadge(size: fontSize * 2.6) : FabFishMark(size: fontSize * 1.5);
     final text = Text(
-      'FAB Seafood',
+      'Ngưu Quán',
       style: AppText.pageTitle(onDark ? AppColors.white : AppColors.ocean900).copyWith(fontSize: fontSize),
     );
     return vertical

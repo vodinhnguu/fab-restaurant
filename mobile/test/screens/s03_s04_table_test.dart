@@ -211,10 +211,10 @@ void main() {
     testWidgets('Món theo kg "Chờ cân": chưa tính tiền, khóa "Gửi thanh toán"', (tester) async {
       await openT02(tester, order: orderWithLobster());
 
-      await tester.scrollUntilVisible(find.text('1.890.000đ/kg · hồ hải sản đang cân'), 200);
+      await tester.scrollUntilVisible(find.text('1.890.000đ/kg · chờ cân tại hồ'), 200);
       expect(find.text('Chờ cân'), findsNWidgets(2)); // nhãn trạng thái + chỗ tiền
       await tapButton(tester, 'Gửi thanh toán · 820.000đ');
-      expect(find.text('Còn 1 món bán theo kg chưa cân. Nhờ hồ hải sản cân xong mới gửi thanh toán được.'), findsOneWidget);
+      expect(find.text('Còn 1 món bán theo kg chưa cân. Ra hồ cân và nhập số kg xong mới gửi thanh toán được.'), findsOneWidget);
       expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Gửi thanh toán')).onPressed, isNull);
     });
 
@@ -222,12 +222,40 @@ void main() {
       // Backend đã cộng tiền tạm 1 kg vào đơn: 820.000 + 1.890.000
       await openT02(tester, order: {...orderWithLobster(weight: 1), 'total': 2710000});
 
-      await tester.scrollUntilVisible(find.text('Ghi 1 kg × 1.890.000đ/kg · chờ hồ hải sản cân'), 200);
+      await tester.scrollUntilVisible(find.text('Ghi tạm 1 kg × 1.890.000đ/kg · chờ cân tại hồ'), 200);
       expect(find.text('1.890.000đ'), findsOneWidget); // chỗ tiền: tiền tạm, không còn "Chờ cân"
       expect(find.text('Chờ cân'), findsOneWidget); // chỉ còn nhãn trạng thái
       await tapButton(tester, 'Gửi thanh toán · 2.710.000đ');
-      expect(find.text('Còn 1 món bán theo kg chưa cân. Nhờ hồ hải sản cân xong mới gửi thanh toán được.'), findsOneWidget);
+      expect(find.text('Còn 1 món bán theo kg chưa cân. Ra hồ cân và nhập số kg xong mới gửi thanh toán được.'), findsOneWidget);
       expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Gửi thanh toán')).onPressed, isNull);
+    });
+
+    testWidgets('Nhập số kg (S14): sửa số kg rồi lưu, gọi POST /items/:id/weigh', (tester) async {
+      // Backend đã cộng tiền tạm 1 kg vào đơn
+      final server = await openT02(tester, order: {...orderWithLobster(weight: 1), 'total': 2710000});
+
+      await tester.scrollUntilVisible(find.text('1 món bán theo kg chờ cân'), 200);
+      await tapButton(tester, 'Nhập số kg');
+      expect(find.text('Nhập số kg bàn T02'), findsOneWidget);
+      expect(inSheet(find.text('1.890.000đ / kg')), findsOneWidget);
+
+      // Cân ra 0,9 kg: bấm − một lần (mỗi lần 0,1 kg)
+      await tester.tap(inSheet(find.byIcon(Icons.remove_rounded)));
+      await tester.pump();
+      expect(inSheet(find.text('0,9 kg')), findsOneWidget);
+      expect(inSheet(find.text('1.701.000đ')), findsOneWidget); // 1.890.000 × 0,9
+
+      await tapButton(tester, 'Lưu số kg (1 món)');
+      expect(sent(server, 'POST', '/dine-in/items/4/weigh').single.data, {'weight': 0.9});
+      expect(find.text('Đã nhập số kg, món đã xuống bếp'), findsOneWidget);
+    });
+
+    testWidgets('Tài khoản chỉ xem: khung chờ cân không có nút "Nhập số kg"', (tester) async {
+      await openT02(tester, order: orderWithLobster(weight: 1), me: bepJson);
+
+      await tester.scrollUntilVisible(find.text('1 món bán theo kg chờ cân'), 200);
+      expect(find.text('Phục vụ cần cân tại hồ và nhập số kg thì món mới xuống bếp.'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Nhập số kg'), findsNothing);
     });
 
     testWidgets('Món theo kg đã cân: hiện số kg và tiền = giá 1 kg × số kg', (tester) async {

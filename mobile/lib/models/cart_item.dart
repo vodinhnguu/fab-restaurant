@@ -29,7 +29,7 @@ class CartItem {
   final double weight; // số kg phục vụ ghi (chỉ dùng cho món theo kg)
   final String note; // ghi chú khẩu vị riêng của món (S07), tối đa 200 ký tự
 
-  /// Món bán theo kg (hải sản sống): price là giá 1 kg, hồ hải sản cân thật rồi xác nhận / sửa số kg.
+  /// Món bán theo kg (hải sản sống): price là giá 1 kg, phục vụ cân tại hồ cùng khách rồi nhập số kg thật (S14).
   bool get soldByWeight => unit == 'kg';
 
   /// Tiền tạm tính của dòng: món theo kg = giá 1 kg × số kg đang ghi (làm tròn đồng), món theo phần = giá × số phần.

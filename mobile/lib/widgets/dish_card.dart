@@ -103,6 +103,7 @@ class DishCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     _RatingLine(dish),
+                    _TankStockLine(dish), // món bán theo kg: còn bao nhiêu kg trong hồ (docs/27)
                     const SizedBox(height: 8),
                     // Giá gốc gạch ngang. Món không giảm giá: ẩn nhưng vẫn giữ chỗ để thẻ cao bằng nhau.
                     Visibility.maintain(
@@ -132,6 +133,41 @@ class DishCard extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Món bán theo kg: "Hồ còn 3,2 kg" (xanh) / "Hồ gần hết · 1,5 kg" (vàng) / "Hồ hết hàng" (đỏ).
+/// Chỉ để phục vụ tư vấn khách, KHÔNG chặn ghi món (khách đứng ở hồ có thể thấy con mà máy chưa kịp cập nhật).
+/// Món theo phần, hoặc món chưa gắn loại hồ nào: không hiện gì (vẫn giữ chỗ cho thẻ cao bằng nhau).
+class _TankStockLine extends StatelessWidget {
+  const _TankStockLine(this.dish);
+  final Dish dish;
+
+  @override
+  Widget build(BuildContext context) {
+    if (dish.tankStockKg == null) return const SizedBox(height: 2);
+    final (text, color) = dish.tankEmpty
+        ? ('Hồ hết hàng', AppColors.danger)
+        : dish.tankLow
+            ? ('Hồ gần hết · ${formatKg(dish.tankStockKg!)}', AppColors.amber.foreground)
+            : ('Hồ còn ${formatKg(dish.tankStockKg!)}', AppColors.success);
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        children: [
+          Icon(Icons.set_meal_rounded, size: 12, color: color),
+          const SizedBox(width: 3),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
       ),
     );
   }

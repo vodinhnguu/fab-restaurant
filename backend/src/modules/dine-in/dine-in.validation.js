@@ -43,10 +43,33 @@ export const cancelItemSchema = z.object({
 // Bếp "Nhận làm"
 export const kitchenStartSchema = z.object({ itemIds });
 
+// Bếp "Đã xong": món đang làm → đã lên (phục vụ / tiếp thực mang ra bàn)
+export const kitchenFinishSchema = z.object({ itemIds });
+
 // Hồ hải sản cân món bán theo kg: số kg thực tế (vd 1.25)
 export const weighItemSchema = z.object({
   weight: z.coerce
     .number({ error: 'Nhập số kg' })
     .min(0.05, 'Ít nhất 0,05 kg')
     .max(30, 'Nhiều nhất 30 kg, kiểm tra lại số cân'),
+});
+
+// Thu ngân chỉnh số lượng món (tăng/giảm, 0 = xóa)
+export const adjustItemSchema = z.object({
+  quantity: z.coerce.number().int().min(0, 'Số lượng từ 0 trở lên').max(50),
+});
+
+// Thu ngân thêm món vào bill
+export const addBillItemsSchema = z.object({
+  items: z
+    .array(z.object({
+      dishId: z.coerce.number().int().positive(),
+      quantity: z.coerce.number().int().min(1).max(50),
+    }))
+    .min(1, 'Chưa chọn món nào'),
+});
+
+// Thu ngân xác nhận thanh toán
+export const paySchema = z.object({
+  paymentMethod: z.enum(['COD', 'CARD']).default('COD'),
 });

@@ -7,7 +7,7 @@
 //
 // Từ trên xuống:
 //   khối xanh đậm: avatar, tên, vai trò + 3 số của ca (bàn có khách, bàn trống, tiền đang phục vụ)
-//   3 mục: Sơ đồ bàn · Đơn hôm nay · Tài khoản (mục đang mở tô màu)
+//   các mục: Sơ đồ bàn · Đơn hôm nay · Quản lý (chỉ ai có quyền Xem Tổng quan) · Tài khoản
 //   Đăng xuất (hỏi lại, xóa phiếu chưa gửi) · phiên bản app
 //
 // Đổi tên / icon / thứ tự mục: sửa enum AppSection bên dưới.
@@ -28,16 +28,24 @@ import '../widgets/confirm_dialog.dart';
 import 'config.dart';
 import 'routes.dart';
 
-/// 3 mục của menu trái, theo thứ tự hiện.
+/// Các mục của menu trái, theo thứ tự hiện.
+/// Mục **Quản lý** chỉ hiện với tài khoản có quyền Xem "Tổng quan" (docs/28-app-quan-ly.md).
 enum AppSection {
   tables('Sơ đồ bàn', Icons.table_restaurant_rounded, AppRoutes.tables),
   orders('Đơn hôm nay', Icons.receipt_long_rounded, AppRoutes.orders),
+  manager('Quản lý', Icons.insights_rounded, AppRoutes.manager, managerOnly: true),
   account('Tài khoản', Icons.person_rounded, AppRoutes.account);
 
-  const AppSection(this.label, this.icon, this.route);
+  const AppSection(this.label, this.icon, this.route, {this.managerOnly = false});
   final String label;
   final IconData icon;
   final String route;
+
+  /// true = chỉ hiện cho người có quyền Xem "Tổng quan".
+  final bool managerOnly;
+
+  /// [user] có thấy mục này không.
+  bool visibleFor(User? user) => !managerOnly || (user?.canSeeManager ?? false);
 }
 
 class AppDrawer extends ConsumerWidget {
@@ -63,6 +71,7 @@ class AppDrawer extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
                 for (final section in AppSection.values)
+                  if (section.visibleFor(user))
                   _MenuItem(
                     icon: section.icon,
                     label: section.label,
@@ -84,7 +93,7 @@ class AppDrawer extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'FAB Phục vụ · Phiên bản ${AppConfig.appVersion}',
+                'Ngưu Quán · Phiên bản ${AppConfig.appVersion}',
                 style: const TextStyle(color: AppColors.slate500, fontSize: 12),
               ),
             ),

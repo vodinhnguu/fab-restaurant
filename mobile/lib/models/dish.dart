@@ -20,6 +20,9 @@ class Dish {
     this.ratingCount = 0,
     this.categoryName,
     this.categorySlug,
+    this.tankStockKg,
+    this.tankLowKg,
+    this.tankName,
   });
 
   final int id;
@@ -38,10 +41,26 @@ class Dish {
   final String? categoryName;
   final String? categorySlug;
 
+  // ---- Tồn hồ hải sản, chỉ món bán theo kg (docs/27-ton-ho-hai-san.md) ----
+  /// Số kg loại hải sản này còn trong hồ. null = món theo phần, hoặc món chưa gắn loại hồ nào.
+  final double? tankStockKg;
+
+  /// Dưới số kg này thì coi là "gần hết" (hồ hải sản đặt trên web).
+  final double? tankLowKg;
+
+  /// Tên loại hải sản trong hồ (vd "Cua gạch"): nhiều món dùng chung 1 loại.
+  final String? tankName;
+
+  /// Hồ hết loại này (phục vụ vẫn ghi món được, chỉ là nhắc để khỏi hứa với khách).
+  bool get tankEmpty => tankStockKg != null && tankStockKg! <= 0;
+
+  /// Hồ gần hết loại này.
+  bool get tankLow => tankStockKg != null && tankLowKg != null && tankStockKg! > 0 && tankStockKg! <= tankLowKg!;
+
   /// Giá bán thật: giá khuyến mãi nếu có, không thì giá gốc (mục 3 docs/16).
   int get effectivePrice => salePrice ?? price;
 
-  /// Hải sản sống bán theo kg: giá là giá 1 kg, tiền tính sau khi hồ hải sản cân (docs/24).
+  /// Hải sản sống bán theo kg: giá là giá 1 kg, tiền tính sau khi phục vụ cân tại hồ và nhập số kg (docs/24).
   bool get soldByWeight => unit == 'kg';
 
   /// Đang giảm giá (giá khuyến mãi thấp hơn giá gốc).
@@ -67,6 +86,7 @@ class Dish {
 
   factory Dish.fromJson(Map<String, dynamic> json) {
     final category = json['category'] as Map<String, dynamic>?;
+    final tank = json['tankItem'] as Map<String, dynamic>?; // tồn hồ, chỉ món bán theo kg
     return Dish(
       id: json['id'] as int,
       name: json['name'] as String? ?? '',
@@ -83,6 +103,9 @@ class Dish {
       ratingCount: json['ratingCount'] as int? ?? 0,
       categoryName: category?['name'] as String?,
       categorySlug: category?['slug'] as String?,
+      tankStockKg: (tank?['stockKg'] as num?)?.toDouble(),
+      tankLowKg: (tank?['lowStockKg'] as num?)?.toDouble(),
+      tankName: tank?['name'] as String?,
     );
   }
 }

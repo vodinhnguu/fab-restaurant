@@ -47,9 +47,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         // Hiện Splash ít nhất 1 giây cho đỡ nháy, kể cả khi mạng rất nhanh.
         Future<void>.delayed(const Duration(seconds: 1)),
       ]);
-      final loggedIn = await user != null;
+      final me = await user;
       if (!mounted) return;
-      context.go(loggedIn ? AppRoutes.tables : AppRoutes.login);
+      // Mở lại app: quản lý / chủ / tổ trưởng / thu ngân vào màn Quản lý, còn lại vào Sơ đồ bàn (docs/28)
+      if (me == null) {
+        context.go(AppRoutes.login);
+      } else {
+        context.go(me.canSeeManager ? AppRoutes.manager : AppRoutes.tables);
+      }
     } catch (e) {
       if (mounted) setState(() => _error = e);
     }
@@ -118,12 +123,12 @@ class _Brand extends StatelessWidget {
           const FabLogoBadge(size: 90),
           const SizedBox(height: 26),
           Text(
-            'FAB Seafood',
+            'Ngưu Quán',
             style: GoogleFonts.playfairDisplay(fontSize: 36, fontWeight: FontWeight.w700, color: AppColors.white),
           ),
           const SizedBox(height: 2),
           Text(
-            'Đà Nẵng · Fine Coastal Dining',
+            'Hải sản tươi sống · Đà Nẵng',
             textAlign: TextAlign.center,
             style: GoogleFonts.playfairDisplay(
               fontSize: 18,

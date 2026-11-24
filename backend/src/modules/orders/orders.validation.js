@@ -44,6 +44,7 @@ export const phoneSchema = z.object({
 
 export const orderQuerySchema = z.object({
   status: z.enum(['PENDING', 'CONFIRMED', 'PREPARING', 'DELIVERING', 'COMPLETED', 'CANCELLED']).optional(),
+  type: z.enum(['DELIVERY', 'PICKUP', 'DINE_IN']).optional(), // lọc theo hình thức ở trang Đơn hàng
   search: z.string().trim().optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),

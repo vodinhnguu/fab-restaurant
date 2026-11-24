@@ -51,7 +51,7 @@ class _Placeholder extends StatelessWidget {
         color: AppColors.ocean100,
         child: Center(
           child: Text(
-            'FAB Seafood',
+            'Ngưu Quán',
             style: TextStyle(color: AppColors.ocean500, fontWeight: FontWeight.w700, fontSize: 13),
           ),
         ),

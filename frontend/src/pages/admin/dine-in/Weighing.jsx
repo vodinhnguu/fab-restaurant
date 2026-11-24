@@ -15,10 +15,11 @@ import { useDocumentTitle } from '../../../lib/hooks';
 import { useCan } from '../../../lib/permissions';
 import { dineInApi } from '../../../services';
 
-// Cân hải sản (docs/24-thuc-don-ban-theo-kg.md): món bán theo kg phục vụ gửi từ app nằm ở "Chờ cân",
-// kèm số kg phục vụ ghi (mặc định 1 kg, đã tính tiền tạm). Ô nhập điền sẵn số đó.
-// Nhân viên hồ hải sản bắt con khách chọn, cân, xác nhận / sửa số kg -> tiền = giá 1 kg × số kg, món sang "Chờ bếp".
-// Nhập nhầm thì "Cân lại" ở bảng "Đã cân hôm nay" khi bếp chưa nhận làm.
+// Cân hải sản (docs/24-thuc-don-ban-theo-kg.md): trang theo dõi + cân lại của hồ hải sản / quản lý.
+// Người nhập số kg chính là PHỤC VỤ, ngay tại hồ trên app (S14): phục vụ dẫn khách ra hồ, khách chỉ con,
+// cân rồi nhập số kg -> món sang "Chờ bếp". Trang này để hồ hải sản / quản lý:
+//   - xem món nào còn "Chờ cân" (phục vụ chưa nhập), kèm số kg ghi tạm (mặc định 1 kg, đã tính tiền tạm);
+//   - đối chiếu bảng "Đã cân hôm nay" và "Cân lại" khi nhập nhầm / khách thắc mắc (bếp chưa nhận làm).
 export default function Weighing() {
   useDocumentTitle('Cân hải sản');
   const canWeigh = useCan()('SEAFOOD_TANK', 'edit');
@@ -45,14 +46,14 @@ export default function Weighing() {
     <>
       <PageHeader
         title="Cân hải sản"
-        subtitle={`${data.waiting.length} món chờ cân · tự cập nhật mỗi 10 giây`}
+        subtitle={`${data.waiting.length} món chờ cân · phục vụ nhập số kg tại hồ trên app · tự cập nhật mỗi 10 giây`}
       />
 
       {data.waiting.length === 0 ? (
         <EmptyState
           icon={Scale}
           title="Chưa có món nào chờ cân"
-          description="Phục vụ gọi món bán theo kg (tôm hùm, tôm sú, cua, cá mú, tôm tít) là món hiện ở đây, kèm tiếng chuông."
+          description="Phục vụ gọi món bán theo kg (tôm hùm, tôm sú, cua, cá mú, tôm tít) là món hiện ở đây, kèm tiếng chuông. Thường phục vụ nhập số kg ngay tại hồ trên app nên món chỉ hiện ở đây trong lúc chờ."
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

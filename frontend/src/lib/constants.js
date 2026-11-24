@@ -37,8 +37,9 @@ export const PAYMENT_TXN_STATUS = {
   FAILED: { label: 'Thất bại', color: 'red' },
 };
 
-export const PAYMENT_METHOD = { COD: 'Tiền mặt khi nhận', ONLINE: 'VNPay' };
-export const ORDER_TYPE = { DELIVERY: 'Giao tận nơi', PICKUP: 'Đến lấy tại quán' };
+export const PAYMENT_METHOD = { COD: 'Tiền mặt', ONLINE: 'VNPay', CARD: 'Thẻ' };
+// Chỉ dùng để hiện nhãn. DINE_IN: đơn ăn tại quán do phục vụ ghi trên app (docs/23), khách không chọn được trên web
+export const ORDER_TYPE = { DELIVERY: 'Giao tận nơi', PICKUP: 'Đến lấy tại quán', DINE_IN: 'Ăn tại quán' };
 
 export const SORT_OPTIONS = [
   { value: 'popular', label: 'Bán chạy' },
@@ -82,7 +83,7 @@ export const ISSUE_SUGGESTIONS = ['Không chạy', 'Không lạnh', 'Chảy nư�
 
 // Trạng thái từng món của đơn ăn tại quán (khớp enum OrderItemStatus ở backend)
 export const DINE_IN_ITEM_STATUS = {
-  WEIGHING: { label: 'Chờ cân', color: 'cyan' }, // món bán theo kg, chờ hồ hải sản cân
+  WEIGHING: { label: 'Chờ cân', color: 'cyan' }, // món bán theo kg, chờ cân tại hồ (phục vụ nhập số kg trên app)
   PENDING: { label: 'Chờ bếp', color: 'amber' },
   COOKING: { label: 'Đang làm', color: 'blue' },
   SERVED: { label: 'Đã lên', color: 'green' },
@@ -98,8 +99,55 @@ export const STATUS_ACTION_LABEL = {
   CANCELLED: 'Hủy đơn',
 };
 
+// ---- Đơn ăn tại quán (DINE_IN) ----
+// Dùng chung 6 trạng thái với đơn online nhưng ý nghĩa khác: không có giao hàng, trạng thái tự suy ra
+// từ các món (syncOrderStatus ở backend/src/modules/dine-in/dine-in.service.js). Xem docs/23 mục 3.
+export const DINE_IN_STATUS = {
+  PENDING: { label: 'Chờ xác nhận', color: 'amber' }, // hầu như không gặp: đơn tại bàn tạo ra là CONFIRMED
+  CONFIRMED: { label: 'Đã gửi bếp', color: 'blue' },
+  PREPARING: { label: 'Đang chế biến', color: 'indigo' },
+  DELIVERING: { label: 'Đã lên món', color: 'cyan' },
+  COMPLETED: { label: 'Đã thu tiền', color: 'green' },
+  CANCELLED: { label: 'Đã hủy', color: 'red' },
+};
+
+// Bước chuyển tiếp của đơn tại bàn (khớp DINE_IN_FLOW ở backend/src/modules/orders/orders.service.js)
+export const DINE_IN_NEXT_STATUS = {
+  PENDING: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['PREPARING', 'DELIVERING', 'COMPLETED', 'CANCELLED'],
+  PREPARING: ['DELIVERING', 'COMPLETED', 'CANCELLED'],
+  DELIVERING: ['COMPLETED', 'CANCELLED'],
+  COMPLETED: [],
+  CANCELLED: [],
+};
+
+export const DINE_IN_ACTION_LABEL = {
+  CONFIRMED: 'Xác nhận đơn',
+  PREPARING: 'Bắt đầu chế biến',
+  DELIVERING: 'Đánh dấu đã lên món',
+  COMPLETED: 'Đã thu tiền',
+  CANCELLED: 'Hủy đơn',
+};
+
+// 3 hàm dưới đây chọn đúng bảng chữ theo loại đơn. Dùng ở trang Đơn hàng (admin) để đơn tại bàn
+// không hiện "Đang giao" / "Giao hàng".
+export const orderStatusMap = (type) => (type === 'DINE_IN' ? DINE_IN_STATUS : ORDER_STATUS);
+export const nextStatusList = (type, status) =>
+  (type === 'DINE_IN' ? DINE_IN_NEXT_STATUS : NEXT_STATUS)[status] ?? [];
+export const statusActionLabel = (type, status) =>
+  (type === 'DINE_IN' ? DINE_IN_ACTION_LABEL : STATUS_ACTION_LABEL)[status];
+
 // Món bán theo kg (hải sản sống ở hồ: tôm hùm, tôm sú, cua, cá mú, tôm tít). Giá của món là giá 1 kg,
-// tại quán nhân viên hồ hải sản cân rồi mới tính tiền, nên KHÔNG đặt online được (web hiện nút Đặt bàn).
+// tại quán phục vụ cân tại hồ cùng khách rồi mới tính tiền, nên KHÔNG đặt online được (web hiện nút Đặt bàn).
 // Khớp backend/src/utils/helpers.js. Xem docs/24-thuc-don-ban-theo-kg.md
 export const WEIGHT_UNIT = 'kg';
 export const isSoldByWeight = (dish) => dish?.unit === WEIGHT_UNIT;
+
+// Loại phiếu trong sổ nhập - xuất hồ hải sản (docs/27-ton-ho-hai-san.md)
+export const TANK_ENTRY_TYPE = {
+  IMPORT: { label: 'Nhập hàng', color: 'green' },
+  SALE: { label: 'Bán', color: 'cyan' },
+  RETURN: { label: 'Trả lại hồ', color: 'blue' },
+  AUDIT: { label: 'Kiểm hồ', color: 'amber' },
+  LOSS: { label: 'Hao hụt', color: 'red' },
+};

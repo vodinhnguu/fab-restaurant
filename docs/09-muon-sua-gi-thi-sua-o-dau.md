@@ -64,7 +64,7 @@ Sửa ở đây thì **tự động cập nhật**: footer, dòng giờ mở c�
 | Chữ "FAB Seafood" trên logo | [Logo.jsx](../frontend/src/components/layout/Logo.jsx#L8-L10) | 8-10 |
 | Mô tả SEO và tiêu đề tab mặc định | [index.html](../frontend/index.html#L7) | 7, 14 |
 | Tiêu đề tab của **từng trang** ("Thực đơn \| FAB Seafood") | Dòng `useDocumentTitle('...')` đầu mỗi file trong `pages/`. Phần đuôi " \| FAB Seafood" nằm trong [lib/hooks.js](../frontend/src/lib/hooks.js) | |
-| "Biển Mỹ Khê, Đà Nẵng" trên ảnh lớn trang chủ | [Home.jsx](../frontend/src/pages/Home.jsx#L46) | 46 |
+| "Biển Mỹ Khê, Đà Nẵng" trên ảnh lớn trang chủ | [Home.jsx](../frontend/src/pages/Home.jsx) (tìm chữ "Biển Mỹ Khê") | |
 | Dòng bản quyền "© FAB Seafood" | [Footer.jsx](../frontend/src/components/layout/Footer.jsx#L59) | 59 |
 | Câu giới thiệu dưới logo ở footer | [Footer.jsx](../frontend/src/components/layout/Footer.jsx#L15) | 15 |
 
@@ -127,12 +127,15 @@ Tất cả nằm trong [frontend/src/pages/Home.jsx](../frontend/src/pages/Home.
 
 | Muốn đổi | Tìm |
 |---|---|
-| Ảnh lớn đầu trang, 2 ảnh mục "Về chúng tôi" | Hằng `HERO`, `ABOUT_1`, `ABOUT_2` (dòng 11-13) |
-| 4 ô ưu điểm (Tươi sống, Đầu bếp...) | Mảng `FEATURES` (dòng 15-20) |
-| 3 lời khen của khách | Mảng `TESTIMONIALS` (dòng 22-26) |
-| Câu khẩu hiệu "Hương vị đại dương..." | Dòng 48-51 |
-| Đoạn giới thiệu, các con số 10+ / 50+ / 20K+ | Dòng 160-171 |
-| Khối kêu gọi đặt bàn | Dòng 190-200 |
+| Ảnh lớn đầu trang, 2 ảnh mục "Về chúng tôi" | Hằng `HERO`, `ABOUT_1`, `ABOUT_2` đầu file |
+| 4 ô ưu điểm (Tươi sống, Đầu bếp...) | Mảng `FEATURES` |
+| 3 bước "Chọn con nào, cân con đó" | Mảng `STEPS` |
+| 3 lời khen của khách | Mảng `TESTIMONIALS` |
+| Câu khẩu hiệu "Hương vị đại dương...", 2 nhãn, nút, dải số liệu | Khối `{/* ===== HERO` (tìm chữ `HERO:`) |
+| Thẻ món đinh bên phải ảnh bìa | Hàm `SignatureCard` cuối file; món nào hiện: biến `signature` trong `Home()` |
+| Đoạn giới thiệu, các con số 10+ / số món / 20K+ | Khối `{/* ===== ABOUT` |
+| Khối kêu gọi đặt bàn | Khối `{/* ===== CTA RESERVATION` |
+| Thanh thông tin trên cùng, nút Gọi / Đặt bàn nổi | [TopBar.jsx](../frontend/src/components/layout/TopBar.jsx), [FloatingContact.jsx](../frontend/src/components/layout/FloatingContact.jsx) ([docs/25](25-giao-dien-trang-khach.md)) |
 
 Ảnh có thể là link `https://...` hoặc file đặt trong `frontend/public/` (ví dụ đặt `public/hero.jpg` thì dùng `'/hero.jpg'`).
 
@@ -288,6 +291,10 @@ Cách tính **giảm giá** của mã nằm trong [coupons.service.js](../backen
 | Độ dài mật khẩu tối thiểu | [auth.validation.js](../backend/src/modules/auth/auth.validation.js#L12) dòng 12 và 29; [Register.jsx](../frontend/src/pages/Register.jsx#L45) dòng 45; [Profile.jsx](../frontend/src/pages/account/Profile.jsx#L55) dòng 55 |
 | Đơn mới trong bao lâu thì hiện "Cảm ơn bạn đã đặt món!" | [OrderDetail.jsx](../frontend/src/pages/OrderDetail.jsx#L124) dòng 124 (đang 10 phút) |
 | Món nào bán theo kg | Không cần sửa code: admin sửa ô "Đơn vị" của món thành `kg` ở trang Món ăn (hoặc cột đơn vị trong [menu.js](../backend/prisma/menu.js) rồi `npm run db:seed-menu`). Xem [24](24-thuc-don-ban-theo-kg.md) |
+| Loại hải sản trong hồ (thêm "Ốc hương", tách "Cua gạch" / "Cua thịt"...) | [config/tank.js](../backend/src/config/tank.js): thêm 1 dòng vào `items` (`[tên, nhóm món, ngưỡng gần hết, từ khóa trong tên món, ghi chú]`) rồi `npm --prefix backend run db:seed-tank`. Xem [27](27-ton-ho-hai-san.md) |
+| Ngưỡng "gần hết" của 1 loại hải sản | Không cần sửa code: hồ hải sản sửa trên trang Tồn hồ (hoặc `lowStockKg` trong [config/tank.js](../backend/src/config/tank.js) cho database mới) |
+| Hết hàng trong hồ thì CHẶN phục vụ ghi món | Hiện chỉ cảnh báo, không chặn (xem [27](27-ton-ho-hai-san.md) mục 2 giải thích vì sao). Muốn chặn: thêm kiểm tra tồn vào `addItems` ([dine-in.service.js](../backend/src/modules/dine-in/dine-in.service.js)) |
+| Cộng / trừ tồn hồ khi cân món, hủy món | `recordDishWeight` ([tank.service.js](../backend/src/modules/tank/tank.service.js)), gọi từ `weighItem` và `cancelItem` ([dine-in.service.js](../backend/src/modules/dine-in/dine-in.service.js)) và `changeStatus` ([orders.service.js](../backend/src/modules/orders/orders.service.js)) |
 | Món nào là Best seller | Ô "Best seller" ở trang Món ăn (cột `isFeatured`), hoặc cột best seller trong `MENU_DISHES` của [menu.js](../backend/prisma/menu.js). Trang chủ lấy 8 món, bán chạy trước ([Home.jsx](../frontend/src/pages/Home.jsx#L35-L38)) |
 | Số kg phục vụ ghi trên app (mặc định 1 kg, 0,05 đến 30 kg, nút −/+ đổi 0,1 kg) | App: `minWeight`, `maxWeight`, `weightStep` trong [cart_state.dart](../mobile/lib/state/cart_state.dart); hộp gõ số: `showAmountDialog` trong [quantity_stepper.dart](../mobile/lib/widgets/quantity_stepper.dart); backend: `weight` trong `addItemsSchema` ([dine-in.validation.js](../backend/src/modules/dine-in/dine-in.validation.js)) |
 | Số kg được nhập khi cân (0,05 đến 30 kg) | `weighItemSchema` trong [dine-in.validation.js](../backend/src/modules/dine-in/dine-in.validation.js#L39-L44) |
@@ -415,6 +422,8 @@ File: [backend/prisma/seed.js](../backend/prisma/seed.js). Sửa xong chạy `np
 | Regex số điện thoại | 7 chỗ, xem [B6](#b6-đổi-quy-tắc-số-điện-thoại-hợp-lệ) |
 | Tối đa 50 phần/món | 4 chỗ, xem [B5](#b5-đổi-số-lượng-tối-đa-mỗi-món-trong-giỏ-đang-là-50) |
 | Ghi chú món tối đa 200 ký tự | orders.validation.js (`items.note`) ↔ ItemNote.jsx (`maxLength`, `slice(0, 200)`, chữ `/200`) |
+| Ảnh + tiêu đề xem trước khi dán link web vào Zalo / Facebook | Thẻ `og:` trong [frontend/index.html](../frontend/index.html). Lên mạng thật thì thêm `og:url` và đổi `og:image` sang ảnh nhà hàng (1200 x 630) |
+| Chữ trạng thái đơn **ăn tại quán** ("Đã gửi bếp", "Đã lên món", "Đã thu tiền") | `DINE_IN_STATUS`, `DINE_IN_ACTION_LABEL` trong [frontend/src/lib/constants.js](../frontend/src/lib/constants.js); đơn online vẫn dùng `ORDER_STATUS` |
 | Mốc miễn phí ship "500.000đ" (chữ hiển thị) | `.env` ↔ Footer.jsx ↔ Home.jsx, xem [A2](#a2-đổi-phí-giao-hàng-và-mức-miễn-phí-giao-hàng) |
 | Giờ đặt muộn nhất (đóng cửa − 1 tiếng) | reservations.validation.js ↔ Reservation.jsx `timeSlots` |
 | Công thức phí ship | orders.service.js ↔ Checkout.jsx (ước tính) ↔ seed.js |

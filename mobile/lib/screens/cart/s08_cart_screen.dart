@@ -223,7 +223,7 @@ class _SendBar extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  // Món theo kg tính theo số kg đang ghi, hồ hải sản cân thật xong tiền có thể đổi
+                  // Món theo kg tính theo số kg đang ghi tạm, cân tại hồ xong tiền có thể đổi
                   hasWeighed ? 'Tạm tính ($count món, món kg tính tạm)' : 'Tạm tính ($count món)',
                   style: const TextStyle(color: AppColors.slate800, fontSize: 15),
                 ),

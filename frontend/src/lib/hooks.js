@@ -12,6 +12,6 @@ export const useCategories = () =>
 // Giúp người dùng phân biệt các tab đang mở, và tốt cho SEO / lịch sử trình duyệt
 export function useDocumentTitle(title) {
   useEffect(() => {
-    document.title = title ? `${title} | FAB Seafood` : 'FAB Seafood - Hải sản tươi sống';
+    document.title = title ? `${title} | Ngưu Quán` : 'Ngưu Quán - Hải sản tươi sống';
   }, [title]);
 }

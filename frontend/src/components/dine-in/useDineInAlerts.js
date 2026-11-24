@@ -35,6 +35,7 @@ export function playDing() {
 //  - Thu ngân (quyền Xem "Thanh toán"): bàn vừa "Gửi thanh toán" -> thông báo + chuông
 //  - Bếp (quyền Xem "Phiếu bếp"): bàn vừa gửi món mới -> thông báo + chuông
 //  - Hồ hải sản (quyền Sửa "Hồ hải sản"): món bán theo kg mới chờ cân -> thông báo + chuông
+//    (phục vụ nhập số kg tại hồ trên app; chuông để hồ hải sản biết có khách ra hồ chọn con)
 // Chỉ người có quyền Sửa (làm được việc đó) mới nghe chuông. Lần tải đầu chỉ ghi nhớ, không báo.
 export function useDineInAlerts(user) {
   const navigate = useNavigate();

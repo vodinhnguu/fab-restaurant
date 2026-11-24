@@ -66,7 +66,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .login(email: _email.text.trim(), password: _password.text);
       TextInput.finishAutofillContext(); // cho điện thoại gợi ý lưu mật khẩu
       showAppSnack('Xin chào, ${user.name}!');
-      if (mounted) context.go(AppRoutes.tables);
+      // Quản lý / chủ / tổ trưởng / thu ngân (có quyền Xem "Tổng quan") vào thẳng màn Quản lý;
+      // phục vụ, bếp, tiếp thực vào Sơ đồ bàn. Đổi mục bất cứ lúc nào bằng menu trái. (docs/28)
+      if (mounted) context.go(user.canSeeManager ? AppRoutes.manager : AppRoutes.tables);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _serverErrors = e.fieldErrors);

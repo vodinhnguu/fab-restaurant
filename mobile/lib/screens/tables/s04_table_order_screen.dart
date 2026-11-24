@@ -9,11 +9,12 @@
 //   bàn có khách:
 //     khung cam "Đã gửi thanh toán lúc 20:15" (khi đã gửi; rút lại bằng nút dưới cùng)
 //     mã đơn, trạng thái đơn, giờ mở bàn, "5 món · 2 chưa ra bàn"
+//     khung xanh "2 món chờ cân" + "Nhập số kg" (món bán theo kg, cân tại hồ cùng khách) → S14
 //     món theo từng lần gửi bếp ("Lần 2 · 19:40"): nhãn Chờ bếp / Bếp đang làm / Đã ra bàn, món hủy gạch ngang
 //   dưới cùng: 3 nút "Check món" (→ S12), "Hủy món" (→ S13), "Order" (gọi thêm → S05)
 //              + "Gửi thanh toán · 820.000đ" (→ S09) hoặc "Rút yêu cầu thanh toán"
 //   menu ⋮: "Hủy cả đơn" (bắt buộc lý do)
-// Nút hiện theo quyền: Order cần ORDERS Thêm; Check món, Hủy món, Gửi thanh toán cần ORDERS Sửa.
+// Nút hiện theo quyền: Order cần ORDERS Thêm; Check món, Hủy món, Nhập số kg, Gửi thanh toán cần ORDERS Sửa.
 
 import 'dart:async';
 
@@ -39,6 +40,7 @@ import '../../widgets/status_badge.dart';
 import 's09_bill_request_sheet.dart';
 import 's12_check_items_sheet.dart';
 import 's13_cancel_item_sheet.dart';
+import 's14_weigh_sheet.dart';
 
 class TableOrderScreen extends ConsumerStatefulWidget {
   const TableOrderScreen({super.key, required this.tableId});
@@ -54,6 +56,7 @@ class TableOrderScreen extends ConsumerStatefulWidget {
 class _TableOrderScreenState extends ConsumerState<TableOrderScreen> {
   Timer? _timer;
   bool _busy = false; // đang gửi "Rút lại" / "Hủy cả đơn"
+  bool _hadOrder = false; // bàn có đơn ở lần tải trước (phát hiện thu ngân thu tiền xong)
 
   @override
   void initState() {
@@ -71,6 +74,29 @@ class _TableOrderScreenState extends ConsumerState<TableOrderScreen> {
   void _reload() {
     ref.invalidate(tableDetailProvider(widget.tableId));
     ref.invalidate(floorProvider);
+  }
+
+  Future<void> _showPaidDialog(String tableCode) async {
+    _timer?.cancel(); // dừng polling, bàn đã trống
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        icon: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 48),
+        title: Text('Bàn $tableCode đã thanh toán'),
+        content: const Text('Thu ngân đã thu tiền xong. Bàn trống, sẵn sàng đón khách mới.'),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    ref.invalidate(floorProvider);
+    ref.invalidate(todayOrdersProvider);
+    context.go(AppRoutes.tables);
   }
 
   /// "Ghi món" / "Order": gắn phiếu gọi món vào bàn này rồi mở S05 ([toTicket] = true: mở thẳng S08).
@@ -93,6 +119,15 @@ class _TableOrderScreenState extends ConsumerState<TableOrderScreen> {
     final cancelled = await showCancelItemSheet(context, order: order, tableCode: tableCode);
     if (cancelled == null || !mounted) return;
     showAppSnack('Đã hủy ${cancelled.quantity} × ${cancelled.name}');
+    _reload();
+  }
+
+  /// Món bán theo kg: phục vụ cân tại hồ cùng khách rồi nhập số kg thật (S14) -> món xuống bếp.
+  Future<void> _weigh(Order order, String tableCode) async {
+    final changed = await showWeighSheet(context, order: order, tableCode: tableCode);
+    if (!changed || !mounted) return;
+    showAppSnack('Đã nhập số kg, món đã xuống bếp');
+    ref.invalidate(floorProvider); // ô bàn ở S03 bớt dòng "chờ cân"
     _reload();
   }
 
@@ -143,6 +178,16 @@ class _TableOrderScreenState extends ConsumerState<TableOrderScreen> {
     final order = detail?.order;
     final canUpdate = user?.canUpdateOrder ?? false;
     final canTakeOrder = user?.canTakeOrder ?? false;
+
+    // Thu ngân thu tiền xong → bàn trống: thông báo rồi quay về sơ đồ bàn.
+    if (_hadOrder && detail != null && order == null) {
+      _hadOrder = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _showPaidDialog(detail.table.code);
+      });
+    }
+    if (order != null) _hadOrder = true;
 
     return Scaffold(
       appBar: AppBar(
@@ -207,6 +252,14 @@ class _TableOrderScreenState extends ConsumerState<TableOrderScreen> {
               else ...[
                 if (d.order!.billRequested) _BillRequestedBanner(order: d.order!),
                 _StatusCard(order: d.order!),
+                if (d.order!.weighingCount > 0) ...[
+                  const SizedBox(height: 12),
+                  _WeighBanner(
+                    count: d.order!.weighingCount,
+                    canUpdate: canUpdate,
+                    onWeigh: () => _weigh(d.order!, d.table.code),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 _ItemsCard(order: d.order!),
               ],
@@ -453,6 +506,59 @@ class _StatusCard extends StatelessWidget {
   }
 }
 
+/// Khung xanh "2 món chờ cân": món bán theo kg chưa có số kg thật -> bếp chưa thấy, chưa gửi thanh toán được.
+/// Có quyền Sửa thì kèm nút "Nhập số kg" (→ S14); chỉ xem thì chỉ nhắc.
+class _WeighBanner extends StatelessWidget {
+  const _WeighBanner({required this.count, required this.canUpdate, required this.onWeigh});
+  final int count;
+  final bool canUpdate;
+  final VoidCallback onWeigh;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.cyan.background,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cyan.foreground.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.scale_rounded, size: 20, color: AppColors.cyan.foreground),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '$count món bán theo kg chờ cân',
+                  style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.cyan.foreground),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            canUpdate
+                ? 'Dẫn khách ra hồ chọn con, cân rồi nhập số kg thật. Bếp chỉ thấy món sau khi có số kg.'
+                : 'Phục vụ cần cân tại hồ và nhập số kg thì món mới xuống bếp.',
+            style: const TextStyle(color: AppColors.slate500, fontSize: 13),
+          ),
+          if (canUpdate) ...[
+            const SizedBox(height: 10),
+            FilledButton.icon(
+              onPressed: onWeigh,
+              icon: const Icon(Icons.scale_rounded, size: 20),
+              label: const Text('Nhập số kg'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// Món đã gọi, gom theo từng lần gửi bếp + tạm tính.
 class _ItemsCard extends StatelessWidget {
   const _ItemsCard({required this.order});
@@ -550,11 +656,11 @@ class OrderItemRow extends StatelessWidget {
                 ),
                 if (item.isByWeight)
                   Text(
-                    // Chờ cân: số kg phục vụ ghi (tiền tạm). Cân xong: số kg thật hồ hải sản nhập.
+                    // Chờ cân: số kg phục vụ ghi tạm (tiền tạm). Cân xong: số kg thật cân tại hồ.
                     item.weight == null
-                        ? '${formatMoney(item.price)}/kg · hồ hải sản đang cân'
+                        ? '${formatMoney(item.price)}/kg · chờ cân tại hồ'
                         : item.isWeighing
-                            ? 'Ghi ${formatKg(item.weight!)} × ${formatMoney(item.price)}/kg · chờ hồ hải sản cân'
+                            ? 'Ghi tạm ${formatKg(item.weight!)} × ${formatMoney(item.price)}/kg · chờ cân tại hồ'
                             : 'Đã cân ${formatKg(item.weight!)} × ${formatMoney(item.price)}/kg',
                     style: TextStyle(color: AppColors.cyan.foreground, fontSize: 13, fontWeight: FontWeight.w600),
                   ),

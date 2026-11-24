@@ -15,6 +15,7 @@ class AppRoutes {
   // 3 màn chính, chuyển bằng menu trái (app_drawer.dart)
   static const tables = '/tables'; // S03 Sơ đồ bàn
   static const orders = '/orders'; // S10 Đơn hôm nay
+  static const manager = '/manager'; // S15 Quản lý · Tổng quan (chỉ ai có quyền Xem Tổng quan)
   static const account = '/account'; // S11 Tài khoản
 
   // Mở toàn màn hình, nằm "dưới" Sơ đồ bàn: quay lại từng bước S06 → S05 → S04 → S03
@@ -22,4 +23,8 @@ class AppRoutes {
   static String menu(int tableId) => '/tables/$tableId/menu'; // S05 Chọn món
   static String dish(int tableId, String slug) => '/tables/$tableId/menu/dish/$slug'; // S06 Chi tiết món
   static String ticket(int tableId) => '/tables/$tableId/ticket'; // S08 Phiếu gọi món
+
+  // Màn con của Quản lý (docs/28-app-quan-ly.md)
+  static const cancelled = '/manager/cancelled'; // S16 Đơn đã hủy
+  static const drinks = '/manager/drinks'; // S17 Kiểm bia nước
 }

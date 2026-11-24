@@ -58,7 +58,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-white/10 py-5 text-center text-xs text-ocean-300">
-        © {new Date().getFullYear()} FAB Seafood. Dự án học tập FAB.
+        © {new Date().getFullYear()} Ngưu Quán. Dự án học tập.
       </div>
     </footer>
   );

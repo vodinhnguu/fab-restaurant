@@ -13,6 +13,8 @@
     "db:seed": "prisma db seed",
     "db:seed-staff": "node prisma/seed-staff.js",
     "db:seed-menu": "node prisma/menu.js",
+    "db:seed-tank": "node prisma/seed-tank.js",
+    "db:seed-drinks": "node prisma/seed-drinks.js",
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",
     "generate": "prisma generate"

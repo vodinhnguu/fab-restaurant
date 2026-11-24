@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { ApiError } from './ApiError.js';
 
 // Bỏ dấu tiếng Việt và chuyển thành slug: "Tôm Hấp Bia" -> "tom-hap-bia"
 export function slugify(text) {
@@ -37,6 +38,13 @@ export async function withUniqueCode(prefix, create, attempts = 5) {
 }
 
 // Đọc ?page=&limit= từ query, trả về skip/take cho Prisma
+// Id trên đường dẫn (/:id): không phải số nguyên dương thì coi như không tìm thấy (404), không phải lỗi 500
+export function toId(value) {
+  const id = Number(value);
+  if (!Number.isInteger(id) || id <= 0) throw ApiError.notFound();
+  return id;
+}
+
 export function getPagination(query, defaultLimit = 12) {
   const page = Math.max(1, Number(query.page) || 1);
   const limit = Math.min(100, Math.max(1, Number(query.limit) || defaultLimit));

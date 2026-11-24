@@ -6,6 +6,8 @@ import categoryRoutes from './modules/categories/categories.routes.js';
 import cleaningRoutes from './modules/cleaning/cleaning.routes.js';
 import couponRoutes from './modules/coupons/coupons.routes.js';
 import dineInRoutes from './modules/dine-in/dine-in.routes.js';
+import drinksRoutes from './modules/drinks/drinks.routes.js';
+import tankRoutes from './modules/tank/tank.routes.js';
 import dishRoutes from './modules/dishes/dishes.routes.js';
 import maintenanceRoutes from './modules/maintenance/maintenance.routes.js';
 import orderRoutes from './modules/orders/orders.routes.js';
@@ -38,5 +40,7 @@ router.use('/cleaning', cleaningRoutes);
 router.use('/maintenance', maintenanceRoutes);
 // Ăn tại quán: nhân viên phục vụ ghi món tại bàn bằng app mobile (docs/23-app-nhan-vien-phuc-vu.md)
 router.use('/dine-in', dineInRoutes);
+router.use('/tank', tankRoutes); // Tồn hồ hải sản (docs/27)
+router.use('/drinks', drinksRoutes); // Kiểm bia nước cuối ngày (docs/29)
 
 export default router;

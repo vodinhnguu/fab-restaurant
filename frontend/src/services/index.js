@@ -140,13 +140,28 @@ export const dineInApi = {
   bills: () => api.get('/dine-in/bills').then((r) => r.data),
   bill: (id) => api.get(`/dine-in/bills/${id}`).then((r) => r.data),
   markPrinted: (id) => api.post(`/dine-in/bills/${id}/printed`).then((r) => r.data),
-  pay: (id) => api.post(`/dine-in/bills/${id}/pay`), // trả { data, message }
+  pay: (id, body = {}) => api.post(`/dine-in/bills/${id}/pay`, body), // trả { data, message }
+  adjustItem: (billId, itemId, body) => api.post(`/dine-in/bill-items/${itemId}/adjust`, body),
+  addBillItems: (billId, items) => api.post(`/dine-in/bills/${billId}/items`, { items }),
   // Bếp: phiếu các bàn còn món chờ làm / đang làm
   kitchen: () => api.get('/dine-in/kitchen').then((r) => r.data),
   startCooking: (itemIds) => api.post('/dine-in/kitchen/start', { itemIds }), // trả { data, message }
+  finishCooking: (itemIds) => api.post('/dine-in/kitchen/finish', { itemIds }),
   // Hồ hải sản: món bán theo kg chờ cân + món đã cân hôm nay; nhập số kg (docs/24-thuc-don-ban-theo-kg.md)
   weighing: () => api.get('/dine-in/weighing').then((r) => r.data),
   weigh: ({ id, weight }) => api.post(`/dine-in/items/${id}/weigh`, { weight }), // trả { data, message }
+};
+
+// Tồn hồ hải sản: nhập bao nhiêu, bán bao nhiêu, còn lại bao nhiêu (docs/27-ton-ho-hai-san.md)
+export const tankApi = {
+  list: (all = false) => api.get('/tank', { params: all ? { all: 1 } : {} }).then((r) => r.data),
+  entries: (params) => api.get('/tank/entries', { params }).then((r) => r), // cần cả meta (phân trang)
+  import: ({ id, ...body }) => api.post(`/tank/${id}/import`, body), // trả { data, message }
+  audit: ({ id, ...body }) => api.post(`/tank/${id}/audit`, body),
+  loss: ({ id, ...body }) => api.post(`/tank/${id}/loss`, body),
+  create: (body) => api.post('/tank', body),
+  update: ({ id, ...body }) => api.patch(`/tank/${id}`, body),
+  setActive: ({ id, isActive }) => api.patch(`/tank/${id}/active`, { isActive }),
 };
 
 export const uploadApi = {

@@ -24,7 +24,7 @@ class OpenOrderSummary {
   final int total;
   final int itemCount; // tổng số phần (bỏ món hủy)
   final int waitingCount; // số phần chưa mang ra bàn (chờ cân + chờ bếp + bếp đang làm)
-  final int weighingCount; // số phần bán theo kg còn chờ hồ hải sản cân
+  final int weighingCount; // số phần bán theo kg còn chờ cân tại hồ (phục vụ nhập số kg)
   final DateTime? billRequestedAt; // đã "Gửi thanh toán" (null = chưa)
   final DateTime? createdAt; // giờ mở bàn (gửi bếp lần đầu)
 

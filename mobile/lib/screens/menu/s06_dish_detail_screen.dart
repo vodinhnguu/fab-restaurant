@@ -127,6 +127,10 @@ class _DishDetailScreenState extends ConsumerState<DishDetailScreen> {
             sliver: SliverList.list(
               children: [
                 DishHeader(dish),
+                if (dish.tankStockKg != null) ...[
+                  const SizedBox(height: 14),
+                  _TankStockCard(dish),
+                ],
                 if (description.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   DishDescription(description),
@@ -168,7 +172,7 @@ class _DishDetailScreenState extends ConsumerState<DishDetailScreen> {
               byWeight: dish.soldByWeight,
               quantity: _quantity,
               weight: _weight,
-              // món theo kg: tiền tạm theo số kg đang chọn, hồ hải sản cân thật sau
+              // món theo kg: tiền tạm theo số kg đang chọn, cân thật tại hồ sau
               total: dish.soldByWeight ? (dish.effectivePrice * _weight).round() : dish.effectivePrice * _quantity,
               onQuantityChanged: (q) => setState(() => _quantity = q),
               onWeightChanged: (kg) => setState(() => _weight = kg),
@@ -313,6 +317,48 @@ class _LoadingView extends StatelessWidget {
                 SkeletonBox(width: 150, height: 28),
                 SizedBox(height: 16),
                 SkeletonBox(height: 96),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+/// Món bán theo kg: khung cho phục vụ biết hồ còn bao nhiêu kg loại hải sản này (docs/27-ton-ho-hai-san.md).
+/// Chỉ để tư vấn khách, KHÔNG chặn ghi món: số trong máy có thể lệch so với hồ thật.
+class _TankStockCard extends StatelessWidget {
+  const _TankStockCard(this.dish);
+  final Dish dish;
+
+  @override
+  Widget build(BuildContext context) {
+    final kg = dish.tankStockKg!;
+    final (text, detail, color) = dish.tankEmpty
+        ? ('Hồ hết hàng', 'Hỏi hồ hải sản trước khi hứa với khách.', AppColors.danger)
+        : dish.tankLow
+            ? ('Hồ gần hết · ${formatKg(kg)}', 'Còn ít, nên xem hồ rồi mới nhận order lớn.', AppColors.amber.foreground)
+            : ('Hồ còn ${formatKg(kg)}', 'Dẫn khách ra hồ chọn con rồi cân.', AppColors.success);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.set_meal_rounded, size: 20, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$text${dish.tankName != null ? ' (${dish.tankName})' : ''}',
+                    style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+                Text(detail, style: const TextStyle(color: AppColors.slate500, fontSize: 12)),
               ],
             ),
           ),

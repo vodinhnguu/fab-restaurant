@@ -7,7 +7,7 @@ import PageHeader from '../../components/PageHeader';
 import { StatusBadge } from '../../components/ui/Badge';
 import { Spinner } from '../../components/ui/Feedback';
 import { Select } from '../../components/ui/Form';
-import { ORDER_STATUS } from '../../lib/constants';
+import { ORDER_STATUS, ORDER_TYPE, orderStatusMap } from '../../lib/constants';
 import { formatCompactPrice, formatPrice, fromNow } from '../../lib/format';
 import { useDocumentTitle } from '../../lib/hooks';
 import { statsApi } from '../../services';
@@ -67,7 +67,7 @@ export default function Dashboard() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={Wallet} label="Doanh thu" value={formatCompactPrice(data.totalRevenue)} sub={`${formatPrice(data.totalRevenue)} · ${data.completedOrders} đơn hoàn thành`} />
+        <StatCard icon={Wallet} label="Doanh thu" value={formatCompactPrice(data.totalRevenue)} sub={`${formatPrice(data.totalRevenue)} · ${data.completedOrders} đơn hoàn thành (online + tại quán)`} />
         <StatCard icon={Receipt} label="Tổng đơn hàng" value={data.orderCount} sub={`${days} ngày qua`} to="/admin/orders" />
         <StatCard icon={Clock} label="Đơn chờ xác nhận" value={data.pendingOrders} sub="Cần xử lý ngay" to="/admin/orders?status=PENDING" />
         <StatCard icon={CalendarDays} label="Đặt bàn hôm nay" value={data.todayReservations} sub={`${data.customerCount} khách hàng đã đăng ký`} to="/admin/reservations" />
@@ -112,7 +112,29 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
+      <div className="mt-6 grid gap-6 xl:grid-cols-4">
+        <div className="card p-5">
+          <h2 className="font-semibold">Doanh thu theo kênh</h2>
+          <p className="text-xs text-slate-500">Đơn hoàn thành, {days} ngày qua</p>
+          <ul className="mt-4 space-y-4">
+            {data.revenueByType.map((t) => {
+              const percent = data.totalRevenue > 0 ? Math.round((t.revenue / data.totalRevenue) * 100) : 0;
+              return (
+                <li key={t.type}>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-sm text-slate-600">{ORDER_TYPE[t.type]}</span>
+                    <span className="font-semibold whitespace-nowrap">{formatCompactPrice(t.revenue)}</span>
+                  </div>
+                  <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-full rounded-full bg-ocean-500" style={{ width: `${percent}%` }} />
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">{percent}% · {t.orders} đơn</p>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
         <div className="card p-5">
           <h2 className="mb-4 font-semibold">Đơn theo trạng thái</h2>
           <ul className="space-y-3">
@@ -142,7 +164,8 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-semibold">{formatPrice(o.total)}</span>
-                  <StatusBadge map={ORDER_STATUS} value={o.status} />
+                  {/* Đơn ăn tại quán dùng chữ riêng: "Đã lên món" thay cho "Đang giao" */}
+                  <StatusBadge map={orderStatusMap(o.type)} value={o.status} />
                 </div>
               </li>
             ))}

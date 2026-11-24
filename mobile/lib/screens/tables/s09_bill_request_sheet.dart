@@ -91,7 +91,7 @@ class _BillRequestSheetState extends ConsumerState<_BillRequestSheet> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Còn $weighing món bán theo kg chưa cân. Nhờ hồ hải sản cân xong mới gửi thanh toán được.',
+                          'Còn $weighing món bán theo kg chưa cân. Ra hồ cân và nhập số kg xong mới gửi thanh toán được.',
                           style: TextStyle(color: AppColors.cyan.foreground, fontSize: 13, fontWeight: FontWeight.w600),
                         ),
                       ),

@@ -3,7 +3,7 @@ import { env } from './config/env.js';
 import { prisma } from './lib/prisma.js';
 
 const server = app.listen(env.port, () => {
-  console.log(`🦞 FAB Seafood API đang chạy tại http://localhost:${env.port}/api/v1`);
+  console.log(`🍜 Ngưu Quán API đang chạy tại http://localhost:${env.port}/api/v1`);
 });
 
 // Đóng kết nối DB gọn gàng khi tắt server (Ctrl+C)

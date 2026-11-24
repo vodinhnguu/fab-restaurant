@@ -81,7 +81,7 @@ class CartItemTile extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             item.soldByWeight
-                                ? '${formatMoney(item.price)} / kg · hồ hải sản cân lại'
+                                ? '${formatMoney(item.price)} / kg · cân tại hồ'
                                 : '${formatMoney(item.price)} / ${item.unit ?? 'phần'}',
                             style: const TextStyle(color: AppColors.slate500, fontSize: 13),
                           ),

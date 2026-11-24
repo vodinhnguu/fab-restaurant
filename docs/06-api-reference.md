@@ -78,7 +78,7 @@ Ký hiệu cột Quyền: 🌐 công khai · 👤 cần đăng nhập · 🔓 c�
 | GET | `/orders/my` | 👤 | Đơn của tôi, có phân trang |
 | GET | `/orders/track/:code?phone=` | 🔓 | Xem đơn: chủ đơn, admin, hoặc ai biết đúng SĐT đặt hàng |
 | POST | `/orders/:code/cancel` | 🔓 | Khách tự hủy (chỉ khi đơn còn `PENDING` và chưa thanh toán online) |
-| GET | `/orders` | 🛡️ | Query: `status`, `search`, `from`, `to`, `page`. `meta.statusCounts` = số đơn theo từng trạng thái |
+| GET | `/orders` | 🛡️ | Query: `status`, **`type`** (`DELIVERY` / `PICKUP` / `DINE_IN`, lọc theo hình thức), `search`, `from`, `to`, `page`. `meta.statusCounts` = số đơn theo từng trạng thái, đã tính cả `type` và `search` đang lọc (không tính `status`) |
 | GET | `/orders/:id` | 🛡️ | Chi tiết, kèm `payments` (lịch sử thanh toán VNPay) |
 | PATCH | `/orders/:id/status` | 🛡️ | `{ status, reason? }`, phải đúng thứ tự trong STATUS_FLOW. Hủy (`CANCELLED`) thì **bắt buộc** `reason` ≤ 300 ký tự, lưu vào `cancelReason` cho khách xem (xem [18](18-ly-do-huy-don-hang.md)). Mọi API trả đơn hàng đều có thêm field `cancelReason` |
 
@@ -193,16 +193,54 @@ Quyền: phục vụ = chức năng `ORDERS`, bếp = `KITCHEN`, thu ngân = `PA
 | POST | `/dine-in/orders` | 🛡️ `ORDERS` Thêm | **Gửi bếp** `{ tableId, items: [{ dishId, quantity, weight?, note? }], note? }`: bàn chưa có đơn → tạo đơn `DINE_IN`, có rồi → thêm món (món mới `PENDING`, món bán theo kg `WEIGHING`, 1 dòng `quantity` = 1, `weight` = số kg phục vụ ghi 0,05 – 30, không gửi thì coi mỗi phần là 1 kg; cộng tiền tạm). Gọi thêm sau khi đã gửi thanh toán thì yêu cầu thanh toán tự rút lại |
 | POST | `/dine-in/items/serve` | 🛡️ `ORDERS` Sửa | **Check món** `{ itemIds: [..], served?: true }`: tick món đã mang ra bàn (`served: false` = bỏ tick, món về `COOKING`). Các món phải cùng 1 đơn đang mở; món đã hủy = 400; món chờ cân không đổi (chưa nấu) |
 | POST | `/dine-in/items/:id/cancel` | 🛡️ `ORDERS` Sửa | **Hủy món** `{ quantity?, reason? }`. Bỏ trống `quantity` = hủy cả dòng, ít hơn = hủy bớt (tách thành dòng mới). Món `WEIGHING` / `PENDING` hủy luôn; `COOKING` / `SERVED` thiếu `reason` = 400. Món bán theo kg chỉ hủy cả dòng (hủy bớt = 400). Tổng tiền tự trừ |
-| POST | `/dine-in/orders/:id/bill-request` | 🛡️ `ORDERS` Sửa | **Gửi thanh toán**: thu ngân nhận thông báo. Bàn không còn món = 400; còn món chờ cân = 400 *"Còn món chưa cân: …. Nhờ hồ hải sản cân trước khi gửi thanh toán"* |
+| POST | `/dine-in/orders/:id/bill-request` | 🛡️ `ORDERS` Sửa | **Gửi thanh toán**: thu ngân nhận thông báo. Bàn không còn món = 400; còn món chờ cân = 400 *"Còn món chưa cân: …. Nhập số kg (cân tại hồ) trước khi gửi thanh toán"* |
 | DELETE | `/dine-in/orders/:id/bill-request` | 🛡️ `ORDERS` Sửa | Rút yêu cầu thanh toán (bấm nhầm) |
 | GET | `/dine-in/kitchen` | 🛡️ `KITCHEN` Xem | Phiếu bếp: bàn còn món `PENDING` / `COOKING` (món chờ cân chưa hiện), phiếu chờ lâu nhất trước |
 | POST | `/dine-in/kitchen/start` | 🛡️ `KITCHEN` Sửa | **Nhận làm** `{ itemIds: [..] }`: `PENDING` → `COOKING`. Trả `{ updated }` |
 | GET | `/dine-in/bills` | 🛡️ `PAYMENTS` Xem | Bàn đang mở kèm món, bàn đã gửi thanh toán xếp trước (gửi sớm trước) |
 | GET | `/dine-in/bills/:id` | 🛡️ `PAYMENTS` Xem | 1 bill để in (cả đơn đã thu tiền, để in lại) |
 | POST | `/dine-in/bills/:id/printed` | 🛡️ `PAYMENTS` Xem | Ghi nhận đã in (`billPrintedAt`) |
-| POST | `/dine-in/bills/:id/pay` | 🛡️ `PAYMENTS` Sửa | **Đã thu tiền**: đơn `COMPLETED` + `PAID`, bàn trống lại. Đơn đã đóng = 400; còn món chờ cân = 400 *"Còn món chưa cân: …. Nhờ hồ hải sản cân trước khi thu tiền"* |
-| GET | `/dine-in/weighing` | 🛡️ `SEAFOOD_TANK` Xem | Trang **Cân hải sản**: `{ waiting: [món chờ cân, gọi sớm trước], weighed: [món đã cân hôm nay, 30 món mới nhất] }`. Mỗi món: `id, name, price` (giá 1 kg), `quantity, note, status, weight, weighedAt, createdAt` kèm `order.table`, `order.staff` |
-| POST | `/dine-in/items/:id/weigh` | 🛡️ `SEAFOOD_TANK` Sửa | **Cân** `{ "weight": 1.25 }` (số kg, 0,05 đến 30, làm tròn tới gam). Tiền dòng = giá 1 kg × số kg, cộng vào đơn, món sang `PENDING` (bếp thấy). **Cân lại** được khi bếp chưa "Nhận làm" (tiền đơn đổi theo chênh lệch, yêu cầu thanh toán cũ bị rút); bếp đã nhận làm / món đã hủy = 400; không phải món theo kg = 404. Trả món vừa cân, `message` "Đã cân Tôm hùm nướng phô mai: 1,25 kg" |
+| POST | `/dine-in/bills/:id/pay` | 🛡️ `PAYMENTS` Sửa | **Đã thu tiền**: đơn `COMPLETED` + `PAID`, bàn trống lại. Đơn đã đóng = 400; còn món chờ cân = 400 *"Còn món chưa cân: …. Cần nhập số kg (cân tại hồ) trước khi thu tiền"* |
+| GET | `/dine-in/weighing` | 🛡️ `SEAFOOD_TANK` Xem | Trang **Cân hải sản** (theo dõi, cân lại): `{ waiting: [món chờ cân, gọi sớm trước], weighed: [món đã cân hôm nay, 30 món mới nhất] }`. Mỗi món: `id, name, price` (giá 1 kg), `quantity, note, status, weight, weighedAt, createdAt` kèm `order.table`, `order.staff` |
+| POST | `/dine-in/items/:id/weigh` | 🛡️ `ORDERS` Sửa **hoặc** `SEAFOOD_TANK` Sửa | **Nhập số kg** `{ "weight": 1.25 }` (phục vụ nhập tại hồ trên app S14; hồ hải sản / quản lý nhập lại trên web) (số kg, 0,05 đến 30, làm tròn tới gam). Tiền dòng = giá 1 kg × số kg, cộng vào đơn, món sang `PENDING` (bếp thấy). **Cân lại** được khi bếp chưa "Nhận làm" (tiền đơn đổi theo chênh lệch, yêu cầu thanh toán cũ bị rút); bếp đã nhận làm / món đã hủy = 400; không phải món theo kg = 404. Trả món vừa cân, `message` "Đã cân Tôm hùm nướng phô mai: 1,25 kg" |
+
+### App Quản lý (`/stats`) — docs/28
+
+| Method | Đường dẫn | Quyền | Việc |
+|---|---|---|---|
+| GET | `/stats/manager` | 🛡️ `DASHBOARD` Xem | Số liệu màn Quản lý trong app (S15), gom sẵn 1 lần gọi: `today` / `month` (`revenue`, `orders`, `avgPerOrder`, `dineIn`, `online`; `month.label` = "11/2026", tính từ ngày 1), `cancelled.today` / `cancelled.month` (`orders`, `amount`), `tables` (`total`, `busy`, `free`, `billRequested`, `servingAmount`), `drinks` (nhóm món "Nước uống" hôm nay: `items`, `quantity`, `revenue`), `tank` (tồn hồ, docs/27), `topDishes`. Giờ tính theo UTC+7 |
+| GET | `/stats/cancellations?range=today\|7d\|month&page=&limit=` | 🛡️ `DASHBOARD` Xem | Màn Đơn đã hủy (S16): `orders` (đơn `CANCELLED` kèm `cancelReason`, `table`, `staff`, phân trang 20), `items` (50 món hủy lẻ mới nhất, đơn chưa hủy), `summary` |
+
+### Kiểm bia nước (`/drinks`) — docs/29
+
+Quyền: chức năng `DRINKS` "Bia nước & kiểm kho quầy". Xuất ra quầy theo **thùng**, kiểm theo **ngày** (giờ VN).
+Lệch = (bán + trả lại) − xuất: **âm = thiếu hàng**, dương = thừa.
+
+| Method | Đường dẫn | Quyền | Việc |
+|---|---|---|---|
+| GET | `/drinks/check?date=yyyy-MM-dd&all=1` | 🛡️ `DRINKS` Xem | Phiếu kiểm 1 ngày (không truyền `date` = hôm nay): `rows` mỗi loại kèm `packSize`, `issuedPacks`, `issuedUnits`, `issued`, `sold` (backend tự tính theo đơn), `returned`, `diff`, `checked`, `note`, `by`; `summary` có `issued`, `sold`, `returned`, `diff`, `checked`, `total`, `mismatched` |
+| PUT | `/drinks/check` | 🛡️ Sửa | `{ date?, productId, issuedPacks?, issuedUnits?, returnedUnits?, note? }`. Trả lại > xuất = 400; ngày chưa tới = 400; loại đã tắt = 400. `message`: *"Bia Tiger: xuất 48, bán 10, trả lại 30 lon → THIẾU 8"* |
+| GET | `/drinks/history?days=14` | 🛡️ Xem | Các ngày đã kiểm + tổng lệch mỗi ngày |
+| GET | `/drinks/products?all=1` | 🛡️ Xem | Danh sách loại + quy cách thùng |
+| POST | `/drinks/products` | 🛡️ Thêm | `{ dishId, packSize? }`. Món ngoài nhóm "Nước uống" = 400, đã có = 400 |
+| PATCH | `/drinks/products/:id` | 🛡️ Xóa | `{ packSize?, isActive? }`: sửa quy cách thùng, tắt / bật loại |
+
+### Tồn hồ hải sản (`/tank`) — docs/27
+
+Quyền: chức năng `SEAFOOD_TANK` "Hồ hải sản & nhập hàng". Mọi tồn tính theo **kg**, làm tròn tới gam.
+
+| Method | Đường dẫn | Quyền | Việc |
+|---|---|---|---|
+| GET | `/tank?all=1` | 🛡️ `SEAFOOD_TANK` Xem | Danh sách loại hải sản: `stockKg`, `lowStockKg`, `isLow`, `isEmpty`, `dishCount`, `today: { imported, sold, returned, lost, audited }`. `all=1` kèm loại đã tắt |
+| GET | `/tank/entries?tankItemId=&type=&date=&page=&limit=` | 🛡️ Xem | Sổ nhập - xuất (mới nhất trước). `type`: `IMPORT` / `SALE` / `RETURN` / `AUDIT` / `LOSS`; `date` dạng `yyyy-MM-dd` (giờ VN). Mỗi dòng kèm `tankItem`, `user`, `order.table`, `stockAfter`; có `meta` phân trang |
+| POST | `/tank/:id/import` | 🛡️ Sửa | **Nhập hàng** `{ kg, unitCost?, supplier?, note? }`. `kg` 0,01 – 500, ngoài khoảng = 400 |
+| POST | `/tank/:id/audit` | 🛡️ Sửa | **Kiểm hồ** `{ actualKg, note? }` (0 – 500). Trả `{ skipped, stockKg, diff }`; khớp số thì `skipped: true`, không tạo phiếu |
+| POST | `/tank/:id/loss` | 🛡️ Sửa | **Hao hụt** `{ kg, note }`. Thiếu `note` = 400 (bắt buộc lý do) |
+| POST | `/tank` | 🛡️ Thêm | Thêm loại `{ name, lowStockKg?, note? }`. Trùng tên = 400 |
+| PATCH | `/tank/:id` | 🛡️ Sửa | Sửa `{ name?, lowStockKg?, note? }`. Không đổi tồn ở đây |
+| PATCH | `/tank/:id/active` | 🛡️ Xóa | `{ isActive }`: tắt loại hồ không nuôi nữa (giữ lịch sử) hoặc bật lại |
+
+Ghi sổ **tự động** (không có endpoint riêng): `POST /dine-in/items/:id/weigh` trừ hồ đúng số kg đã cân (cân lại chỉ ghi chênh lệch); `POST /dine-in/items/:id/cancel` và `PATCH /orders/:id/status` → `CANCELLED` trả lại hồ món đã cân mà bếp chưa "Nhận làm".
 
 `PATCH /orders/:id/status` vẫn dùng được với đơn tại bàn (trang Đơn hàng trên web, hủy cả đơn trên app): `PREPARING` → món chờ bếp thành đang làm, `DELIVERING` → tick hết món, `CANCELLED` + `reason` → hủy mọi món còn lại.
 
@@ -213,7 +251,7 @@ Quyền: phục vụ = chức năng `ORDERS`, bếp = `KITCHEN`, thu ngân = `PA
 | POST | `/users` | Tạo tài khoản nhân viên: `{ name, email, phone?, password, role?: STAFF|ADMIN, staffRoleId }`. Chỉ ADMIN hoặc Chủ nhà hàng tạo được tài khoản ADMIN |
 | POST | `/users/:id/reset-password` | `{ password }` đặt lại mật khẩu (không dùng cho chính mình) |
 | PATCH | `/users/:id` | `{ role?, staffRoleId?, isActive? }`. `role: STAFF` bắt buộc có vai trò. Không tự sửa chính mình; nhân viên không sửa được tài khoản ADMIN |
-| GET | `/stats/overview?days=30` | Doanh thu, số đơn, `revenueByDay[]`, `topDishes[]`, `ordersByStatus[]`, `recentOrders[]` |
+| GET | `/stats/overview?days=30` | Doanh thu, số đơn, `revenueByDay[]`, **`revenueByType[]`** (doanh thu + số đơn theo kênh: `DELIVERY`, `PICKUP`, `DINE_IN`; cộng lại bằng `totalRevenue`), `topDishes[]`, `ordersByStatus[]`, `recentOrders[]` |
 | POST | `/upload` | `multipart/form-data`, field `image` (tối đa 5MB) → `{ url: "/uploads/xxx.jpg" }` |
 
 ---

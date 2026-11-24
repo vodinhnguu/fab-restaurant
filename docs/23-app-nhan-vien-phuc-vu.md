@@ -4,8 +4,8 @@ Từ 20/11/2026 app mobile **"FAB Phục vụ"** chỉ dành cho nhân viên. Ph
 
 | Ai | Dùng gì | Làm gì |
 |---|---|---|
-| Phục vụ, tổ trưởng, tiếp thực | App mobile | Chọn khu → chọn bàn → chọn món → **Gửi bếp** (hoặc **Cất order** để gửi sau, **Hủy order** để bỏ); **Check món** (tick món đã mang ra bàn), **Hủy món**, **Order** (gọi thêm), **Gửi thanh toán** |
-| Hồ hải sản (cả bếp, quản lý) | Web `/admin/weighing` "Cân hải sản" | Món bán theo kg (tôm hùm, tôm sú, cua, cá mú, tôm tít) phục vụ vừa gọi hiện "Chờ cân": bắt con khách chọn, cân, nhập số kg → tiền tự tính, món chuyển xuống bếp |
+| Phục vụ, tổ trưởng, tiếp thực | App mobile | Chọn khu → chọn bàn → chọn món → **Gửi bếp** (hoặc **Cất order** để gửi sau, **Hủy order** để bỏ); **Nhập số kg** (dẫn khách ra hồ cân món bán theo kg), **Check món** (tick món đã mang ra bàn), **Hủy món**, **Order** (gọi thêm), **Gửi thanh toán** |
+| Hồ hải sản (cả bếp, quản lý) | Web `/admin/weighing` "Cân hải sản" | Theo dõi món bán theo kg (tôm hùm, tôm sú, cua, cá mú, tôm tít) còn "Chờ cân"; đối chiếu "Đã cân hôm nay", **Cân lại** khi phục vụ nhập nhầm. Từ 23/11/2026 **phục vụ nhập số kg ngay tại hồ trên app**, không phải chạy vào máy tính |
 | Bếp | Web `/admin/kitchen` "Phiếu bếp" | Xem món mới gửi xuống (món theo kg chỉ hiện sau khi cân), bấm **Nhận làm** |
 | Thu ngân | Web `/admin/cashier` "Thanh toán tại bàn" | Nhận thông báo bàn gửi thanh toán, **In bill** (khổ 80mm), **Đã thu tiền** |
 | Quản lý | Web `/admin/orders` | Xem mọi đơn (đơn tại bàn có loại "Ăn tại quán") |
@@ -25,9 +25,11 @@ Code: app `mobile/lib/screens/` (cấu trúc ở [19-app-mobile.md](19-app-mobil
    │                                        (chuông + số đỏ trên menu)
    │ món bán theo kg: "Chờ cân"             ▲
    │ (tiền tạm theo số kg ghi, bếp chưa thấy)│
-   └──► HỒ HẢI SẢN (web "Cân hải sản"):     │
-        bắt con khách chọn, cân, xác nhận / ───┘ tiền = giá 1 kg × số kg
-        sửa số kg phục vụ ghi (vd 1 → 0,98)
+   │ Dẫn khách ra hồ, khách chỉ con, cân:    │
+   └──► S04 "Nhập số kg" (S14) ─────────────┘ tiền = giá 1 kg × số kg
+        sửa 1 → 0,98, "Lưu số kg"
+        (hồ hải sản / quản lý xem lại,
+         "Cân lại" trên web khi nhập nhầm)
                                             "Nhận làm" → "Bếp đang làm"
  S04: "Check món" (tick món đã ra bàn)
       "Hủy món" (bếp chưa làm: hủy luôn;
@@ -46,14 +48,14 @@ App tự tải lại sơ đồ bàn và đơn của bàn mỗi **15 giây**, web
 
 ## 2. Màn hình
 
-**App (11 màn + 3 bottom sheet).** Chuyển giữa S03, S10, S11 bằng **menu trái** kiểu CukCuk (nút ☰ góc trái hoặc vuốt từ mép trái): đầu menu có tên, vai trò, tổng số bàn có khách / trống / tiền đang phục vụ; dưới là Sơ đồ bàn · Đơn hôm nay · Tài khoản · Đăng xuất.
+**App (14 mã màn: 9 màn hình + 5 bottom sheet S07, S09, S12, S13, S14).** Chuyển giữa S03, S10, S11 bằng **menu trái** kiểu CukCuk (nút ☰ góc trái hoặc vuốt từ mép trái): đầu menu có tên, vai trò, tổng số bàn có khách / trống / tiền đang phục vụ; dưới là Sơ đồ bàn · Đơn hôm nay · Tài khoản · Đăng xuất.
 
 | Mã | Màn | Có gì |
 |---|---|---|
 | S01 | Splash | Kiểm tra đăng nhập, mất mạng thì "Thử lại" |
 | S02 | Đăng nhập nhân viên | Nút điền nhanh tài khoản demo. Chặn tài khoản khách / không có quyền đơn hàng |
 | S03 | Sơ đồ bàn (màn đầu) | **3 ô khu** (Trong nhà, Ngoài trời - view biển, Phòng VIP) kèm số bàn có khách, số bàn chờ thanh toán; sơ đồ bàn của khu theo vị trí x, y: trắng = trống, xanh = có khách (tiền, số món, "2 chưa ra", "1 chờ cân"), cam = chờ thu tiền. Có order đã cất: khung "Order đã cất, chưa gửi bếp" với nút từng bàn ("T01 · 3 món"), ô bàn viền cam + icon dấu trang |
-| S04 | Đơn của bàn | Món theo từng lần gửi bếp, nhãn trạng thái từng món, món hủy gạch ngang kèm lý do, tạm tính. Món bán theo kg: nhãn **Chờ cân**, "Ghi 1 kg × 1.890.000đ/kg · chờ hồ hải sản cân" + tiền tạm; cân rồi: "Đã cân 1,25 kg × 1.890.000đ/kg" + thành tiền. Bàn có order đã cất: khung "Order đã cất: 3 món · lúc 19:05" + nút **Mở order** (→ S08). 3 nút **Check món / Hủy món / Order** + **Gửi thanh toán** (đã gửi thì "Rút yêu cầu thanh toán"). Menu ⋮ **Hủy cả đơn** (bắt buộc lý do) |
+| S04 | Đơn của bàn | Khung xanh "1 món bán theo kg chờ cân" + nút **Nhập số kg** (→ S14). Món theo từng lần gửi bếp, nhãn trạng thái từng món, món hủy gạch ngang kèm lý do, tạm tính. Món bán theo kg: nhãn **Chờ cân**, "Ghi 1 kg × 1.890.000đ/kg · chờ hồ hải sản cân" + tiền tạm; cân rồi: "Đã cân 1,25 kg × 1.890.000đ/kg" + thành tiền. Bàn có order đã cất: khung "Order đã cất: 3 món · lúc 19:05" + nút **Mở order** (→ S08). 3 nút **Check món / Hủy món / Order** + **Gửi thanh toán** (đã gửi thì "Rút yêu cầu thanh toán"). Menu ⋮ **Hủy cả đơn** (bắt buộc lý do) |
 | S05 | Chọn món | Tìm, lọc danh mục, sắp xếp, nút "+" thêm vào phiếu, thanh phiếu nổi "Bàn B05 · 3 món" |
 | S06 | Chi tiết món | Ảnh, mô tả, đánh giá (để tư vấn khách), ghi chú khẩu vị, `[ − ] 1 [ + ]` (món theo kg: `[ − ] 1 kg [ + ]`, bấm số để gõ, vd 0,98), "Thêm vào phiếu · tiền" |
 | S07 | Ghi chú món (sheet) | Chip gợi ý theo loại món + ô 200 ký tự |
@@ -62,13 +64,14 @@ App tự tải lại sơ đồ bàn và đơn của bàn mỗi **15 giây**, web
 | S10 | Đơn hôm nay | Đã thu hôm nay, đang phục vụ; lọc Đang phục vụ / Đã thu tiền / Đã hủy; xem lại đơn |
 | S11 | Tài khoản | Vai trò, việc làm được theo quyền, đăng xuất (xóa phiếu chưa gửi) |
 | S12 | Check món (sheet) | Tick / bỏ tick từng món, "Chọn hết", "Lưu (2 món)" |
+| S14 | Nhập số kg (sheet) | Món bán theo kg còn "Chờ cân": mỗi món `[ − ] 1 kg [ + ]` (bấm số để gõ, vd 0,98), tiền xem trước; **Lưu số kg (N món)** → món sang "Chờ bếp", tính tiền theo số kg thật (`docs/24`) |
 | S13 | Hủy món (sheet) | Chọn món, hủy bao nhiêu phần, lý do (chip điền nhanh); bắt buộc khi bếp đã làm. Món theo kg không có ô chọn số phần (hủy cả dòng) |
 
 **Web:**
 
 | Trang | Quyền | Có gì |
 |---|---|---|
-| `/admin/weighing` Cân hải sản | Hồ hải sản & nhập hàng (SEAFOOD_TANK): xem trang = Xem, cân = Sửa; mục menu chỉ hiện cho người có quyền Sửa | Thẻ món chờ cân (bàn, khu, phục vụ, giờ gọi, giá / kg), ô nhập kg xem trước thành tiền, "Xác nhận cân"; bảng "Đã cân hôm nay" có nút **Cân lại** |
+| `/admin/weighing` Cân hải sản | Hồ hải sản & nhập hàng (SEAFOOD_TANK): xem trang = Xem, cân lại = Sửa; mục menu chỉ hiện cho người có quyền Sửa | Trang theo dõi + cân lại (phục vụ mới là người nhập số kg, trên app). Thẻ món chờ cân (bàn, khu, phục vụ, giờ gọi, giá / kg), ô nhập kg xem trước thành tiền, "Xác nhận cân"; bảng "Đã cân hôm nay" có nút **Cân lại** |
 | `/admin/kitchen` Phiếu bếp | Phiếu bếp (KITCHEN) | Phiếu theo bàn, chờ lâu nhất lên đầu; "Nhận làm" từng món / cả phiếu. Món theo kg chỉ hiện sau khi cân, kèm "Đã cân 1,3 kg" |
 | `/admin/cashier` Thanh toán tại bàn | Thu ngân & thanh toán (PAYMENTS) | Bàn đã gửi thanh toán xếp trên + viền cam, bàn đang ăn bên dưới; "In bill", "Đã thu tiền" |
 | `/admin/bill/:id/print` | Như trên | Bill khổ 80mm, tự mở hộp thoại in |
@@ -83,8 +86,8 @@ Web có chuông + thông báo + số đỏ trên menu khi có món mới chờ c
 
 | Mã | App hiện | Đổi khi |
 |---|---|---|
-| `WEIGHING` | Chờ cân | Chỉ món bán theo kg: phục vụ gửi bếp / gọi thêm. Chưa tính tiền, bếp chưa thấy |
-| `PENDING` | Chờ bếp | Phục vụ gửi bếp / gọi thêm (món theo phần); hồ hải sản cân xong (món theo kg) |
+| `WEIGHING` | Chờ cân | Chỉ món bán theo kg: phục vụ gửi bếp / gọi thêm. Chưa tính tiền thật, bếp chưa thấy |
+| `PENDING` | Chờ bếp | Phục vụ gửi bếp / gọi thêm (món theo phần); phục vụ nhập số kg sau khi cân tại hồ (món theo kg) |
 | `COOKING` | Bếp đang làm | Bếp bấm "Nhận làm"; hoặc phục vụ bỏ tick món đã ra (bấm nhầm) |
 | `SERVED` | Đã ra bàn | Phục vụ "Check món" |
 | `CANCELLED` | Đã hủy | Phục vụ "Hủy món" / "Hủy cả đơn" |
@@ -115,9 +118,10 @@ Web có chuông + thông báo + số đỏ trên menu khi có món mới chờ c
 | Hủy món | "Chờ bếp" hủy luôn; "Bếp đang làm" / "Đã ra bàn" bắt buộc lý do. Hủy bớt phần: tách phần hủy thành dòng riêng. Tiền đơn và số lượng đã bán trừ ngay |
 | Hủy hết món | Đơn tự "Đã hủy", bàn trống |
 | Check món | Chỉ món của cùng 1 bàn, món đã hủy không check được. Bỏ tick: về "Bếp đang làm" |
+| Nhập số kg | Phục vụ nhập tại hồ (quyền ORDERS Sửa) hoặc hồ hải sản / quản lý nhập lại trên web (SEAFOOD_TANK Sửa). Sửa lại được khi bếp **chưa** "Nhận làm"; sửa làm đổi tiền thì yêu cầu thanh toán cũ bị rút |
 | Gửi thanh toán | Bàn phải còn món. Gọi thêm sau khi gửi → tự rút yêu cầu (bill cũ không còn đúng) |
 | Thu tiền | Chỉ thu ngân (quyền Thanh toán). Phục vụ gọi API thu tiền → 403 |
-| Phiếu gọi món | Lưu trên máy, gắn với 1 bàn; mở bàn khác khi phiếu còn món thì hỏi "Bỏ phiếu cũ?"; đăng xuất thì xóa |
+| Phiếu gọi món | Lưu trên máy, gắn với 1 bàn; mở bàn khác khi phiếu còn món thì phiếu bàn cũ **tự cất** (xem "Cất order"), không hỏi bỏ phiếu nữa; đăng xuất thì xóa |
 | Ai dùng app | Tài khoản STAFF / ADMIN có quyền **Xem** "Đơn hàng & gọi món". Khách, tạp vụ, kỹ thuật bị chặn ở màn đăng nhập |
 | Món bán theo kg | App mặc định 1 kg, phục vụ sửa được (0,05 đến 30 kg); gửi bếp kèm số kg, món ở "Chờ cân", **cộng tiền tạm** theo số kg đó. Hồ hải sản cân thật: ô số kg điền sẵn số phục vụ ghi, xác nhận hoặc sửa (0,05 đến 30 kg) → tiền dòng = giá 1 kg × số kg (làm tròn đồng), món sang "Chờ bếp". Cân lại được khi bếp chưa "Nhận làm". Chỉ hủy cả dòng; chờ cân hủy không cần lý do; chưa cân thì không "Check món" được |
 | Còn món chờ cân | Không gửi thanh toán, không thu tiền được (báo tên món chưa cân) |
@@ -160,7 +164,9 @@ Chi tiết tham số: [06-api-reference.md](06-api-reference.md) mục "Ăn tạ
 | `GET /dine-in/bills`, `GET /dine-in/bills/:id`, `POST .../printed`, `POST .../pay` | Thu ngân | Danh sách bàn, bill, đã in, đã thu tiền |
 | `GET /dine-in/weighing`, `POST /dine-in/items/:id/weigh` | Hồ hải sản | Món chờ cân + đã cân hôm nay; nhập số kg (cân / cân lại) |
 
-## 8. Đã kiểm tra (21/11/2026)
+## 8. Đã kiểm tra (21/11/2026, cập nhật 22/11)
+
+- **22/11:** sau khi thêm món bán theo kg, menu trái, Cất / Hủy order: `flutter test` **83 test** qua ([19](19-app-mobile.md) mục 6), script API cân hải sản 13/13 và phục vụ ghi số kg 14/14 bước.
 
 - **App:** `flutter analyze` sạch; `flutter test` **63/63** (server giả: đăng nhập, chọn khu, đơn của bàn, check món, hủy món có / không lý do, hủy bớt phần, gửi / rút thanh toán, hủy cả đơn, nút theo quyền, phiếu gọi món, gửi bếp, đơn hôm nay, tài khoản); `test/live_api_test.dart` với backend thật **2/2**; `flutter build apk --debug` thành công.
 - **Backend:** script gọi API thật **28/28 bước**: quyền (khách, bếp, phục vụ thu tiền = 403), gửi bếp, bếp nhận làm, hủy món chờ bếp / bếp đang làm (thiếu lý do = 400) / hủy bớt, check món / bỏ tick / check món đã hủy = 400, gửi thanh toán, gọi thêm tự rút yêu cầu, rút lại, thu ngân xem bill / in / thu tiền, bàn trống lại, hủy hết món, hủy cả đơn. Dữ liệu thử đã xóa, số lượng đã bán trả lại như cũ.

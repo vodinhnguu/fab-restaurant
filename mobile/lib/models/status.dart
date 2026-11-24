@@ -27,7 +27,7 @@ enum OrderStatus {
 /// Trạng thái từng món của đơn tại bàn: chờ bếp → bếp đang làm (bếp bấm "Nhận làm" trên web)
 /// → đã ra bàn (phục vụ "Check món"), hoặc đã hủy.
 enum OrderItemStatus {
-  weighing('WEIGHING', 'Chờ cân'), // món bán theo kg: chờ hồ hải sản cân (docs/24)
+  weighing('WEIGHING', 'Chờ cân'), // món bán theo kg: chờ cân tại hồ, phục vụ nhập số kg (docs/24)
   pending('PENDING', 'Chờ bếp'),
   cooking('COOKING', 'Bếp đang làm'),
   served('SERVED', 'Đã ra bàn'),

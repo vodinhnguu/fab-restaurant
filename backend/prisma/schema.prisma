@@ -46,8 +46,9 @@ enum OrderItemStatus {
 }
 
 enum PaymentMethod {
-  COD // Thanh toán khi nhận hàng
+  COD // Tiền mặt (giao hàng: nhận tiền khi giao; tại quán: thu ngân thu tiền mặt)
   ONLINE // Thanh toán online (mô phỏng)
+  CARD // Thanh toán bằng thẻ (quẹt thẻ tại quán)
 }
 
 enum PaymentStatus {
@@ -76,6 +77,15 @@ enum CouponType {
 }
 
 // Việc vệ sinh của tạp vụ. Tài liệu: docs/20-ve-sinh.md
+// Loại phiếu trong sổ nhập - xuất hồ hải sản (docs/27-ton-ho-hai-san.md)
+enum TankEntryType {
+  IMPORT // Nhập hàng: xe hàng về, cộng vào hồ (có giá nhập)
+  SALE // Bán: phục vụ nhập số kg món bán theo kg -> trừ hồ
+  RETURN // Trả lại hồ: hủy món đã cân khi bếp chưa nhận làm (con hải sản còn sống)
+  AUDIT // Kiểm hồ: đếm / cân thực tế, lệch bao nhiêu thì ghi vào đây (+ hoặc -)
+  LOSS // Hao hụt: hải sản chết, thất thoát (trừ hồ, ghi rõ lý do)
+}
+
 enum CleaningStatus {
   TODO // Chờ làm
   IN_PROGRESS // Đang làm
@@ -134,6 +144,8 @@ model User {
   tableChanges     ReservationTableChange[] // Các lần nhân viên này chuyển bàn cho khách
   repairsReported  RepairTicket[]           @relation("RepairReporter") // Phiếu sửa chữa người này báo
   repairsAssigned  RepairTicket[]           @relation("RepairAssignee") // Phiếu sửa chữa người này nhận / đã sửa
+  tankEntries      TankEntry[] // Phiếu nhập / xuất hồ hải sản người này ghi
+  drinkChecks      DrinkDayCheck[] // Phiếu kiểm bia nước người này ghi
 }
 
 model Category {
@@ -163,12 +175,98 @@ model Dish {
   ratingCount Int         @default(0)
   categoryId  Int
   category    Category    @relation(fields: [categoryId], references: [id])
+  // Món bán theo kg (unit = 'kg'): loại hải sản sống mà món này bắt từ hồ. Nhiều món dùng chung 1 loại
+  // (5 món tôm hùm đều bắt tôm hùm trong hồ). null = món theo phần, không liên quan tồn hồ.
+  tankItemId  Int?
+  tankItem    TankItem?   @relation(fields: [tankItemId], references: [id], onDelete: SetNull)
+  // Đồ uống đóng lon / chai (nhóm "Nước uống"): quy cách thùng + phiếu kiểm cuối ngày (docs/29)
+  drink       DrinkProduct?
   orderItems  OrderItem[]
   reviews     Review[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
   @@index([categoryId])
+  @@index([tankItemId])
+}
+
+// Loại hải sản sống trong hồ (Tôm hùm, Tôm sú, Cua gạch, Cua thịt, Cá mú, Tôm tít).
+// Khác với Category (nhóm món trên thực đơn): nhóm "Cua" có 2 loại hàng trong hồ là cua gạch và cua thịt,
+// giá nhập và giá bán khác nhau. Tài liệu: docs/27-ton-ho-hai-san.md
+model TankItem {
+  id         Int        @id @default(autoincrement())
+  name       String     @unique
+  slug       String     @unique
+  note       String? // Ghi chú của hồ hải sản: nguồn hàng, cỡ con...
+  stockKg    Float      @default(0) // Tồn hiện tại (kg). Backend tự cộng / trừ, mọi lần đổi đều có 1 dòng TankEntry
+  lowStockKg Float      @default(2) // Còn ít hơn số này -> trang Tồn hồ báo "gần hết", app hiện nhãn vàng
+  isActive   Boolean    @default(true) // Tắt khi hồ không nuôi loại này nữa (giữ lịch sử)
+  sortOrder  Int        @default(0)
+  dishes     Dish[]
+  entries    TankEntry[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+// Sổ nhập - xuất hồ: mỗi lần tồn đổi là 1 dòng, để biết hôm nay nhập bao nhiêu, bán bao nhiêu, còn lại bao nhiêu.
+model TankEntry {
+  id          Int           @id @default(autoincrement())
+  tankItemId  Int
+  tankItem    TankItem      @relation(fields: [tankItemId], references: [id], onDelete: Cascade)
+  type        TankEntryType
+  deltaKg     Float // Số kg đổi: nhập / trả lại = dương, bán / hao hụt = âm, kiểm hồ = lệch (+ hoặc -)
+  stockAfter  Float // Tồn sau khi ghi dòng này (để xem lại lịch sử không phải tính lại)
+  unitCost    Int? // Giá nhập 1 kg (VNĐ), chỉ phiếu IMPORT. Dùng để tính tiền hàng đã nhập
+  supplier    String? // Nhà cung cấp / xe hàng (chỉ phiếu IMPORT)
+  note        String? // Lý do hao hụt, ghi chú kiểm hồ...
+  userId      Int? // Ai ghi phiếu (hồ hải sản, quản lý; phiếu SALE là phục vụ nhập số kg)
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  orderId     Int? // Phiếu SALE / RETURN: đơn của bàn
+  order       Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  orderItemId Int? // Phiếu SALE / RETURN: dòng món đã cân
+  createdAt   DateTime      @default(now())
+
+  @@index([tankItemId, createdAt])
+  @@index([type, createdAt])
+  @@index([orderItemId])
+}
+
+// Đồ uống đóng lon / chai bán ở quầy (bia, nước ngọt, nước suối): quy cách thùng để kiểm kho cuối ngày.
+// Mỗi món trong nhóm "Nước uống" là 1 dòng (khác hải sản: nhiều món dùng chung 1 loại trong hồ).
+// Tài liệu: docs/29-kiem-bia-nuoc.md
+model DrinkProduct {
+  id        Int             @id @default(autoincrement())
+  dishId    Int             @unique
+  dish      Dish            @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  packSize  Int             @default(24) // Số lon / chai mỗi thùng (két bia chai thường 20)
+  isActive  Boolean         @default(true) // Tắt khi quầy không bán loại này nữa (giữ lịch sử)
+  sortOrder Int             @default(0)
+  checks    DrinkDayCheck[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+// Phiếu kiểm bia nước THEO NGÀY: xuất ra quầy bao nhiêu thùng, bán bao nhiêu (theo đơn), trả lại bao nhiêu.
+// Lệch = (bán + trả lại) - xuất. ÂM = thiếu hàng (xuất ra mà không bán, không trả lại), dương = thừa.
+// Tài liệu: docs/29-kiem-bia-nuoc.md
+model DrinkDayCheck {
+  id            Int          @id @default(autoincrement())
+  productId     Int
+  product       DrinkProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  date          DateTime // 0h (giờ VN) của ngày kiểm
+  issuedPacks   Int          @default(0) // Số thùng xuất từ kho ra quầy
+  issuedUnits   Int          @default(0) // Số lon / chai lẻ xuất thêm (ngoài thùng)
+  returnedUnits Int          @default(0) // Số lon / chai còn lại trả về kho cuối ngày
+  soldUnits     Int          @default(0) // Số đã bán theo đơn, chốt lại lúc lưu phiếu
+  diffUnits     Int          @default(0) // Lệch = (bán + trả lại) - xuất. Âm = thiếu hàng, dương = thừa
+  note          String?
+  userId        Int? // Ai ghi phiếu (thu ngân / quản lý)
+  user          User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@unique([productId, date]) // Mỗi loại 1 phiếu / ngày
+  @@index([date])
 }
 
 model Order {
@@ -198,6 +296,7 @@ model Order {
   billPrintedAt   DateTime? // Đơn tại quán: thu ngân in bill lần gần nhất
   items           OrderItem[]
   payments        Payment[]
+  tankEntries     TankEntry[] // Phiếu trừ / trả lại hồ của các món bán theo kg trong đơn
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 

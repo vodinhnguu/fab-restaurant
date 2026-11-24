@@ -42,7 +42,7 @@ class AccountScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           const Text(
-            'FAB Phục vụ · Phiên bản ${AppConfig.appVersion}',
+            'Ngưu Quán · Phiên bản ${AppConfig.appVersion}',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.slate500, fontSize: 12),
           ),

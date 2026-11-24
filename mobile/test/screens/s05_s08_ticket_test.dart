@@ -54,6 +54,21 @@ void main() {
     expect(find.text('Bàn T02'), findsOneWidget);
   });
 
+  testWidgets('S05: món bán theo kg hiện tồn hồ "Hồ còn 3,2 kg", vẫn thêm vào phiếu được (docs/27)', (tester) async {
+    await pumpApp(
+      tester,
+      initialLocation: AppRoutes.menu(2),
+      token: 'abc',
+      prefs: {'ticketTable': jsonEncode({'id': 2, 'code': 'T02'})},
+    );
+
+    // skipOffstage: false - thẻ món thứ 3 có thể nằm dưới mép màn hình test (360 x 800)
+    expect(find.text('Tôm hùm nướng phô mai', skipOffstage: false), findsOneWidget);
+    expect(find.text('Hồ còn 3,2 kg', skipOffstage: false), findsOneWidget);
+    // 2 món theo phần (Tôm sú, Sashimi) KHÔNG có dòng tồn hồ
+    expect(find.textContaining('Hồ ', skipOffstage: false), findsOneWidget);
+  });
+
   testWidgets('S08 "Gửi bếp": hỏi lại, gửi đúng món + ghi chú, xóa phiếu, về S04', (tester) async {
     final server = await pumpApp(
       tester,
@@ -145,7 +160,7 @@ void main() {
     }
 
     expect(find.text('1 kg'), findsOneWidget);
-    expect(find.text('1.890.000đ / kg · hồ hải sản cân lại'), findsOneWidget);
+    expect(find.text('1.890.000đ / kg · cân tại hồ'), findsOneWidget);
     expect(find.text('1.890.000đ'), findsOneWidget); // tiền tạm của dòng tôm hùm
     expect(find.text('Tạm tính (2 món, món kg tính tạm)'), findsOneWidget);
     expect(find.text('1.979.000đ'), findsOneWidget);

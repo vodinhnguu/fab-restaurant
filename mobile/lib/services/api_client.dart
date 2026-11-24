@@ -19,11 +19,13 @@ import '../app/config.dart';
 import 'api_exception.dart';
 import 'token_store.dart';
 
-/// Kết quả thành công: [data] là phần `data`, [meta] là phần `meta` (phân trang) nếu có.
+/// Kết quả thành công: [data] là phần `data`, [meta] là phần `meta` (phân trang) nếu có,
+/// [message] là câu backend muốn hiện cho người dùng (vd "Đã nhập số kg...") - có thể null.
 class ApiResponse {
-  const ApiResponse(this.data, [this.meta]);
+  const ApiResponse(this.data, {this.meta, this.message});
   final dynamic data;
   final Map<String, dynamic>? meta;
+  final String? message;
 }
 
 class ApiClient {
@@ -75,6 +77,9 @@ class ApiClient {
   Future<ApiResponse> post(String path, {Object? body, Map<String, dynamic>? query}) =>
       _send(() => _dio.post(path, data: body, queryParameters: _clean(query), options: _options()), false);
 
+  Future<ApiResponse> put(String path, {Object? body}) =>
+      _send(() => _dio.put(path, data: body, options: _options()), false);
+
   Future<ApiResponse> patch(String path, {Object? body}) =>
       _send(() => _dio.patch(path, data: body, options: _options()), false);
 
@@ -101,7 +106,11 @@ class ApiClient {
       final body = res.data;
       if (body is Map<String, dynamic>) {
         final meta = body['meta'];
-        return ApiResponse(body['data'], meta is Map<String, dynamic> ? meta : null);
+        return ApiResponse(
+          body['data'],
+          meta: meta is Map<String, dynamic> ? meta : null,
+          message: body['message'] as String?,
+        );
       }
       return ApiResponse(body);
     } on DioException catch (e) {
