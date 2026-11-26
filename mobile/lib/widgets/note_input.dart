@@ -6,6 +6,7 @@
 // Bấm chip: nối vào ghi chú bằng ", ", ý nào đã có thì bỏ qua (utils/notes.dart).
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/app_colors.dart';
 import '../utils/notes.dart';
@@ -53,8 +54,11 @@ class NoteInput extends StatelessWidget {
           controller: controller,
           minLines: 2,
           maxLines: 4,
-          maxLength: maxNoteLength, // đủ 200 ký tự thì không gõ thêm được, tự hiện "12/200"
+          maxLength: maxNoteLength,
+          maxLengthEnforcement: MaxLengthEnforcement.none,
           textCapitalization: TextCapitalization.sentences,
+          buildCounter: (_, {required currentLength, required isFocused, maxLength}) =>
+              Text('$currentLength/$maxNoteLength', style: Theme.of(context).textTheme.bodySmall),
           decoration: InputDecoration(
             hintText: 'Khẩu vị riêng cho $dishName, vd: 2 phần ít cay, 1 phần không hành',
             hintMaxLines: 2,
