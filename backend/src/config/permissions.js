@@ -59,25 +59,25 @@ export const DEFAULT_ROLES = [
     key: 'WAITER',
     name: 'Nhân viên phục vụ',
     description: 'Đón khách tại bàn, ghi món, tư vấn hải sản trong hồ, dọn bàn sau khi khách về',
-    perms: { ORDERS: 'VCE', RESERVATIONS: 'V', MENU: 'V', KITCHEN: 'V', SEAFOOD_TANK: 'V', FACILITY: 'C', CLEANING: 'VC' },
+    perms: { ORDERS: 'VCE', RESERVATIONS: 'V', MENU: 'V', KITCHEN: 'V', FACILITY: 'C', CLEANING: 'VC' },
   },
   {
     key: 'RECEPTIONIST',
     name: 'Lễ tân',
     description: 'Nghe điện thoại, nhận đặt bàn, đón và xếp chỗ cho khách',
-    perms: { ORDERS: 'V', RESERVATIONS: 'VCE', MENU: 'V', COUPONS: 'V', REVIEWS: 'V', FACILITY: 'C', CLEANING: 'VC' },
+    perms: { RESERVATIONS: 'VCE', REVIEWS: 'V', FACILITY: 'C', CLEANING: 'VC' },
   },
   {
     key: 'CASHIER',
     name: 'Thu ngân',
     description: 'Tính tiền, áp mã giảm giá, in hóa đơn, chốt tiền cuối ca',
-    perms: { DASHBOARD: 'V', ORDERS: 'VE', RESERVATIONS: 'V', MENU: 'V', PAYMENTS: 'VCE', DRINKS: 'VE', COUPONS: 'V' },
+    perms: { DASHBOARD: 'V', ORDERS: 'VE', RESERVATIONS: 'V', MENU: 'V', PAYMENTS: 'VCE', DRINKS: 'VE', COUPONS: 'V', FACILITY: 'VC', CLEANING: 'VC' },
   },
   {
     key: 'TECHNICIAN',
     name: 'Nhân viên kỹ thuật',
     description: 'Bảo trì điện nước, máy lạnh, hệ thống lọc và sục khí hồ',
-    perms: { KITCHEN: 'V', SEAFOOD_TANK: 'V', FACILITY: 'VCED' },
+    perms: { KITCHEN: 'V', FACILITY: 'VCED' },
   },
   {
     key: 'CLEANER',
@@ -89,7 +89,7 @@ export const DEFAULT_ROLES = [
     key: 'KITCHEN',
     name: 'Bếp',
     description: 'Sơ chế và chế biến món, báo món hết nguyên liệu',
-    perms: { ORDERS: 'V', MENU: 'VE', KITCHEN: 'VCE', SEAFOOD_TANK: 'VE', FACILITY: 'VC', CLEANING: 'VC' },
+    perms: { ORDERS: 'VCE', MENU: 'VE', KITCHEN: 'VCE', SEAFOOD_TANK: 'VE', FACILITY: 'VC', CLEANING: 'VC' },
   },
   {
     key: 'RUNNER',

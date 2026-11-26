@@ -243,11 +243,11 @@ Tài liệu này gom **mọi thông tin cần để viết một bản báo cáo
 | Quản lý | Điều hành ca, xử lý khiếu nại, duyệt thực đơn và khuyến mãi | Web quản trị, app (ghi món như phục vụ) |
 | Tổ trưởng | Phân công nhân viên trong ca, giám sát phục vụ tại khu vực | App (ghi món), web quản trị |
 | Nhân viên phục vụ | Đón khách tại bàn, ghi món, tư vấn hải sản trong hồ, dọn bàn sau khi khách về | **App FAB Phục vụ**; web: Khu vực cần dọn, nút Báo hỏng |
-| Lễ tân | Nghe điện thoại, nhận đặt bàn, đón và xếp chỗ cho khách | Web: Đặt bàn (app chỉ xem) |
-| Thu ngân | Tính tiền, áp mã giảm giá, in hóa đơn, chốt tiền cuối ca, **kiểm bia nước** | Web: **Thanh toán tại bàn**, In bill; app: nhóm **Quản lý** + **Kiểm bia nước** ([docs/29](29-kiem-bia-nuoc.md)), check / hủy món (không ghi món) |
+| Lễ tân | Nghe điện thoại, nhận đặt bàn, đón và xếp chỗ cho khách | Web: Đặt bàn, đánh giá, vệ sinh, bảo trì (app chỉ xem) |
+| Thu ngân | Tính tiền, áp mã giảm giá, in hóa đơn, chốt tiền cuối ca, **kiểm bia nước** | Web: **Thanh toán tại bàn**, In bill, vệ sinh, bảo trì; app: nhóm **Quản lý** + **Kiểm bia nước** ([docs/29](29-kiem-bia-nuoc.md)), check / hủy món (không ghi món) |
 | Nhân viên kỹ thuật | Bảo trì điện nước, máy lạnh, hệ thống lọc và sục khí hồ | Web: nhóm Kỹ thuật (không dùng app) |
 | Tạp vụ | Vệ sinh quanh nhà hàng: rửa chén bát, rửa ly, quét lau sàn, dọn nhà vệ sinh, đổ rác (không dọn bàn) | Web: nhóm Vệ sinh (không dùng app) |
-| Bếp | Sơ chế và chế biến món, báo món hết nguyên liệu | Web: **Phiếu bếp**, Cân hải sản (cân lại), Món ăn (app chỉ xem) |
+| Bếp | Sơ chế và chế biến món, báo món hết nguyên liệu, **duyệt đơn hàng** | Web: **Phiếu bếp**, **Đơn hàng** (xem + duyệt), Cân hải sản (cân lại), Món ăn (app chỉ xem) |
 | Nhân viên tiếp thực | Nhận món từ bếp, mang ra đúng bàn | App: check / hủy món, gửi thanh toán (không ghi món); web: Phiếu bếp |
 | Nhân viên hồ hải sản | Chăm sóc hồ, nhập hàng, kiểm số lượng hải sản trong hồ, vớt con khách chọn và cân cùng phục vụ | Web: **Tồn hồ hải sản** (nhập hàng, kiểm hồ, hao hụt - việc chính), **Cân hải sản** để theo dõi và cân lại (app chỉ xem). Số kg bán do phục vụ nhập trên app ngay tại hồ |
 
@@ -346,10 +346,10 @@ Hệ thống có 12 vai trò nhân viên (mục 3.1). Để sơ đồ dễ đọ
 | Khách hàng (CUSTOMER) | Người, kế thừa Khách vãng lai | | Website | Có tài khoản. Thêm: lịch sử đơn và đặt bàn, hồ sơ, đổi mật khẩu, đánh giá món đã nhận. Không đăng nhập được app (app chỉ cho nhân viên) |
 | Nhân viên (STAFF) | Người, tác nhân cha của 8 tác nhân dưới | Mọi vai trò | Web, app | Đăng nhập trang quản trị, chỉ thấy mục vai trò được cấp quyền; vai trò có quyền Xem "Đơn hàng & gọi món" đăng nhập được app |
 | Quản lý | Kế thừa Nhân viên | Quản lý, Tổ trưởng | Web, app | Điều hành ca: xem thống kê, xử lý đơn hàng và đặt bàn, thực đơn, mã giảm giá, kiểm duyệt đánh giá; giao và hủy việc vệ sinh, quản lý khu vực vệ sinh; giao phiếu sửa chữa, ghi bảo trì; xem nhân sự. Tại quán: ghi món trên app như phục vụ; Quản lý còn nhận làm, nhập hàng và kiểm tồn hồ hải sản, thu tiền. **Trên app**: đăng nhập là vào thẳng nhóm **Quản lý** (doanh thu hôm nay / tháng này tách tại quán - online, đơn đã hủy kèm lý do, bàn đang phục vụ, bia & nước, tồn hồ) - [docs/28](28-app-quan-ly.md). Tổ trưởng hẹp hơn (vd chỉ xem thực đơn, phiếu bếp; in bill được nhưng không thu tiền) |
-| Lễ tân | Kế thừa Nhân viên | Lễ tân | Web | Xác nhận / hủy lịch đặt bàn, **xếp / chuyển bàn**; xem đơn, món, mã giảm giá, đánh giá; báo cần dọn, báo hỏng. Mở app chỉ xem được sơ đồ bàn, đơn của bàn |
-| Thu ngân | Kế thừa Nhân viên | Thu ngân | Web (app phụ) | Trang **Thanh toán tại bàn**: thấy bàn gửi thanh toán (chuông), **In bill** 80mm, **Đã thu tiền**; xem thống kê, chuyển trạng thái đơn online; xem đặt bàn, món, mã giảm giá. **Trên app**: nhóm **Quản lý** (doanh thu, đơn hủy, bàn, bia nước, tồn hồ) + **Kiểm bia nước** cuối ngày (S17); check / hủy món, gửi thanh toán, không ghi món |
+| Lễ tân | Kế thừa Nhân viên | Lễ tân | Web | Xác nhận / hủy lịch đặt bàn, **xếp / chuyển bàn**; xem đánh giá; báo cần dọn, báo hỏng. Mở app chỉ xem được sơ đồ bàn, đơn của bàn |
+| Thu ngân | Kế thừa Nhân viên | Thu ngân | Web (app phụ) | Trang **Thanh toán tại bàn**: thấy bàn gửi thanh toán (chuông), **In bill** 80mm, **Đã thu tiền**; xem thống kê, chuyển trạng thái đơn online; xem đặt bàn, món, mã giảm giá; báo cần dọn, báo hỏng. **Trên app**: nhóm **Quản lý** (doanh thu, đơn hủy, bàn, bia nước, tồn hồ) + **Kiểm bia nước** cuối ngày (S17); check / hủy món, gửi thanh toán, không ghi món |
 | Phục vụ | Kế thừa Nhân viên | Phục vụ, Tiếp thực | **App** (web phụ) | App FAB Phục vụ: xem sơ đồ bàn theo khu, **ghi món tại bàn, gửi bếp, gọi thêm, cất / hủy order, nhập số kg món bán theo kg (cân tại hồ cùng khách), check món, hủy món, hủy cả đơn, gửi / rút thanh toán**, xem đơn hôm nay. Web: báo cần dọn, báo hỏng. Tiếp thực không ghi món (chỉ check / hủy món, gửi thanh toán; thấy Phiếu bếp và nhận làm được), không báo cần dọn / báo hỏng |
-| Bếp | Kế thừa Nhân viên | Bếp | Web | Trang **Phiếu bếp**: thấy món phục vụ gửi xuống (chuông), **Nhận làm** từng món / cả bàn; sửa món, bật / tắt món hết hàng; cân lại hải sản khi hồ hải sản vắng; xem thiết bị, báo hỏng, báo cần dọn |
+| Bếp | Kế thừa Nhân viên | Bếp | Web | Trang **Phiếu bếp**: thấy món phục vụ gửi xuống (chuông), **Nhận làm** từng món / cả bàn; **xem và duyệt đơn hàng** (online + tại quán, cập nhật trạng thái đang làm / xong / đang giao / giao xong); sửa món, bật / tắt món hết hàng; cân lại hải sản khi hồ hải sản vắng; xem thiết bị, báo hỏng, báo cần dọn |
 | Hồ hải sản | Kế thừa Nhân viên | Hồ hải sản | Web | Trang **Tồn hồ hải sản** (việc chính): nhập hàng (kèm giá nhập, nhà cung cấp), kiểm hồ, ghi hao hụt, xem sổ nhập - xuất; thêm / tắt loại hải sản. Trang **Cân hải sản**: theo dõi món bán theo kg còn chờ cân, đối chiếu "Đã cân hôm nay", **cân lại** khi phục vụ nhập nhầm (số kg do phục vụ nhập tại hồ trên app); xem phiếu bếp (không nhận làm); sửa món, bật / tắt món; xem thiết bị, báo hỏng |
 | Tạp vụ | Kế thừa Nhân viên | Tạp vụ | Web | Làm việc vệ sinh (nhận, hoàn thành, báo đã dọn cả khu), báo hỏng. Không dọn bàn |
 | Nhân viên kỹ thuật | Kế thừa Nhân viên | Kỹ thuật | Web | Nhận và sửa phiếu sửa chữa, bảo trì định kỳ, quản lý danh sách thiết bị |
@@ -395,7 +395,7 @@ Hệ thống có 12 vai trò nhân viên (mục 3.1). Để sơ đồ dễ đọ
 
 | Mã | Chức năng | Mô tả |
 |---|---|---|
-| QT01 | Tổng quan | Doanh thu (chỉ đơn hoàn thành), tổng đơn, đơn chờ xác nhận, đặt bàn hôm nay, số khách hàng; biểu đồ doanh thu theo ngày; top 5 món bán chạy; **doanh thu theo kênh** (giao tận nơi / đến lấy / ăn tại quán, kèm tỉ lệ phần trăm và số đơn); đơn theo trạng thái; 6 đơn mới nhất; chọn 7 / 30 / 90 ngày |
+| QT01 | Tổng quan | Doanh thu (chỉ đơn hoàn thành), tổng đơn, đơn chờ xác nhận, đặt bàn hôm nay, số khách hàng; **doanh thu hôm nay** (tách tại quán / online, trung bình / đơn); **doanh thu tháng này** (tách tại quán / online, trung bình / đơn); **đơn & món đã hủy** (hôm nay + tháng: số đơn hủy, số món hủy riêng lẻ, giá trị); biểu đồ doanh thu theo ngày; top 5 món bán chạy; **doanh thu theo kênh** (giao tận nơi / đến lấy / ăn tại quán, kèm tỉ lệ phần trăm và số đơn); đơn theo trạng thái; 6 đơn mới nhất; chọn 7 / 30 / 90 ngày |
 | QT02 | Quản lý đơn hàng | Tab theo trạng thái kèm số lượng, tìm theo mã / tên / SĐT, phân trang, xem chi tiết (món, ghi chú món, lịch sử thanh toán VNPay), chuyển trạng thái đúng quy trình, hủy bắt buộc chọn / ghi lý do (khách xem được), tự làm mới 30 giây / lần |
 | QT03 | Quản lý đặt bàn | Ba chế độ: **Hôm nay** (mặc định: lịch hôm nay theo giờ, tô vàng khách sắp đến trong 60 phút, tô đỏ khách trễ, đếm lịch chưa xếp bàn), danh sách (lọc theo ngày, trạng thái, tìm kiếm) và sơ đồ bàn theo ngày giờ (bấm bàn xem khách); xác nhận, đánh dấu khách đã đến, hủy bắt buộc kèm lý do |
 | QT04 | Quản lý món ăn | Thêm / sửa / xóa, upload ảnh hoặc dán link, bật / tắt "đang bán" bằng công tắc, đánh dấu **Best seller**; ghi đơn vị `kg` thì món thành bán theo kg (giá là giá 1 kg), không cần sửa code |
@@ -588,17 +588,17 @@ Ghi chú (mũi tên "mở rộng" vẽ cùng chiều với sơ đồ b, từ use
 | Use case | Quản lý | Lễ tân | Thu ngân | Phục vụ | Bếp | Hồ hải sản | Tạp vụ | Kỹ thuật | QTV / Chủ |
 |---|---|---|---|---|---|---|---|---|---|
 | A1 Xem thống kê | ✔ | - | ✔ | - | - | - | - | - | ✔ |
-| A2 Xử lý đơn hàng | ✔ | 👁 | ✔ | ✔ | 👁 | 👁 | - | - | ✔ |
+| A2 Xử lý đơn hàng | ✔ | - | ✔ | ✔ | ✔ | 👁 | - | - | ✔ |
 | A3 Xác nhận / hủy đặt bàn | ✔ | ✔ | 👁 | 👁 | - | - | - | - | ✔ |
 | A4 Chuyển / xếp bàn | ✔ | ✔ | - | - | - | - | - | - | ✔ |
-| A5 Quản lý thực đơn | ✔ (Tổ trưởng 👁) | 👁 | 👁 | 👁 | ✔ (sửa, bật / tắt) | ✔ (sửa, bật / tắt) | - | - | ✔ |
-| A6 Quản lý mã giảm giá | ✔ (Tổ trưởng -) | 👁 | 👁 | - | - | - | - | - | ✔ |
+| A5 Quản lý thực đơn | ✔ (Tổ trưởng 👁) | - | 👁 | 👁 | ✔ (sửa, bật / tắt) | ✔ (sửa, bật / tắt) | - | - | ✔ |
+| A6 Quản lý mã giảm giá | ✔ (Tổ trưởng -) | - | 👁 | - | - | - | - | - | ✔ |
 | A7 Kiểm duyệt đánh giá | ✔ (Tổ trưởng 👁) | 👁 | - | - | - | - | - | - | ✔ |
 | A8 Quản lý nhân viên | 👁 | - | - | - | - | - | - | - | ✔ |
 | A9 Sửa ma trận phân quyền | 👁 | - | - | - | - | - | - | - | ✔ |
 | A10 Làm việc vệ sinh | ✔ | - | - | - | - | - | ✔ | - | ✔ |
-| A11 Báo cần dọn | ✔ | ✔ | - | ✔ (Tiếp thực -) | ✔ | - | ✔ | - | ✔ |
-| A12 Báo hỏng thiết bị | ✔ | ✔ | - | ✔ (Tiếp thực -) | ✔ | ✔ | ✔ | ✔ | ✔ |
+| A11 Báo cần dọn | ✔ | ✔ | ✔ | ✔ (Tiếp thực -) | ✔ | - | ✔ | - | ✔ |
+| A12 Báo hỏng thiết bị | ✔ | ✔ | ✔ | ✔ (Tiếp thực -) | ✔ | ✔ | ✔ | ✔ | ✔ |
 | A13 Sửa chữa, bảo trì thiết bị | ✔ (Tổ trưởng 👁) | - | - | - | 👁 | 👁 | - | ✔ | ✔ |
 | A14 Quản lý khu vực / thiết bị | ✔ khu vực vệ sinh | - | - | - | - | - | - | ✔ thiết bị | ✔ |
 | A15 Cân hải sản bán theo kg | ✔ (Tổ trưởng 👁) | - | - | 👁 (Tiếp thực -) | ✔ | ✔ | - | 👁 | ✔ |
@@ -1949,7 +1949,7 @@ Chi tiết từng API và ví dụ: [docs/06-api-reference.md](06-api-reference.
 | Sửa | Thấy cả 4 trang; nhận việc, hoàn thành, giao việc | Thấy cả 4 trang; nhận sửa, chờ linh kiện, hoàn thành, ghi bảo trì |
 | Xóa | Hủy việc, quản lý khu vực | Hủy phiếu, quản lý thiết bị |
 
-**Hồ hải sản & nhập hàng (`SEAFOOD_TANK`)** hiện dùng cho trang **Cân hải sản**: Xem = xem danh sách món chờ cân (API `GET /dine-in/weighing`), Sửa = nhập số kg, cân lại. Mục menu Cân hải sản khai báo `action: 'edit'` nên chỉ người cân được mới thấy (mặc định: Chủ, Admin, Quản lý, Bếp, Hồ hải sản); Tổ trưởng, Phục vụ, Kỹ thuật chỉ có Xem.
+**Hồ hải sản & nhập hàng (`SEAFOOD_TANK`)** hiện dùng cho trang **Cân hải sản** và **Tồn hồ hải sản**: Xem = xem danh sách món chờ cân (API `GET /dine-in/weighing`), Sửa = nhập số kg, cân lại. Mục menu Cân hải sản khai báo `action: 'edit'` nên chỉ người cân được mới thấy (mặc định: Chủ, Admin, Quản lý, Bếp, Hồ hải sản); Tổ trưởng chỉ có Xem. Phục vụ, Kỹ thuật không có quyền Tồn hồ.
 
 **Ý nghĩa quyền ở 3 chức năng ăn tại quán:**
 
@@ -1959,7 +1959,7 @@ Chi tiết từng API và ví dụ: [docs/06-api-reference.md](06-api-reference.
 | Thêm | Ghi món, **Gửi bếp**, gọi thêm, Cất order | | |
 | Sửa | Check món, Hủy món, Hủy cả đơn, Gửi / rút thanh toán | **Nhận làm** | **Đã thu tiền** |
 
-Mặc định dùng được app (có Xem `ORDERS`): Chủ, Admin, Quản lý, Tổ trưởng, Phục vụ, Lễ tân, Thu ngân, Bếp, Tiếp thực, Hồ hải sản; trong đó ghi món được: Chủ, Admin, Quản lý, Tổ trưởng, Phục vụ. Kỹ thuật, Tạp vụ không có quyền đơn hàng nên bị chặn ở màn đăng nhập app.
+Mặc định dùng được app (có Xem `ORDERS`): Chủ, Admin, Quản lý, Tổ trưởng, Phục vụ, Thu ngân, Bếp, Tiếp thực, Hồ hải sản; trong đó ghi món được: Chủ, Admin, Quản lý, Tổ trưởng, Phục vụ. Lễ tân, Kỹ thuật, Tạp vụ không có quyền đơn hàng nên bị chặn ở màn đăng nhập app.
 
 **Ma trận mặc định** (V = Xem, C = Thêm, E = Sửa, D = Xóa, "-" = không có quyền), lấy từ `DEFAULT_ROLES`:
 
@@ -1969,12 +1969,12 @@ Mặc định dùng được app (có Xem `ORDERS`): Chủ, Admin, Quản lý, T
 | Admin | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED | VCED |
 | Quản lý | V | VCED | VCED | VCED | VCE | VCE | VE | VCED | VD | V | VCE | VCED |
 | Tổ trưởng | V | VCE | VCE | V | V | V | V | - | V | V | VC | VCE |
-| Phục vụ | - | VCE | V | V | V | V | - | - | - | - | C | VC |
-| Lễ tân | - | V | VCE | V | - | - | - | V | V | - | C | VC |
-| Thu ngân | V | VE | V | V | - | - | VCE | V | - | - | - | - |
-| Kỹ thuật | - | - | - | - | V | V | - | - | - | - | VCED | - |
+| Phục vụ | - | VCE | V | V | V | - | - | - | - | - | C | VC |
+| Lễ tân | - | - | VCE | - | - | - | - | - | V | - | C | VC |
+| Thu ngân | V | VE | V | V | - | - | VCE | V | - | - | VC | VC |
+| Kỹ thuật | - | - | - | - | V | - | - | - | - | - | VCED | - |
 | Tạp vụ | - | - | - | - | - | - | - | - | - | - | C | VCE |
-| Bếp | - | V | - | VE | VCE | VE | - | - | - | - | VC | VC |
+| Bếp | - | VCE | - | VE | VCE | VE | - | - | - | - | VC | VC |
 | Tiếp thực | - | VE | V | V | VE | - | - | - | - | - | - | - |
 | Hồ hải sản | - | V | - | VE | V | VCED | - | - | - | - | VC | - |
 
@@ -2372,7 +2372,7 @@ SavedTicket? openFor(TicketTable table) {
 | 13 | Tài khoản | `/account`, `/account/orders` | `khach@fab.vn` | Hồ sơ, lịch sử đơn |
 | 14 | Đánh giá món | `/menu/<món trong đơn FAB0000DEMO>` | `khach@fab.vn` | Form chọn sao |
 | 15 | Giao diện điện thoại | các trang trên, chế độ giả lập mobile (F12) | | Menu thu gọn, giỏ hàng toàn màn hình |
-| 16 | Tổng quan | `/admin` | `admin@fab.vn` | Thẻ số liệu, biểu đồ doanh thu, món bán chạy, **doanh thu theo kênh** |
+| 16 | Tổng quan | `/admin` | `admin@fab.vn` | Thẻ số liệu, biểu đồ doanh thu, món bán chạy, **doanh thu theo kênh**, **doanh thu hôm nay / tháng** (tách tại quán / online), **đơn & món đã hủy** (hôm nay + tháng) |
 | 17 | Quản lý đơn hàng | `/admin/orders` | `admin@fab.vn` | Tab trạng thái, hộp chi tiết đơn có nút chuyển trạng thái |
 | 18 | Quản lý đặt bàn: danh sách | `/admin/reservations` | `letan@fab.vn` | Nút Xác nhận / Hủy, dòng lý do hủy |
 | 19 | Quản lý đặt bàn: sơ đồ | `/admin/reservations`, tab "Sơ đồ bàn" | `letan@fab.vn` | Đếm bàn trống / có khách, hộp thông tin khách |
@@ -2799,7 +2799,7 @@ Chuẩn bị: chạy `npm run setup` trước buổi bảo vệ cho dữ liệu 
 4. **Đặt bàn (điện thoại):** chọn khu "Ngoài trời - view biển", 19:00 ngày mai → chỉ bàn B03 đang có khách (đỏ) → chọn bàn trống → đặt thành công, có mã RSV.
 5. **Lễ tân (`letan@fab.vn`):** trang Đặt bàn, chế độ Sơ đồ bàn → thấy bàn vừa đặt màu vàng → Hủy kèm lý do "Hết bàn vào khung giờ này" → khách tra cứu thấy lý do, bấm Đặt lại.
 6. **Phân quyền:** đăng nhập `bep@fab.vn` → menu chỉ có mục của bếp, không có Mã giảm giá, không có nút Thêm món → `admin@fab.vn` mở Ma trận, cấp cho Bếp quyền Xem mã giảm giá → Bếp tải lại trang thấy mục mới.
-7. **Tổng quan:** biểu đồ doanh thu 30 ngày, món bán chạy.
+7. **Tổng quan:** biểu đồ doanh thu 30 ngày, món bán chạy, **doanh thu hôm nay** (tại quán / online, TB/đơn), **doanh thu tháng** (tại quán / online, TB/đơn), **đơn & món đã hủy** (hôm nay + tháng: số đơn, số món, giá trị).
 8. (Nếu đã cấu hình VNPay sandbox) đặt đơn VNPay, thanh toán bằng thẻ test, xem lịch sử giao dịch trong admin.
 9. **Lễ tân chuyển bàn (`letan@fab.vn`):** tab Hôm nay → bấm Chuyển bàn → bàn hiện tại màu tím → chọn bàn ngoài trời view biển, lý do "Khách muốn ngồi view biển" → khách tra cứu thấy số bàn mới.
 10. **Vệ sinh:** `phucvu@fab.vn` mở Khu vực cần dọn, báo "Nhà vệ sinh nữ hết giấy" mức Gấp → `tapvu@fab.vn` thấy việc gấp viền đỏ, bấm Bắt đầu rồi Hoàn thành → khu xanh lại, việc vào Lịch sử.
