@@ -144,10 +144,13 @@ export const dineInApi = {
   pay: (id, body = {}) => api.post(`/dine-in/bills/${id}/pay`, body), // trả { data, message }
   adjustItem: (billId, itemId, body) => api.post(`/dine-in/bill-items/${itemId}/adjust`, body),
   addBillItems: (billId, items) => api.post(`/dine-in/bills/${billId}/items`, { items }),
-  // Bếp: phiếu các bàn còn món chờ làm / đang làm
+  // Bếp: phiếu các bàn còn món ăn chờ làm / đang làm (đồ uống sang quầy bar)
   kitchen: () => api.get('/dine-in/kitchen').then((r) => r.data),
   startCooking: (itemIds) => api.post('/dine-in/kitchen/start', { itemIds }), // trả { data, message }
   finishCooking: (itemIds) => api.post('/dine-in/kitchen/finish', { itemIds }),
+  // Quầy bia nước: đồ uống chờ lấy
+  bar: () => api.get('/dine-in/bar').then((r) => r.data),
+  barServe: (itemIds) => api.post('/dine-in/bar/serve', { itemIds }),
   // Hồ hải sản: món bán theo kg chờ cân + món đã cân hôm nay; nhập số kg (docs/24-thuc-don-ban-theo-kg.md)
   weighing: () => api.get('/dine-in/weighing').then((r) => r.data),
   weigh: ({ id, weight }) => api.post(`/dine-in/items/${id}/weigh`, { weight }), // trả { data, message }

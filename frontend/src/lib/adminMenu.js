@@ -1,4 +1,4 @@
-import { CalendarDays, ChartColumn, ChefHat, ClipboardList, FileClock, Fish, FolderTree, Gauge, HandCoins, History, LayoutDashboard, MapPinned, MessageSquare, Receipt, Refrigerator, Scale, ShieldCheck, Ticket, Users, UtensilsCrossed, Wrench } from 'lucide-react';
+import { Beer, CalendarDays, ChartColumn, ChefHat, ClipboardList, FileClock, Fish, FolderTree, Gauge, HandCoins, History, LayoutDashboard, MapPinned, MessageSquare, Receipt, Refrigerator, Scale, ShieldCheck, Ticket, Users, UtensilsCrossed, Wrench } from 'lucide-react';
 
 // module = chức năng trong ma trận phân quyền; nhân viên không có quyền Xem thì menu tự ẩn.
 // action (không bắt buộc, mặc định 'view'): quyền cần có để thấy mục đó.
@@ -38,6 +38,7 @@ export const ADMIN_MENU = [
   // Tồn hồ: nhập hàng, kiểm hồ, hao hụt (docs/27). Quyền Xem để phục vụ / tổ trưởng xem còn bao nhiêu kg mà tư vấn khách
   { to: '/admin/tank', label: 'Tồn hồ hải sản', icon: Fish, module: 'SEAFOOD_TANK', group: 'Tại quán' },
   { to: '/admin/kitchen', label: 'Phiếu bếp', icon: ChefHat, module: 'KITCHEN', group: 'Tại quán', badge: 'kitchen' },
+  { to: '/admin/bar', label: 'Quầy bia nước', icon: Beer, module: 'DRINKS', group: 'Tại quán', badge: 'bar' },
   { to: '/admin/cashier', label: 'Thanh toán tại bàn', icon: HandCoins, module: 'PAYMENTS', group: 'Tại quán', badge: 'cashier' },
 ];
 

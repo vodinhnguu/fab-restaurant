@@ -320,6 +320,7 @@ model OrderItem {
   note         String? // Ghi chú khẩu vị riêng của món, vd "2 phần ít cay, 1 phần không hành"
   createdAt    DateTime        @default(now()) // Đơn ăn tại quán: mỗi lần gọi thêm là các dòng mới, biết món nào gọi lúc nào
   // ---- Chỉ dùng cho đơn ăn tại quán ----
+  isDrink      Boolean         @default(false) // Đồ uống (Dish có DrinkProduct): gửi sang quầy bia nước, không vào bếp
   status       OrderItemStatus @default(PENDING)
   servedAt     DateTime? // Lúc phục vụ check món (mang ra bàn)
   cancelReason String? // Lý do hủy món (bắt buộc khi bếp đã làm)

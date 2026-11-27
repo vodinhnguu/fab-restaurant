@@ -164,7 +164,7 @@ export async function addItems({ tableId, items: lines, note }, staff) {
     const table = await getActiveTable(tx, tableId);
 
     // Giá lấy từ DB, không tin giá app gửi
-    const dishes = await tx.dish.findMany({ where: { id: { in: [...qtyByDish.keys()] } }, include: { tankItem: true } });
+    const dishes = await tx.dish.findMany({ where: { id: { in: [...qtyByDish.keys()] } }, include: { tankItem: true, drink: true } });
     if (dishes.length !== qtyByDish.size) throw ApiError.badRequest('Có món không tồn tại');
     // Giữ đúng thứ tự nhân viên bấm (bếp đọc phiếu theo thứ tự này)
     const items = [...qtyByDish.keys()].map((id) => dishes.find((x) => x.id === id)).map((d) => {
@@ -172,7 +172,8 @@ export async function addItems({ tableId, items: lines, note }, staff) {
       if (isSoldByWeight(d) && d.tankItem && d.tankItem.stockKg <= 0) {
         throw ApiError.badRequest(`Hồ đang hết "${d.tankItem.name ?? d.name}", không thể ghi món`);
       }
-      const base = { dishId: d.id, name: d.name, price: d.salePrice ?? d.price, note: noteByDish.get(d.id) ?? null };
+      const isDrink = d.drink != null;
+      const base = { dishId: d.id, name: d.name, price: d.salePrice ?? d.price, note: noteByDish.get(d.id) ?? null, isDrink };
       if (!isSoldByWeight(d)) return { ...base, quantity: qtyByDish.get(d.id), status: 'PENDING' };
       // Món theo kg: price là giá 1 kg; số kg làm tròn tới gam
       const kg = Math.round(kgByDish.get(d.id) * 1000) / 1000;
@@ -401,14 +402,14 @@ export async function adjustBillItem(itemId, { quantity }, userId) {
 export async function addBillItems(orderId, items, userId) {
   return prisma.$transaction(async (tx) => {
     const order = await getOpenOrder(tx, orderId);
-    const dishes = await tx.dish.findMany({ where: { id: { in: items.map((i) => i.dishId) } } });
+    const dishes = await tx.dish.findMany({ where: { id: { in: items.map((i) => i.dishId) } }, include: { drink: true } });
     if (dishes.length !== new Set(items.map((i) => i.dishId)).size) throw ApiError.badRequest('Có món không tồn tại');
 
     const newItems = items.map((line) => {
       const d = dishes.find((x) => x.id === line.dishId);
       if (!d.isAvailable) throw ApiError.badRequest(`Món "${d.name}" hiện đã hết`);
       if (isSoldByWeight(d)) throw ApiError.badRequest(`Món "${d.name}" bán theo kg, chỉ gọi được qua phục vụ tại hồ`);
-      return { orderId, dishId: d.id, name: d.name, price: d.salePrice ?? d.price, quantity: line.quantity, status: 'PENDING' };
+      return { orderId, dishId: d.id, name: d.name, price: d.salePrice ?? d.price, quantity: line.quantity, status: 'PENDING', isDrink: d.drink != null };
     });
 
     await tx.orderItem.createMany({ data: newItems });
@@ -424,17 +425,43 @@ export async function addBillItems(orderId, items, userId) {
 
 // ---------------- Bếp (web) ----------------
 
-// Phiếu bếp: các bàn còn món chờ bếp / đang làm, phiếu chờ lâu nhất lên đầu
+// Phiếu bếp: các bàn còn MÓN ĂN chờ bếp / đang làm (đồ uống sang quầy bar). Phiếu chờ lâu nhất lên đầu.
 export async function kitchen() {
   const orders = await prisma.order.findMany({
-    where: { type: 'DINE_IN', status: { in: OPEN_ORDER }, items: { some: { status: { in: KITCHEN_ITEM } } } },
+    where: { type: 'DINE_IN', status: { in: OPEN_ORDER }, items: { some: { status: { in: KITCHEN_ITEM }, isDrink: false } } },
     select: {
       id: true, code: true, note: true, createdAt: true, table: tableSelect, staff: staffSelect,
-      items: { where: { status: { in: KITCHEN_ITEM } }, orderBy: { id: 'asc' } },
+      items: { where: { status: { in: KITCHEN_ITEM }, isDrink: false }, orderBy: { id: 'asc' } },
     },
   });
   const oldest = (o) => Math.min(...o.items.map((i) => i.createdAt.getTime()));
   return orders.sort((a, b) => oldest(a) - oldest(b));
+}
+
+// Quầy bia nước: các bàn còn ĐỒ UỐNG chờ lấy / đang lấy. Giống bếp nhưng chỉ đồ uống.
+export async function bar() {
+  const orders = await prisma.order.findMany({
+    where: { type: 'DINE_IN', status: { in: OPEN_ORDER }, items: { some: { status: { in: KITCHEN_ITEM }, isDrink: true } } },
+    select: {
+      id: true, code: true, note: true, createdAt: true, table: tableSelect, staff: staffSelect,
+      items: { where: { status: { in: KITCHEN_ITEM }, isDrink: true }, orderBy: { id: 'asc' } },
+    },
+  });
+  const oldest = (o) => Math.min(...o.items.map((i) => i.createdAt.getTime()));
+  return orders.sort((a, b) => oldest(a) - oldest(b));
+}
+
+// Quầy bia nước "Đã lấy": đồ uống PENDING → READY (không cần COOKING vì chỉ lấy ra, không nấu)
+export async function barServe(itemIds) {
+  return prisma.$transaction(async (tx) => {
+    const items = await tx.orderItem.findMany({
+      where: { id: { in: itemIds }, status: { in: ['PENDING', 'COOKING'] }, isDrink: true, order: { type: 'DINE_IN', status: { in: OPEN_ORDER } } },
+      select: { id: true, orderId: true },
+    });
+    await tx.orderItem.updateMany({ where: { id: { in: items.map((i) => i.id) } }, data: { status: 'READY' } });
+    for (const orderId of new Set(items.map((i) => i.orderId))) await syncOrderStatus(tx, orderId);
+    return { updated: items.length };
+  });
 }
 
 // "Nhận làm": món chờ bếp -> bếp đang làm (từ giờ hủy món phải ghi lý do)

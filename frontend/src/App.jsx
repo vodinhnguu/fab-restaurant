@@ -47,6 +47,7 @@ const MaintenanceTickets = lazy(() => import('./pages/admin/maintenance/Tickets'
 const MaintenanceEquipment = lazy(() => import('./pages/admin/maintenance/Equipment'));
 const MaintenanceHistory = lazy(() => import('./pages/admin/maintenance/History'));
 const Kitchen = lazy(() => import('./pages/admin/dine-in/Kitchen'));
+const Bar = lazy(() => import('./pages/admin/dine-in/Bar'));
 const Weighing = lazy(() => import('./pages/admin/dine-in/Weighing'));
 const Tank = lazy(() => import('./pages/admin/dine-in/Tank'));
 const Cashier = lazy(() => import('./pages/admin/dine-in/Cashier'));
@@ -145,6 +146,7 @@ export default function App() {
             </Route>
             {/* Ăn tại quán (docs/23-app-nhan-vien-phuc-vu.md): phục vụ ghi món bằng app, bếp + thu ngân làm ở đây */}
             <Route element={<ProtectedRoute module="KITCHEN" />}><Route path="kitchen" element={<Kitchen />} /></Route>
+            <Route element={<ProtectedRoute module="DRINKS" />}><Route path="bar" element={<Bar />} /></Route>
             <Route element={<ProtectedRoute module="SEAFOOD_TANK" />}><Route path="weighing" element={<Weighing />} /></Route>
             <Route element={<ProtectedRoute module="SEAFOOD_TANK" />}><Route path="tank" element={<Tank />} /></Route>
             <Route element={<ProtectedRoute module="PAYMENTS" />}><Route path="cashier" element={<Cashier />} /></Route>

@@ -51,6 +51,12 @@ export function useDineInAlerts(user) {
     enabled: can(user, 'KITCHEN'),
     refetchInterval: DINE_IN_REFRESH_MS,
   });
+  const bar = useQuery({
+    queryKey: ['dine-in', 'bar'],
+    queryFn: dineInApi.bar,
+    enabled: can(user, 'DRINKS'),
+    refetchInterval: DINE_IN_REFRESH_MS,
+  });
   const ringWeighing = can(user, 'SEAFOOD_TANK', 'edit');
   const weighing = useQuery({
     queryKey: ['dine-in', 'weighing'],
@@ -60,6 +66,7 @@ export function useDineInAlerts(user) {
   });
   const ringCashier = can(user, 'PAYMENTS', 'edit');
   const ringKitchen = can(user, 'KITCHEN', 'edit');
+  const ringBar = can(user, 'DRINKS', 'edit');
 
   // Bàn gửi thanh toán. Khóa = id + giờ gửi: rút lại rồi gửi lại thì vẫn báo lần nữa
   const seenBills = useRef(null);
@@ -118,9 +125,29 @@ export function useDineInAlerts(user) {
     seenWeighing.current = new Set(waiting.map((i) => i.id));
   }, [weighing.data, navigate]);
 
+  // Đồ uống mới chờ lấy
+  const seenBar = useRef(null);
+  useEffect(() => {
+    if (!bar.data) return;
+    const pending = bar.data.flatMap((o) => o.items.filter((i) => i.status === 'PENDING').map((i) => ({ ...i, table: o.table })));
+    if (seenBar.current && ringBar) {
+      const fresh = pending.filter((i) => !seenBar.current.has(i.id));
+      const tables = [...new Set(fresh.map((i) => i.table?.code))];
+      if (tables.length) {
+        toast.info(`Đồ uống mới: bàn ${tables.join(', ')}`, {
+          duration: 15000,
+          action: { label: 'Xem', onClick: () => navigate('/admin/bar') },
+        });
+        playDing();
+      }
+    }
+    seenBar.current = new Set(pending.map((i) => i.id));
+  }, [bar.data, ringBar, navigate]);
+
   return {
     weighing: weighing.data?.waiting.length ?? 0,
     cashier: bills.data?.filter((o) => o.billRequestedAt).length ?? 0,
     kitchen: kitchen.data?.filter((o) => o.items.some((i) => i.status === 'PENDING')).length ?? 0,
+    bar: bar.data?.filter((o) => o.items.some((i) => i.status === 'PENDING')).length ?? 0,
   };
 }

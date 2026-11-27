@@ -32,6 +32,17 @@ export async function moveTable(req, res) {
   res.json({ success: true, data, message: 'Đã chuyển bàn' });
 }
 
+// GET /dine-in/bar
+export async function bar(req, res) {
+  res.json({ success: true, data: await service.bar() });
+}
+
+// POST /dine-in/bar/serve
+export async function barServe(req, res) {
+  const data = await service.barServe(req.body.itemIds);
+  res.json({ success: true, data, message: 'Đã lấy đồ uống' });
+}
+
 // POST /dine-in/items/serve
 export async function serveItems(req, res) {
   const data = await service.serveItems(req.body);

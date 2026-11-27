@@ -32,6 +32,10 @@ router.post('/bill-items/:itemId/adjust', requirePermission('PAYMENTS', 'edit'),
 router.post('/bills/:id/items', requirePermission('PAYMENTS', 'edit'), validate(addBillItemsSchema), ctrl.addBillItems);
 router.post('/bills/:id/pay', requirePermission('PAYMENTS', 'edit'), validate(paySchema), ctrl.pay); // Đã thu tiền
 
+// ---- Quầy bia nước (web /admin/bar, docs/29-kiem-bia-nuoc.md) ----
+router.get('/bar', requirePermission('DRINKS', 'view'), ctrl.bar);
+router.post('/bar/serve', requirePermission('DRINKS', 'edit'), validate(kitchenStartSchema), ctrl.barServe); // dùng lại schema itemIds
+
 // ---- Bếp (web /admin/kitchen) ----
 router.get('/kitchen', requirePermission('KITCHEN', 'view'), ctrl.kitchen);
 router.post('/kitchen/start', requirePermission('KITCHEN', 'edit'), validate(kitchenStartSchema), ctrl.startCooking); // Nhận làm
