@@ -40,13 +40,15 @@ class RevenueBlock {
 
 /// Đơn đã hủy: số đơn + số tiền của các đơn đó.
 class CancelledBlock {
-  const CancelledBlock({this.orders = 0, this.amount = 0});
+  const CancelledBlock({this.orders = 0, this.amount = 0, this.items = 0});
   final int orders;
   final int amount;
+  final int items;
 
   factory CancelledBlock.fromJson(Map<String, dynamic>? json) => CancelledBlock(
         orders: json?['orders'] as int? ?? 0,
         amount: json?['amount'] as int? ?? 0,
+        items: json?['items'] as int? ?? 0,
       );
 }
 

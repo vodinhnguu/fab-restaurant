@@ -41,6 +41,7 @@ enum OrderItemStatus {
   WEIGHING // Món bán theo kg (hải sản sống): chờ nhân viên hồ hải sản cân, cân xong mới tính tiền và sang bếp
   PENDING // Đã gửi bếp, bếp chưa làm
   COOKING // Bếp đang làm (bếp bấm "Nhận làm" ở trang Phiếu bếp)
+  READY // Bếp xong, chờ phục vụ mang ra bàn (bếp bấm "Đã xong")
   SERVED // Phục vụ đã mang ra bàn ("Check món")
   CANCELLED // Đã hủy
 }

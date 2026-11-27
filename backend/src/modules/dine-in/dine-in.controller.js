@@ -26,6 +26,12 @@ export async function addItems(req, res) {
   res.status(201).json({ success: true, data, message: 'Đã gửi bếp' });
 }
 
+// POST /dine-in/tables/:id/move
+export async function moveTable(req, res) {
+  const data = await service.moveTable(toId(req.params.id), req.body, req.user);
+  res.json({ success: true, data, message: 'Đã chuyển bàn' });
+}
+
 // POST /dine-in/items/serve
 export async function serveItems(req, res) {
   const data = await service.serveItems(req.body);
@@ -101,7 +107,7 @@ export async function startCooking(req, res) {
 // POST /dine-in/kitchen/finish
 export async function finishCooking(req, res) {
   const data = await service.finishCooking(req.body.itemIds);
-  res.json({ success: true, data, message: 'Đã xong, phục vụ mang ra bàn' });
+  res.json({ success: true, data, message: 'Đã báo xong, chờ phục vụ mang ra bàn' });
 }
 
 // ---- Hồ hải sản ----

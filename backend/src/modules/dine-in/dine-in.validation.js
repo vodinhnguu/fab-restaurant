@@ -54,6 +54,12 @@ export const weighItemSchema = z.object({
     .max(30, 'Nhiều nhất 30 kg, kiểm tra lại số cân'),
 });
 
+// Chuyển bàn: chuyển đơn đang mở sang bàn khác
+export const moveTableSchema = z.object({
+  toTableId: z.coerce.number({ error: 'Vui lòng chọn bàn đích' }).int().positive('Vui lòng chọn bàn đích'),
+  reason: z.string().trim().max(200, 'Lý do tối đa 200 ký tự').optional().nullable(),
+});
+
 // Thu ngân chỉnh số lượng món (tăng/giảm, 0 = xóa)
 export const adjustItemSchema = z.object({
   quantity: z.coerce.number().int().min(0, 'Số lượng từ 0 trở lên').max(50),

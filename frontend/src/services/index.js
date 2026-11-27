@@ -94,6 +94,7 @@ export const permissionApi = {
 
 export const statsApi = {
   overview: (days) => api.get('/stats/overview', { params: { days } }).then((r) => r.data),
+  manager: () => api.get('/stats/manager').then((r) => r.data),
 };
 
 // Vệ sinh & dọn dẹp (việc của tạp vụ). Tài liệu: docs/20-ve-sinh.md

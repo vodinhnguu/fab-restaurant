@@ -49,6 +49,8 @@ class _CheckItemsSheetState extends ConsumerState<_CheckItemsSheet> {
     for (final i in _items)
       if (i.isServed) i.id,
   };
+  // Chỉ món bếp đã xong (READY) hoặc đã ra bàn (SERVED) mới tick/bỏ tick được
+  bool _canCheck(OrderItem item) => item.isReady || item.isServed;
   late final Set<int> _checked = {..._servedBefore};
   bool _saving = false;
   String? _error;
@@ -92,13 +94,13 @@ class _CheckItemsSheetState extends ConsumerState<_CheckItemsSheet> {
                   TextButton(
                     onPressed: allChecked || _saving
                         ? null
-                        : () => setState(() => _checked.addAll(_items.map((i) => i.id))),
+                        : () => setState(() => _checked.addAll(_items.where(_canCheck).map((i) => i.id))),
                     child: const Text('Chọn hết'),
                   ),
                 ],
               ),
               const Text(
-                'Tick món đã mang ra bàn. Bỏ tick nếu lỡ bấm nhầm.',
+                'Tick món bếp đã xong khi mang ra bàn. Bỏ tick nếu lỡ bấm nhầm.',
                 style: TextStyle(color: AppColors.slate500, fontSize: 13),
               ),
               if (_items.isEmpty)
@@ -108,12 +110,23 @@ class _CheckItemsSheetState extends ConsumerState<_CheckItemsSheet> {
                 ),
               for (final item in _items)
                 InkWell(
-                  onTap: _saving ? null : () => _toggle(item.id, !_checked.contains(item.id)),
-                  child: OrderItemRow(
-                    item: item,
-                    trailing: Checkbox(
-                      value: _checked.contains(item.id),
-                      onChanged: _saving ? null : (v) => _toggle(item.id, v ?? false),
+                  onTap: _saving || !_canCheck(item) ? null : () => _toggle(item.id, !_checked.contains(item.id)),
+                  child: Opacity(
+                    opacity: _canCheck(item) ? 1.0 : 0.5,
+                    child: OrderItemRow(
+                      item: item,
+                      trailing: _canCheck(item)
+                          ? Checkbox(
+                              value: _checked.contains(item.id),
+                              onChanged: _saving ? null : (v) => _toggle(item.id, v ?? false),
+                            )
+                          : Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Text(
+                                item.status.label,
+                                style: const TextStyle(color: AppColors.slate500, fontSize: 12),
+                              ),
+                            ),
                     ),
                   ),
                 ),

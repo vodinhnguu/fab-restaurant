@@ -42,6 +42,7 @@ class OrderItem {
   /// Tiền dòng món, khớp backend: theo kg = giá 1 kg × số kg (chưa cân = 0), theo phần = giá × số phần.
   int get lineTotal => isByWeight ? (price * (weight ?? 0)).round() : price * quantity;
   bool get isCancelled => status == OrderItemStatus.cancelled;
+  bool get isReady => status == OrderItemStatus.ready;
   bool get isServed => status == OrderItemStatus.served;
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {

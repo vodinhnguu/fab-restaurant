@@ -52,12 +52,17 @@ async function revenueSince(from) {
 
 /** Đơn đã hủy từ [from]: số đơn + số tiền của các đơn đó (tiền "mất" ước theo tổng đơn lúc hủy). */
 async function cancelledSince(from) {
-  const r = await prisma.order.aggregate({
-    where: { status: 'CANCELLED', createdAt: { gte: from } },
-    _sum: { total: true },
-    _count: true,
-  });
-  return { orders: r._count ?? 0, amount: r._sum.total ?? 0 };
+  const [r, itemCount] = await Promise.all([
+    prisma.order.aggregate({
+      where: { status: 'CANCELLED', updatedAt: { gte: from } },
+      _sum: { total: true },
+      _count: true,
+    }),
+    prisma.orderItem.count({
+      where: { status: 'CANCELLED', cancelledAt: { gte: from }, order: { status: { not: 'CANCELLED' } } },
+    }),
+  ]);
+  return { orders: r._count ?? 0, amount: r._sum.total ?? 0, items: itemCount };
 }
 
 // GET /stats/manager: màn Tổng quan của app Quản lý (S15)
@@ -161,7 +166,7 @@ export async function cancellations(req, res) {
 
   const [orders, total, items, summary] = await Promise.all([
     prisma.order.findMany({
-      where: { status: 'CANCELLED', createdAt: { gte: from } },
+      where: { status: 'CANCELLED', updatedAt: { gte: from } },
       orderBy: { updatedAt: 'desc' },
       skip,
       take,
@@ -173,7 +178,7 @@ export async function cancellations(req, res) {
         _count: { select: { items: true } },
       },
     }),
-    prisma.order.count({ where: { status: 'CANCELLED', createdAt: { gte: from } } }),
+    prisma.order.count({ where: { status: 'CANCELLED', updatedAt: { gte: from } } }),
     // Món hủy lẻ: đơn vẫn còn, chỉ bỏ vài món (hủy khi bếp đã làm là mất hàng thật)
     prisma.orderItem.findMany({
       where: { status: 'CANCELLED', cancelledAt: { gte: from }, order: { status: { not: 'CANCELLED' } } },
@@ -184,7 +189,7 @@ export async function cancellations(req, res) {
         order: { select: { id: true, code: true, type: true, table: { select: { code: true } } } },
       },
     }),
-    prisma.order.aggregate({ where: { status: 'CANCELLED', createdAt: { gte: from } }, _sum: { total: true } }),
+    prisma.order.aggregate({ where: { status: 'CANCELLED', updatedAt: { gte: from } }, _sum: { total: true } }),
   ]);
 
   res.json({

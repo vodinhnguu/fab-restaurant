@@ -293,8 +293,8 @@ class _CancelledCard extends StatelessWidget {
             child: _MiniStat(
               label: 'Hôm nay',
               value: '${today.orders} đơn',
-              sub: formatMoney(today.amount),
-              color: today.orders > 0 ? AppColors.danger : AppColors.slate500,
+              sub: today.items > 0 ? '${today.items} món lẻ · ${formatMoney(today.amount)}' : formatMoney(today.amount),
+              color: (today.orders > 0 || today.items > 0) ? AppColors.danger : AppColors.slate500,
             ),
           ),
           Container(width: 1, height: 44, color: AppColors.sand100),
@@ -302,7 +302,7 @@ class _CancelledCard extends StatelessWidget {
             child: _MiniStat(
               label: 'Tháng này',
               value: '${month.orders} đơn',
-              sub: formatMoney(month.amount),
+              sub: month.items > 0 ? '${month.items} món lẻ · ${formatMoney(month.amount)}' : formatMoney(month.amount),
               color: AppColors.slate800,
             ),
           ),

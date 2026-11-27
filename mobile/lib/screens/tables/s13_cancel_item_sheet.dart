@@ -9,6 +9,7 @@
 // Trả về (name, quantity) của phần vừa hủy, null nếu đóng sheet.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/order.dart';
@@ -145,6 +146,7 @@ class _CancelItemSheetState extends ConsumerState<_CancelItemSheet> {
                 TextField(
                   controller: _reason,
                   maxLength: 200,
+                  maxLengthEnforcement: MaxLengthEnforcement.none,
                   decoration: InputDecoration(
                     labelText: _needReason ? 'Lý do hủy (bắt buộc)' : 'Lý do hủy (không bắt buộc)',
                     helperText: !_needReason

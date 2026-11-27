@@ -19,6 +19,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -37,6 +38,7 @@ import '../../widgets/app_snackbar.dart';
 import '../../widgets/bottom_panel.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/status_badge.dart';
+import 's04_move_table_sheet.dart';
 import 's09_bill_request_sheet.dart';
 import 's12_check_items_sheet.dart';
 import 's13_cancel_item_sheet.dart';
@@ -170,6 +172,27 @@ class _TableOrderScreenState extends ConsumerState<TableOrderScreen> {
     }
   }
 
+  Future<void> _moveTable(DiningTable fromTable) async {
+    final result = await showMoveTableSheet(context, ref: ref, fromTable: fromTable);
+    if (result == null || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      final detail = await ref.read(dineInServiceProvider).moveTable(
+        fromTable.id,
+        result.tableId,
+        reason: result.reason,
+      );
+      showAppSnack('Đã chuyển sang bàn ${detail.table.code}');
+      ref.invalidate(floorProvider);
+      ref.invalidate(todayOrdersProvider);
+      if (mounted) context.go(AppRoutes.table(detail.table.id));
+    } on ApiException catch (e) {
+      showAppSnack(e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final value = ref.watch(tableDetailProvider(widget.tableId));
@@ -208,8 +231,21 @@ class _TableOrderScreenState extends ConsumerState<TableOrderScreen> {
           if (order != null && canUpdate)
             PopupMenuButton<String>(
               tooltip: 'Thêm',
-              onSelected: (_) => _cancelOrder(order, detail!.table.code),
+              onSelected: (action) {
+                if (action == 'move') _moveTable(detail!.table);
+                if (action == 'cancel') _cancelOrder(order, detail!.table.code);
+              },
               itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: 'move',
+                  child: Row(
+                    children: [
+                      Icon(Icons.swap_horiz_rounded, color: AppColors.ocean700),
+                      SizedBox(width: 10),
+                      Text('Chuyển bàn'),
+                    ],
+                  ),
+                ),
                 PopupMenuItem(
                   value: 'cancel',
                   child: Row(
@@ -319,6 +355,7 @@ class _CancelOrderDialogState extends State<_CancelOrderDialog> {
           controller: _controller,
           autofocus: true,
           maxLength: 300,
+          maxLengthEnforcement: MaxLengthEnforcement.none,
           maxLines: 2,
           decoration: const InputDecoration(labelText: 'Lý do hủy', hintText: 'vd Khách bỏ về, ghi nhầm bàn'),
           validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập lý do hủy' : null,
@@ -617,6 +654,7 @@ class OrderItemRow extends StatelessWidget {
     OrderItemStatus.weighing: AppColors.cyan,
     OrderItemStatus.pending: AppColors.amber,
     OrderItemStatus.cooking: AppColors.indigo,
+    OrderItemStatus.ready: AppColors.violet,
     OrderItemStatus.served: AppColors.green,
     OrderItemStatus.cancelled: AppColors.red,
   };

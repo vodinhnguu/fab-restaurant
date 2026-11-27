@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, Clock, Receipt, Wallet } from 'lucide-react';
+import { Ban, CalendarDays, Clock, Receipt, TrendingUp, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -47,6 +47,7 @@ export default function Dashboard() {
   useDocumentTitle('Quản trị - Tổng quan');
   const [days, setDays] = useState(30);
   const { data, isLoading } = useQuery({ queryKey: ['stats', days], queryFn: () => statsApi.overview(days) });
+  const { data: mgr } = useQuery({ queryKey: ['stats-manager'], queryFn: () => statsApi.manager() });
 
   if (isLoading) return <Spinner />;
 
@@ -72,6 +73,103 @@ export default function Dashboard() {
         <StatCard icon={Clock} label="Đơn chờ xác nhận" value={data.pendingOrders} sub="Cần xử lý ngay" to="/admin/orders?status=PENDING" />
         <StatCard icon={CalendarDays} label="Đặt bàn hôm nay" value={data.todayReservations} sub={`${data.customerCount} khách hàng đã đăng ký`} to="/admin/reservations" />
       </div>
+
+      {mgr && (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="card p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
+                <TrendingUp className="h-5 w-5" />
+              </div>
+              <h2 className="font-semibold">Doanh thu hôm nay</h2>
+            </div>
+            <p className="text-2xl font-bold text-slate-900">{formatCompactPrice(mgr.today.revenue)}</p>
+            <p className="mt-1 text-sm text-slate-500">{formatPrice(mgr.today.revenue)}</p>
+            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded-lg bg-slate-50 p-2.5">
+                <p className="text-xs text-slate-400">Tại quán</p>
+                <p className="font-semibold">{formatCompactPrice(mgr.today.dineIn.revenue)}</p>
+                <p className="text-xs text-slate-400">{mgr.today.dineIn.orders} đơn</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2.5">
+                <p className="text-xs text-slate-400">Online</p>
+                <p className="font-semibold">{formatCompactPrice(mgr.today.online.revenue)}</p>
+                <p className="text-xs text-slate-400">{mgr.today.online.orders} đơn</p>
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-slate-400">TB/đơn: {formatPrice(mgr.today.avgPerOrder)}</p>
+          </div>
+
+          <div className="card p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
+                <Wallet className="h-5 w-5" />
+              </div>
+              <h2 className="font-semibold">Doanh thu tháng này</h2>
+            </div>
+            <p className="text-2xl font-bold text-slate-900">{formatCompactPrice(mgr.month.revenue)}</p>
+            <p className="mt-1 text-sm text-slate-500">{formatPrice(mgr.month.revenue)}</p>
+            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded-lg bg-slate-50 p-2.5">
+                <p className="text-xs text-slate-400">Tại quán</p>
+                <p className="font-semibold">{formatCompactPrice(mgr.month.dineIn.revenue)}</p>
+                <p className="text-xs text-slate-400">{mgr.month.dineIn.orders} đơn</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2.5">
+                <p className="text-xs text-slate-400">Online</p>
+                <p className="font-semibold">{formatCompactPrice(mgr.month.online.revenue)}</p>
+                <p className="text-xs text-slate-400">{mgr.month.online.orders} đơn</p>
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-slate-400">TB/đơn: {formatPrice(mgr.month.avgPerOrder)}</p>
+          </div>
+
+          <div className="card p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-red-50 text-red-600">
+                <Ban className="h-5 w-5" />
+              </div>
+              <h2 className="font-semibold">Đơn / món đã hủy</h2>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-medium text-slate-400 uppercase">Hôm nay</p>
+                <div className="mt-1 grid grid-cols-3 gap-2 text-sm">
+                  <div className="rounded-lg bg-red-50 p-2.5 text-center">
+                    <p className="text-lg font-bold text-red-600">{mgr.cancelled.today.orders}</p>
+                    <p className="text-xs text-slate-500">đơn hủy</p>
+                  </div>
+                  <div className="rounded-lg bg-red-50 p-2.5 text-center">
+                    <p className="text-lg font-bold text-red-600">{mgr.cancelled.today.items}</p>
+                    <p className="text-xs text-slate-500">món hủy</p>
+                  </div>
+                  <div className="rounded-lg bg-red-50 p-2.5 text-center">
+                    <p className="text-sm font-bold text-red-600">{formatCompactPrice(mgr.cancelled.today.amount)}</p>
+                    <p className="text-xs text-slate-500">giá trị</p>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-400 uppercase">Tháng này</p>
+                <div className="mt-1 grid grid-cols-3 gap-2 text-sm">
+                  <div className="rounded-lg bg-slate-50 p-2.5 text-center">
+                    <p className="text-lg font-bold text-slate-700">{mgr.cancelled.month.orders}</p>
+                    <p className="text-xs text-slate-500">đơn hủy</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 p-2.5 text-center">
+                    <p className="text-lg font-bold text-slate-700">{mgr.cancelled.month.items}</p>
+                    <p className="text-xs text-slate-500">món hủy</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 p-2.5 text-center">
+                    <p className="text-sm font-bold text-slate-700">{formatCompactPrice(mgr.cancelled.month.amount)}</p>
+                    <p className="text-xs text-slate-500">giá trị</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 grid gap-6 xl:grid-cols-3">
         <div className="card p-5 xl:col-span-2">

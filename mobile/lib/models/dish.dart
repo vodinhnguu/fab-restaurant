@@ -51,7 +51,7 @@ class Dish {
   /// Tên loại hải sản trong hồ (vd "Cua gạch"): nhiều món dùng chung 1 loại.
   final String? tankName;
 
-  /// Hồ hết loại này (phục vụ vẫn ghi món được, chỉ là nhắc để khỏi hứa với khách).
+  /// Hồ hết loại này → chặn ghi món trên app (S06).
   bool get tankEmpty => tankStockKg != null && tankStockKg! <= 0;
 
   /// Hồ gần hết loại này.

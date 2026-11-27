@@ -84,12 +84,14 @@ class AppTextField extends StatelessWidget {
           textInputAction: textInputAction,
           autofillHints: autofillHints,
           textCapitalization: textCapitalization,
-          inputFormatters: inputFormatters,
           obscureText: obscureText,
           enabled: enabled,
           readOnly: readOnly,
           maxLines: obscureText ? 1 : maxLines,
-          maxLength: maxLength,
+          inputFormatters: [
+            if (maxLength != null) LengthLimitingTextInputFormatter(maxLength),
+            ...?inputFormatters,
+          ],
           style: TextStyle(color: enabled && !readOnly ? AppColors.slate800 : AppColors.slate500),
           decoration: InputDecoration(
             hintText: hint,

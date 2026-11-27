@@ -90,6 +90,24 @@ export default function BillPrint() {
           {order.discount > 0 && <Row label="Giảm giá:" value={`-${formatPrice(order.discount)}`} />}
           <div className="text-sm"><Row label="TỔNG CỘNG:" value={formatPrice(order.total)} bold /></div>
         </div>
+        {info?.banking?.bankId && info?.banking?.accountNo && (
+          <>
+            <Line />
+            <p className="text-center font-bold">Chuyển khoản ngân hàng</p>
+            <div className="mt-1 flex justify-center">
+              <img
+                src={`https://img.vietqr.io/image/${info.banking.bankId}-${info.banking.accountNo}-compact.png?amount=${order.total}&addInfo=${encodeURIComponent(order.code)}`}
+                alt="QR chuyển khoản"
+                className="h-40 w-40"
+              />
+            </div>
+            <div className="mt-1 space-y-0.5 text-center text-[11px]">
+              <p>{info.banking.accountName}</p>
+              <p>{info.banking.accountNo} · {info.banking.bankId}</p>
+              <p>Nội dung: {order.code}</p>
+            </div>
+          </>
+        )}
         <Line />
         <p className="text-center">Cảm ơn quý khách! Hẹn gặp lại.</p>
       </div>

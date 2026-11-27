@@ -30,6 +30,7 @@ enum OrderItemStatus {
   weighing('WEIGHING', 'Chờ cân'), // món bán theo kg: chờ cân tại hồ, phục vụ nhập số kg (docs/24)
   pending('PENDING', 'Chờ bếp'),
   cooking('COOKING', 'Bếp đang làm'),
+  ready('READY', 'Bếp xong'),
   served('SERVED', 'Đã ra bàn'),
   cancelled('CANCELLED', 'Đã hủy');
 

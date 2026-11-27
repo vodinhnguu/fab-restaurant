@@ -10,7 +10,7 @@
 //   Thu ngân (web /admin/cashier): nhận thông báo -> "In bill" -> "Đã thu tiền" (đơn COMPLETED + PAID, bàn trống lại)
 //
 // Trạng thái từng món (OrderItem.status): [WEIGHING chờ cân, chỉ món theo kg] -> PENDING chờ bếp -> COOKING bếp đang làm
-//   -> SERVED đã lên | CANCELLED đã hủy.
+//   -> READY bếp xong (chờ phục vụ mang ra) -> SERVED đã lên bàn | CANCELLED đã hủy.
 // Trạng thái ĐƠN tự suy ra từ các món (syncOrderStatus): còn món chờ bếp = CONFIRMED "Đã gửi bếp",
 // còn món đang làm = PREPARING "Đang chế biến", lên hết = DELIVERING "Đã lên món", hủy hết món = CANCELLED.
 import { restaurant } from '../../config/restaurant.js';
@@ -24,8 +24,8 @@ import { recordDishWeight } from '../tank/tank.service.js';
 export const OPEN_ORDER = ['CONFIRMED', 'PREPARING', 'DELIVERING'];
 // Món bếp còn phải làm (món chờ cân bếp chưa thấy)
 const KITCHEN_ITEM = ['PENDING', 'COOKING'];
-// Món chưa mang ra bàn (kể cả món đang chờ cân)
-const NOT_SERVED = ['WEIGHING', ...KITCHEN_ITEM];
+// Món chưa mang ra bàn (kể cả món đang chờ cân và bếp xong chờ mang ra)
+const NOT_SERVED = ['WEIGHING', ...KITCHEN_ITEM, 'READY'];
 
 // Dòng món bán theo kg: đang chờ cân hoặc đã cân (có số kg)
 const byWeight = (i) => i.status === 'WEIGHING' || i.weight != null;
@@ -66,7 +66,7 @@ export async function syncOrderStatus(db, orderId) {
   let status = 'DELIVERING';
   if (live.length === 0) status = 'CANCELLED';
   else if (live.some((i) => i.status === 'PENDING' || i.status === 'WEIGHING')) status = 'CONFIRMED';
-  else if (live.some((i) => i.status === 'COOKING')) status = 'PREPARING';
+  else if (live.some((i) => i.status === 'COOKING' || i.status === 'READY')) status = 'PREPARING';
   if (status === order.status) return;
 
   const data = { status };
@@ -164,11 +164,14 @@ export async function addItems({ tableId, items: lines, note }, staff) {
     const table = await getActiveTable(tx, tableId);
 
     // Giá lấy từ DB, không tin giá app gửi
-    const dishes = await tx.dish.findMany({ where: { id: { in: [...qtyByDish.keys()] } } });
+    const dishes = await tx.dish.findMany({ where: { id: { in: [...qtyByDish.keys()] } }, include: { tankItem: true } });
     if (dishes.length !== qtyByDish.size) throw ApiError.badRequest('Có món không tồn tại');
     // Giữ đúng thứ tự nhân viên bấm (bếp đọc phiếu theo thứ tự này)
     const items = [...qtyByDish.keys()].map((id) => dishes.find((x) => x.id === id)).map((d) => {
       if (!d.isAvailable) throw ApiError.badRequest(`Món "${d.name}" hiện đã hết`);
+      if (isSoldByWeight(d) && d.tankItem && d.tankItem.stockKg <= 0) {
+        throw ApiError.badRequest(`Hồ đang hết "${d.tankItem.name ?? d.name}", không thể ghi món`);
+      }
       const base = { dishId: d.id, name: d.name, price: d.salePrice ?? d.price, note: noteByDish.get(d.id) ?? null };
       if (!isSoldByWeight(d)) return { ...base, quantity: qtyByDish.get(d.id), status: 'PENDING' };
       // Món theo kg: price là giá 1 kg; số kg làm tròn tới gam
@@ -212,6 +215,32 @@ export async function addItems({ tableId, items: lines, note }, staff) {
   return tableDetail(tableId);
 }
 
+// Chuyển bàn: chuyển đơn đang mở từ bàn này sang bàn khác (bàn đích phải trống).
+export async function moveTable(fromTableId, { toTableId, reason }, staff) {
+  if (fromTableId === toTableId) throw ApiError.badRequest('Bàn đích trùng bàn hiện tại');
+
+  await prisma.$transaction(async (tx) => {
+    await getActiveTable(tx, fromTableId);
+    await getActiveTable(tx, toTableId);
+
+    const order = await findOpenOrder(tx, fromTableId);
+    if (!order) throw ApiError.badRequest('Bàn này chưa có đơn nào đang mở');
+
+    const existing = await findOpenOrder(tx, toTableId);
+    if (existing) throw ApiError.badRequest('Bàn đích đang có khách, không chuyển được');
+
+    await tx.order.update({
+      where: { id: order.id },
+      data: {
+        tableId: toTableId,
+        note: [order.note, reason ? `Chuyển bàn: ${reason}` : 'Chuyển bàn'].filter(Boolean).join('; '),
+      },
+    });
+  });
+
+  return tableDetail(toTableId);
+}
+
 // "Check món": tick (served = true) / bỏ tick các món đã mang ra bàn. Các món phải cùng 1 đơn đang mở.
 export async function serveItems({ itemIds, served }) {
   const tableId = await prisma.$transaction(async (tx) => {
@@ -223,11 +252,11 @@ export async function serveItems({ itemIds, served }) {
     if (items.some((i) => i.status === 'CANCELLED')) throw ApiError.badRequest('Có món đã hủy, không check được');
 
     if (served) {
-      // Món còn chờ cân thì chưa check được (chưa nấu)
-      await tx.orderItem.updateMany({ where: { id: { in: itemIds }, status: { in: KITCHEN_ITEM } }, data: { status: 'SERVED', servedAt: new Date() } });
+      // Phục vụ check: chỉ món bếp đã xong (READY) mới tick được
+      await tx.orderItem.updateMany({ where: { id: { in: itemIds }, status: 'READY' }, data: { status: 'SERVED', servedAt: new Date() } });
     } else {
-      // Bỏ tick (bấm nhầm): món đã ra khỏi bếp nên về "Bếp đang làm"
-      await tx.orderItem.updateMany({ where: { id: { in: itemIds }, status: 'SERVED' }, data: { status: 'COOKING', servedAt: null } });
+      // Bỏ tick (bấm nhầm): bếp đã xong nên về READY (chờ mang ra)
+      await tx.orderItem.updateMany({ where: { id: { in: itemIds }, status: 'SERVED' }, data: { status: 'READY', servedAt: null } });
     }
     await syncOrderStatus(tx, order.id);
     return order.tableId;
@@ -244,7 +273,7 @@ export async function cancelItem(itemId, { quantity, reason }, userId) {
     const order = await getOpenOrder(tx, item.orderId);
     if (item.status === 'CANCELLED') throw ApiError.badRequest('Món này đã hủy rồi');
     if (!['WEIGHING', 'PENDING'].includes(item.status) && !reason) {
-      throw ApiError.badRequest(item.status === 'SERVED' ? 'Món đã mang ra bàn, vui lòng ghi lý do hủy' : 'Bếp đã làm món này, vui lòng ghi lý do hủy');
+      throw ApiError.badRequest(item.status === 'SERVED' ? 'Món đã mang ra bàn, vui lòng ghi lý do hủy' : 'Bếp đã làm món này (đang chờ mang ra hoặc đang nấu), vui lòng ghi lý do hủy');
     }
     const qty = quantity ?? item.quantity;
     if (qty > item.quantity) throw ApiError.badRequest(`Món này chỉ có ${item.quantity} phần`);
@@ -428,7 +457,7 @@ export async function finishCooking(itemIds) {
       where: { id: { in: itemIds }, status: 'COOKING', order: { type: 'DINE_IN', status: { in: OPEN_ORDER } } },
       select: { id: true, orderId: true },
     });
-    await tx.orderItem.updateMany({ where: { id: { in: items.map((i) => i.id) } }, data: { status: 'SERVED', servedAt: new Date() } });
+    await tx.orderItem.updateMany({ where: { id: { in: items.map((i) => i.id) } }, data: { status: 'READY' } });
     for (const orderId of new Set(items.map((i) => i.orderId))) await syncOrderStatus(tx, orderId);
     return { updated: items.length };
   });

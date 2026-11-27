@@ -10,6 +10,7 @@
 // Chọn ngày bằng nút ở thanh tiêu đề (xem lại hôm qua, không ghi được cho ngày chưa tới).
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/drink_check.dart';
@@ -430,6 +431,7 @@ class _CheckSheetState extends ConsumerState<_CheckSheet> {
               TextField(
                 controller: _note,
                 maxLength: 300,
+                maxLengthEnforcement: MaxLengthEnforcement.none,
                 maxLines: 2,
                 enabled: !_saving,
                 decoration: const InputDecoration(

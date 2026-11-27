@@ -135,7 +135,7 @@ class _DishDetailScreenState extends ConsumerState<DishDetailScreen> {
                   const SizedBox(height: 16),
                   DishDescription(description),
                 ],
-                if (dish.isAvailable) ...[
+                if (dish.isAvailable && !dish.tankEmpty) ...[
                   const SizedBox(height: 24),
                   _NoteSection(controller: _note, dish: dish),
                 ],
@@ -167,7 +167,11 @@ class _DishDetailScreenState extends ConsumerState<DishDetailScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           FloatingCartBar(tableId: widget.tableId),
-          if (dish.isAvailable)
+          if (!dish.isAvailable)
+            const _SoldOutBar()
+          else if (dish.tankEmpty)
+            const _TankEmptyBar()
+          else
             _AddToCartBar(
               byWeight: dish.soldByWeight,
               quantity: _quantity,
@@ -177,9 +181,7 @@ class _DishDetailScreenState extends ConsumerState<DishDetailScreen> {
               onQuantityChanged: (q) => setState(() => _quantity = q),
               onWeightChanged: (kg) => setState(() => _weight = kg),
               onAdd: () => _addToCart(dish),
-            )
-          else
-            const _SoldOutBar(),
+            ),
         ],
       ),
     );
@@ -291,6 +293,37 @@ class _SoldOutBar extends StatelessWidget {
   }
 }
 
+/// Hồ hải sản hết loại này: không cho ghi món.
+class _TankEmptyBar extends StatelessWidget {
+  const _TankEmptyBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomPanel(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.danger.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.set_meal_rounded, color: AppColors.danger),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Hồ đang hết loại này, không thể ghi món',
+                style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Khung xương lúc đang tải: ảnh + vài dòng chữ.
 class _LoadingView extends StatelessWidget {
   const _LoadingView();
@@ -328,7 +361,7 @@ class _LoadingView extends StatelessWidget {
 
 
 /// Món bán theo kg: khung cho phục vụ biết hồ còn bao nhiêu kg loại hải sản này (docs/27-ton-ho-hai-san.md).
-/// Chỉ để tư vấn khách, KHÔNG chặn ghi món: số trong máy có thể lệch so với hồ thật.
+/// Hồ hết (stockKg ≤ 0) → chặn ghi món (_TankEmptyBar). Hồ gần hết / còn hàng → chỉ cảnh báo.
 class _TankStockCard extends StatelessWidget {
   const _TankStockCard(this.dish);
   final Dish dish;

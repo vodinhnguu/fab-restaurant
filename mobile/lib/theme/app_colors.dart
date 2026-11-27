@@ -41,6 +41,7 @@ class AppColors {
   static const amber = StatusColor(Color(0xFFFEF3C7), Color(0xFFB45309)); // chờ xác nhận, chưa thanh toán
   static const blue = StatusColor(Color(0xFFDBEAFE), Color(0xFF1D4ED8)); // đã xác nhận
   static const indigo = StatusColor(Color(0xFFE0E7FF), Color(0xFF4338CA)); // đang chế biến
+  static const violet = StatusColor(Color(0xFFEDE9FE), Color(0xFF7C3AED)); // bếp xong, chờ mang ra
   static const cyan = StatusColor(Color(0xFFCFFAFE), Color(0xFF0E7490)); // đang giao
   static const green = StatusColor(Color(0xFFDCFCE7), Color(0xFF15803D)); // hoàn thành, đã đến, đã thanh toán
   static const red = StatusColor(Color(0xFFFEE2E2), Color(0xFFB91C1C)); // đã hủy

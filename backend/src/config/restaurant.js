@@ -10,4 +10,10 @@ export const restaurant = {
   reservationAreas: ['Trong nhà', 'Ngoài trời - view biển', 'Phòng VIP'],
   diningMinutes: 120, // 1 bữa ăn ~2 tiếng: bàn đã đặt lúc 19:00 thì bận từ 17:01 đến 20:59
   socials: { facebook: 'https://facebook.com', instagram: 'https://instagram.com', tiktok: 'https://tiktok.com' },
+  // Thông tin chuyển khoản ngân hàng (QR VietQR trên bill). Để trống bankId hoặc accountNo thì không hiện QR.
+  banking: {
+    bankId: 'MB',           // Mã ngân hàng (VietQR): MB, VCB, TCB, ACB, BIDV, VPB, TPB...
+    accountNo: '0379123456', // Số tài khoản
+    accountName: 'NGUYEN VAN A', // Tên chủ tài khoản (in hoa, không dấu)
+  },
 };

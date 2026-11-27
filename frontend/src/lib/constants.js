@@ -86,6 +86,7 @@ export const DINE_IN_ITEM_STATUS = {
   WEIGHING: { label: 'Chờ cân', color: 'cyan' }, // món bán theo kg, chờ cân tại hồ (phục vụ nhập số kg trên app)
   PENDING: { label: 'Chờ bếp', color: 'amber' },
   COOKING: { label: 'Đang làm', color: 'blue' },
+  READY: { label: 'Bếp xong', color: 'violet' },
   SERVED: { label: 'Đã lên', color: 'green' },
   CANCELLED: { label: 'Đã hủy', color: 'slate' },
 };

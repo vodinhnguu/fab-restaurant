@@ -92,6 +92,15 @@ class DineInService {
     await _api.patch('/orders/$orderId/status', body: {'status': 'CANCELLED', 'reason': reason.trim()});
   }
 
+  /// POST /dine-in/tables/:id/move (S04 menu ⋮ "Chuyển bàn"): chuyển đơn đang mở sang bàn khác (bàn đích phải trống).
+  Future<TableDetail> moveTable(int fromTableId, int toTableId, {String? reason}) async {
+    final res = await _api.post('/dine-in/tables/$fromTableId/move', body: {
+      'toTableId': toTableId,
+      if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+    });
+    return TableDetail.fromJson(res.data as Map<String, dynamic>);
+  }
+
   /// DELETE /dine-in/orders/:id/bill-request (S04 "Rút lại"): khách muốn gọi thêm / gửi nhầm.
   Future<TableDetail> cancelBillRequest(int orderId) async {
     final res = await _api.delete('/dine-in/orders/$orderId/bill-request');

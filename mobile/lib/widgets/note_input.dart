@@ -54,9 +54,8 @@ class NoteInput extends StatelessWidget {
           controller: controller,
           minLines: 2,
           maxLines: 4,
-          maxLength: maxNoteLength,
-          maxLengthEnforcement: MaxLengthEnforcement.none,
           textCapitalization: TextCapitalization.sentences,
+          inputFormatters: [LengthLimitingTextInputFormatter(maxNoteLength)],
           buildCounter: (_, {required currentLength, required isFocused, maxLength}) =>
               Text('$currentLength/$maxNoteLength', style: Theme.of(context).textTheme.bodySmall),
           decoration: InputDecoration(

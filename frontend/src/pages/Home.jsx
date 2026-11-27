@@ -126,7 +126,7 @@ export default function Home() {
               <p className="inline-flex items-center gap-2 rounded-full bg-coral-500 px-3 py-1 text-sm font-bold text-white">
                 <Flame className="h-4 w-4" /> Best seller
               </p>
-              <h2 className="heading-display mt-3 text-3xl text-white sm:text-4xl">Món khách gọi nhiều nhất tại FAB</h2>
+              <h2 className="heading-display mt-3 text-3xl text-white sm:text-4xl">Món khách gọi nhiều nhất tại Ngưu Quán</h2>
               <p className="mt-2 text-ocean-200">Hải sản sống chọn tại hồ, cân tại chỗ, chế biến theo ý bạn</p>
             </div>
             <Link to="/menu?best=1" className="flex items-center gap-1 font-medium text-coral-300 hover:text-coral-200">

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { requirePermission } from '../../middlewares/auth.js';
 import { validate } from '../../middlewares/validate.js';
 import * as ctrl from './dine-in.controller.js';
-import { addBillItemsSchema, addItemsSchema, adjustItemSchema, cancelItemSchema, kitchenFinishSchema, kitchenStartSchema, paySchema, serveItemsSchema, weighItemSchema } from './dine-in.validation.js';
+import { addBillItemsSchema, addItemsSchema, adjustItemSchema, cancelItemSchema, kitchenFinishSchema, kitchenStartSchema, moveTableSchema, paySchema, serveItemsSchema, weighItemSchema } from './dine-in.validation.js';
 
 // Ăn tại quán. Tài liệu: docs/23-app-nhan-vien-phuc-vu.md
 // Quyền theo ma trận phân quyền:
@@ -18,6 +18,7 @@ router.get('/tables', requirePermission('ORDERS', 'view'), ctrl.floor);
 router.get('/tables/:id', requirePermission('ORDERS', 'view'), ctrl.tableDetail);
 router.get('/orders', requirePermission('ORDERS', 'view'), ctrl.todayOrders);
 router.post('/orders', requirePermission('ORDERS', 'create'), validate(addItemsSchema), ctrl.addItems); // Gửi bếp
+router.post('/tables/:id/move', requirePermission('ORDERS', 'edit'), validate(moveTableSchema), ctrl.moveTable); // Chuyển bàn
 router.post('/items/serve', requirePermission('ORDERS', 'edit'), validate(serveItemsSchema), ctrl.serveItems); // Check món
 router.post('/items/:id/cancel', requirePermission('ORDERS', 'edit'), validate(cancelItemSchema), ctrl.cancelItem); // Hủy món
 router.post('/orders/:id/bill-request', requirePermission('ORDERS', 'edit'), ctrl.requestBill); // Gửi thanh toán
