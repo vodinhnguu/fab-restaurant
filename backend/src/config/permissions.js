@@ -103,6 +103,12 @@ export const DEFAULT_ROLES = [
     description: 'Chăm sóc hồ, vớt và cân hải sản, nhập hàng, báo hải sản hết / chết',
     perms: { ORDERS: 'V', MENU: 'VE', KITCHEN: 'V', SEAFOOD_TANK: 'VCED', FACILITY: 'VC' },
   },
+  {
+    key: 'BARTENDER',
+    name: 'Nhân viên bar',
+    description: 'Lấy bia nước theo đơn, kiểm kho quầy cuối ca',
+    perms: { ORDERS: 'V', DRINKS: 'VCE', FACILITY: 'C' },
+  },
 ];
 
 // 'VCE' -> { canView: true, canCreate: true, canEdit: true, canDelete: false }

@@ -29,6 +29,7 @@ export const DEMO_STAFF = [
   ['Bùi Đầu Bếp', 'bep@fab.vn', '0930000004', 'KITCHEN'],
   ['Lâm Tiếp Thực', 'tiepthuc@fab.vn', '0930000010', 'RUNNER'],
   ['Hồ Văn Hải', 'hohaisan@fab.vn', '0930000011', 'SEAFOOD_KEEPER'],
+  ['Vũ Nhân Bar', 'bar@fab.vn', '0930000012', 'BARTENDER'],
 ];
 
 // Tạo các tài khoản còn thiếu. Trả về { created: [email...], skipped: [email...] }

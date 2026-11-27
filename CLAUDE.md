@@ -54,6 +54,7 @@ Tạo bởi `npm run setup` / `npm run db:seed`. Dùng để đăng nhập thử
 | Bếp | `bep@fab.vn` | `123456` | Đơn hàng, món ăn, danh mục, Cân hải sản, khu vực cần dọn (báo), xem thiết bị, nút Báo hỏng |
 | Tiếp thực | `tiepthuc@fab.vn` | `123456` | Đơn hàng, đặt bàn (xem), món |
 | Hồ hải sản | `hohaisan@fab.vn` | `123456` | Đơn hàng, món, **Tồn hồ hải sản** (nhập hàng, kiểm hồ, hao hụt, `docs/27-ton-ho-hai-san.md`), Cân hải sản (theo dõi + cân lại; số kg do phục vụ nhập tại hồ trên app, `docs/24-thuc-don-ban-theo-kg.md`), xem thiết bị, nút Báo hỏng |
+| Nhân viên bar | `bar@fab.vn` | `123456` | **Quầy bia nước** (lấy đồ uống theo đơn, kiểm kho quầy), xem đơn hàng, nút Báo hỏng |
 | Khách hàng | `khach@fab.vn` | `123456` | Có sẵn đơn đã hoàn thành `FAB0000DEMO` để thử đánh giá |
 
 Danh sách nhân viên demo nằm ở `backend/prisma/seed-staff.js` (mỗi vai trò 1 tài khoản). Cột "Thấy gì" là quyền **mặc định** (`backend/src/config/permissions.js`). Quyền thật lấy theo ma trận trong DB, admin sửa được trên giao diện nên có thể khác bảng này.
